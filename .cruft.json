@@ -1,0 +1,25 @@
+{
+  "template": "https://github.com/scientific-python/cookie",
+  "commit": "c07eb4b42e9f645e77e5d7a818064382dbc2dda9",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "poligrain",
+      "org": "OpenSenseAction",
+      "url": "https://github.com/OpenSenseAction/poligrain",
+      "full_name": "Christian Chwala",
+      "email": "christian.chwala@kit.edu",
+      "project_short_description": "Effortlessly plot and compare (rainfall) sensor data with point, line and grid geometry.",
+      "license": "BSD",
+      "backend": "poetry",
+      "vcs": true,
+      "__year": "2023",
+      "__project_slug": "poligrain",
+      "__type": "pure",
+      "__answers": "",
+      "__ci": "github",
+      "_template": "https://github.com/scientific-python/cookie"
+    }
+  },
+  "directory": null
+}
