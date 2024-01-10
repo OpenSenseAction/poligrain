@@ -9,6 +9,9 @@
 ```{include} ../README.md
 :start-after: <!-- SPHINX-START -->
 ```
+## User guide
+
+- [Development](development.md)
 
 ## Indices and tables
 
