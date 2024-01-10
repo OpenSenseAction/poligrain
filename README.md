@@ -7,9 +7,9 @@
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
-[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
-
 <!-- SPHINX-START -->
+
+`poligrain` is a Python package developed within the COST Action OPENSENSE to simplify common tasks for working with **po**int, **li**ne and **gr**idded sensor data, focusing on **rain**fall observations.
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/OpenSenseAction/poligrain/workflows/CI/badge.svg
