@@ -9,7 +9,9 @@
 
 <!-- SPHINX-START -->
 
-`poligrain` is a Python package developed within the COST Action OPENSENSE to simplify common tasks for working with **po**int, **li**ne and **gr**idded sensor data, focusing on **rain**fall observations.
+`poligrain` is a Python package developed within the COST Action OPENSENSE to
+simplify common tasks for working with **po**int, **li**ne and **gr**idded
+sensor data, focusing on **rain**fall observations.
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/OpenSenseAction/poligrain/workflows/CI/badge.svg
