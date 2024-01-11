@@ -29,6 +29,8 @@ exclude_patterns = [
 
 html_theme = "furo"
 
+html_logo = "_static/logo.png"
+
 myst_enable_extensions = [
     "colon_fence",
 ]
