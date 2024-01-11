@@ -14,7 +14,7 @@ simplify common tasks for working with **po**int, **li**ne and **gr**idded
 sensor data, focusing on **rain**fall observations.
 
 This is currently an early draft of the package and no, or only preliminary
-functionality, is there.
+functionality, is there...
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/OpenSenseAction/poligrain/workflows/CI/badge.svg
