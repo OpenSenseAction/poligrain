@@ -7,6 +7,33 @@
 - test coverage
 - ...
 
+## Releasing packages
+
+[PyPA-Build](https://pypa-build.readthedocs.io/en/latest/) is used to release
+packages on PyPi. This is automatically done when a release is published via the
+github WebGUI. See more details
+[here](https://learn.scientific-python.org/development/guides/gha-pure/#distribution-pure-python-wheels).
+
+Note that this requires a manual activation of the connection between this repo
+and PyPi. A guide how to do that can be found
+[here](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
+The workflow is called `cd.yml` and the environment is called `pypi`.
+
+Steps for releasing on pypi:
+
+1. Add a git tag with the version number like `v0.2.4` following semantic
+   versioning [semver](https://semver.org/).
+2. run `nox -s build` to see if the correct sdist file is built. (for whatever
+   reason, running `poetry build` does not pick up the version from the git tag,
+   but the `nox` command seems to work)
+3. push tagged commit to github, which then triggers CD to upload the sdist at
+   PyPi
+
+Note that the version numbers in pyprojects.toml and `src/poligrain/__init__.py`
+are only set to the version number from the git tag during the build process.
+Hence, they stay at 0.0.0 in the version in the repo but are correct in the
+sdist or wheel.
+
 ## Repository structure and tooling
 
 ### Initialization of repo structure via cookiecutter template
@@ -28,7 +55,8 @@ worth it since our changes might be few and small.)
 ### Steps taken after repo structure initialization to get build processes going
 
 1. Needed to manually activate ReadTheDoc build process for this repo. Currently
-   the ReadTheDocs processes are running on the account of `cchwala.
+   the ReadTheDocs processes are running on the account of `cchwala`.
+2.
 
 ### Changes to default repo structure
 
