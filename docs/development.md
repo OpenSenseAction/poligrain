@@ -57,8 +57,8 @@ worth it since our changes might be few and small.)
    the ReadTheDocs processes are running on the account of `cchwala`.
 2. Connection to PyPi has to be established manually by allowing and configuring
    the creation of a PyPI project with a "trusted publisher" (see info in
-   section [Releasing packages](#repository-structure-and-tooling) above and in
-   more detail in the
+   section [Releasing packages](#releasing-packages) above and in more detail in
+   the
    [pypi docs](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)).
    This is currently done via the account of `cchwala`.
 
