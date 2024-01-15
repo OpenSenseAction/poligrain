@@ -7,32 +7,27 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+<!-- A short summary of the issue -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+#### MCVE Code Sample
+<!-- In order for the maintainers to efficiently understand and prioritize issues, we ask you post a "Minimal, Complete and Verifiable Example" (MCVE): https://stackoverflow.com/help/minimal-reproducible-example -->
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+```python
+# Your code here
+```
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+#### Expected Output
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
 
-**Additional context**
-Add any other context about the problem here.
+#### Problem Description
+<!-- this should explain why the current behavior is a problem and why the expected output is a better solution -->
+
+
+#### Version
+
+<details><summary>Output of <tt>wrl.show_versions()</tt></summary>
+
+<!-- Paste the output of wrl.show_versions() here -->
+
+</details>
