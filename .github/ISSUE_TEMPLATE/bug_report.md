@@ -1,16 +1,15 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 <!-- A short summary of the issue -->
 
-
 #### MCVE Code Sample
+
 <!-- In order for the maintainers to efficiently understand and prioritize issues, we ask you post a "Minimal, Complete and Verifiable Example" (MCVE): https://stackoverflow.com/help/minimal-reproducible-example -->
 
 ```python
@@ -19,15 +18,14 @@ assignees: ''
 
 #### Expected Output
 
-
 #### Problem Description
-<!-- this should explain why the current behavior is a problem and why the expected output is a better solution -->
 
+<!-- this should explain why the current behavior is a problem and why the expected output is a better solution -->
 
 #### Version
 
-<details><summary>Output of <tt>wrl.show_versions()</tt></summary>
+<details><summary>Installed packages</summary>
 
-<!-- Paste the output of wrl.show_versions() here -->
+<!-- Paste the output of `conda list` or similar here ->
 
 </details>
