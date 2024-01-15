@@ -158,3 +158,6 @@ Thumbs.db
 *.swp
 .idea
 .vscode
+
+# Poetry lock file
+poetry.lock
