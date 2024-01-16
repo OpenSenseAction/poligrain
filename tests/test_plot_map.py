@@ -8,7 +8,7 @@ import poligrain as plg
 
 
 def test_plot_lines():
-    ds_cmls = xr.open_dataset("test_data/openMRG_CML_180minutes.nc")
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     lines = plg.plot_map.plot_lines(ds_cmls)
     numpy.testing.assert_almost_equal(
         lines.get_paths()[19].vertices,
