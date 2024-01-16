@@ -61,6 +61,11 @@ worth it since our changes might be few and small.)
    the
    [pypi docs](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)).
    This is currently done via the account of `cchwala`.
+3. Connection to Codecov has to be established manually by installing the
+   codecov App for the OpenSenseAction github organization. Most probably it
+   will not work for other repos without further action. There is at least no
+   need to add any authentication key to the github account and then add it at
+   the CI.yaml file.
 
 ### Changes to default repo structure
 

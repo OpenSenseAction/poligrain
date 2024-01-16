@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.10, <3.12"
 
 furo = { version = ">=2023.08.17", optional = true }
 myst_parser = { version = ">=0.13", optional = true }
@@ -34,12 +34,15 @@ pytest-cov = { version = ">=3", optional = true }
 sphinx = { version = ">=7.0", optional = true }
 sphinx_copybutton = { version = ">=0.3.0", optional = true }
 sphinx-autodoc-typehints = { version = "*", optional = true }
+nbsphinx = { version = "*", optional = true }
+netcdf4 = "^1.6.5"
 xarray = "^2023.12.0"
-netcdf4 = "*"
+matplotlib = "^3.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
 pytest-cov = ">= 3"
+jupyterlab = "^4.0.10"
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-cov"]
@@ -50,6 +53,7 @@ docs = [
   "sphinx",
   "sphinx_autodoc_typehints",
   "sphinx_copybutton",
+  "nbsphinx",
 ]
 
 [tool.poetry-dynamic-versioning]
@@ -96,6 +100,9 @@ module = "poligrain.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
+[[tool.mypy.overrides]]
+module = "numpy,numpy.testing,xarray,matplotlib,matplotlib.pyplot,matplotlib.collections,netCDF4,poligrain"
+ignore_missing_imports = true
 
 [tool.ruff]
 src = ["src"]

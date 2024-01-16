@@ -15,6 +15,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
+    "nbsphinx",
 ]
 
 source_suffix = [".rst", ".md"]
