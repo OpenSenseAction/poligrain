@@ -9,4 +9,6 @@ from __future__ import annotations
 
 __version__ = "0.0.0"
 
-__all__ = ["__version__"]
+from . import plot_map
+
+__all__ = ["__version__", "plot_map"]
