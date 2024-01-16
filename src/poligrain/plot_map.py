@@ -6,8 +6,9 @@ import xarray as xr
 from matplotlib.collections import LineCollection
 
 
-def lines(cmls: xr.Dataset, linewidth: float = 1) -> LineCollection:
-    fig, ax = plt.subplots()
+def plot_lines(cmls: xr.Dataset, linewidth: float = 1) -> LineCollection:
+    """Plot CML paths"""
+    _, ax = plt.subplots()
 
     x0 = np.atleast_1d(cmls.site_0_lon.values)
     y0 = np.atleast_1d(cmls.site_0_lat.values)
