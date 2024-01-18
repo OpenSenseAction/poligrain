@@ -43,10 +43,11 @@ matplotlib = "^3.8.2"
 pytest = ">= 6"
 pytest-cov = ">= 3"
 jupyterlab = "^4.0.10"
+nbmake = "^1.4.6"
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-cov"]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "nbmake"]
 docs = [
   "furo",
   "myst_parser",
