@@ -38,6 +38,7 @@ nbsphinx = { version = "*", optional = true }
 netcdf4 = "^1.6.5"
 xarray = "^2023.12.0"
 matplotlib = "^3.8.2"
+nbmake = "^1.4.6"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
