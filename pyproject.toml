@@ -46,7 +46,7 @@ jupyterlab = "^4.0.10"
 nbmake = "^1.4.6"
 
 [tool.poetry.extras]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "nbmake"]
 dev = ["pytest", "pytest-cov", "nbmake"]
 docs = [
   "furo",
