@@ -74,3 +74,4 @@ jobs:
           else
             python -m pytest --nbmake docs/notebooks/*ipynb
           fi
+        shell: bash
