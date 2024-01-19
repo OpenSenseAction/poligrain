@@ -67,11 +67,10 @@ jobs:
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.4
 
-      - name: Test notebooks
-        run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            python -m pytest --nbmake docs\\notebooks\\*ipynb
-          else
-            python -m pytest --nbmake docs/notebooks/*ipynb
-          fi
-        shell: bash
+      - name: Test notebooks on Linux and MacOS
+        if: runner.os != 'Windows'
+        run: python -m pytest --nbmake docs/notebooks/*ipynb
+
+      - name: Test notebooks on Windows
+        if: runner.os == 'Windows'
+        run: python -m pytest --nbmake docs\\notebooks\\*ipynb
