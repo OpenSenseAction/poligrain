@@ -73,4 +73,4 @@ jobs:
 
       - name: Test notebooks on Windows
         if: runner.os == 'Windows'
-        run: python -m pytest --nbmake docs\\notebooks\\*ipynb
+        run: python -m pytest --nbmake docs\notebooks\*ipynb
