@@ -68,5 +68,8 @@ jobs:
         uses: codecov/codecov-action@v3.1.4
 
       - name: Test notebooks
-        run: >-
-          python -m pytest --nbmake docs/notebooks/*ipynb
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            python -m pytest --nbmake docs\\notebooks\\*ipynb
+          else
+            python -m pytest --nbmake docs/notebooks/*ipynb
