@@ -1,12 +1,5 @@
 # Development
 
-## Guidelines
-
-- PR
-- formatting
-- test coverage
-- ...
-
 ## Releasing packages
 
 [PyPA-Build](https://pypa-build.readthedocs.io/en/latest/) is used to release

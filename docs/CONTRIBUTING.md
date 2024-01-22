@@ -1,5 +1,16 @@
 # Contributing
 
+## Guidelines
+
+- Every contribution (except for very quick fixes by the maintainers) should go
+  through a pull request (PR). Ideally, there is also an open issue that the PR
+  solves or that is used to discuss implementation details before the PR is
+  opened.
+- Code format and style are enforced by the linting tools with the configuration
+  defined at the root directory of this package
+- Every new contribution must have 100% test coverage. Exception might be made,
+  but need to be discussed and justified.
+
 ## Step-by-step guide to set up dev workflow
 
 1. Login github and go to https://github.com/OpenSenseAction/poligrain
