@@ -1,11 +1,4 @@
-# Development
-
-## Guidelines
-
-- PR
-- formatting
-- test coverage
-- ...
+# Tools for automation
 
 ## Releasing packages
 
@@ -33,13 +26,14 @@ are only set to the version number from the git tag during the build process.
 Hence, they stay at 0.0.0 in the version in the repo but are correct in the
 sdist or wheel.
 
-## Repository structure and tooling
+## Repository structure and tools
 
 ### Initialization of repo structure via cookiecutter template
 
-The repo structure is based on the cookiecutter template
-https://github.com/scientific-python/cookie and was initialized using `cruft` to
-seamlessly apply updates when the template changes.
+The repo structure is based on
+[this cookiecutter template](https://github.com/scientific-python/cookie) and
+was initialized using `cruft` to seamlessly apply updates when the template
+changes.
 
 During initialization with the cookiecutter template `poetry` was chosen to
 manage packaging. Many best-practice tools are provides by the templates, e.g.
@@ -71,7 +65,7 @@ worth it since our changes might be few and small.)
 
 None yet.
 
-### Solutions for common problems with tooling
+### Solutions for common problems with tools
 
 #### Use `poetry` environment in VSCode
 
