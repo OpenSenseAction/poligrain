@@ -1,14 +1,29 @@
 # poligrain
 
+```{include} ../README.md
+:start-after: <!-- SPHINX-START -->
+```
+
 ```{toctree}
-:maxdepth: 2
+:caption: Getting started
 :hidden:
-development.md
+
+installation.md
+```
+
+```{toctree}
+:caption: Examples
+:hidden:
+
 notebooks/Plotting.ipynb
 ```
 
-```{include} ../README.md
-:start-after: <!-- SPHINX-START -->
+```{toctree}
+:caption: Development
+:hidden:
+
+development/CONTRIBUTING.md
+development/automation.md
 ```
 
 ## Indices and tables
