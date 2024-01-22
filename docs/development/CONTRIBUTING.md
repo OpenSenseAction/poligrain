@@ -13,32 +13,39 @@
 
 ## Step-by-step guide to set up dev workflow
 
-1. Login github and go to https://github.com/OpenSenseAction/poligrain
+1. Login github and go to
+   [https://github.com/OpenSenseAction/poligrain](https://github.com/OpenSenseAction/poligrain)
 1. Forking: Click on fork and create a fork with the default settings
 1. Cloning: Go to your fork, click on “code”, copy info from ssh or https and
-   enter if after $ git clone (e.g. $ git clone
-   https://github.com/maxmargraf/poligrain.git)
-1. install poetry and nox, e.g. in your base conda env with $ mamba install
-   poetry nox if you are not on python >= 3.10 you have to add a new conda env
-   with $ mamba create -n poetry_env python=3.10 then activate this env with $
-   conda activate poetry_env
-1. Run $ poetry install (does config based on pyproject.toml)
-1. now you can perform following lints:
-   1. $ nox -s lint # Lint only
-   1. $ nox -s tests # Python tests
-   1. $ nox -s docs -- --serve # Build and serve the docs
-   1. $ nox -s build # Make an SDist and wheel
-1. Install pre-commit (with $ mamba install pre-commit) and set a hook
-   ($
-   pre-commit install) (does config based on pyproject.toml) so that you can run
-   $
-   pre-commit run -a to check if all files pass the style checks prior to a git
-   commit
+   enter if after `git clone` (e.g.
+   `git clone https://github.com/maxmargraf/poligrain.git`)
+1. install poetry and nox, e.g. in your base conda env with
+   `mamba install poetry nox`. If you are not on python >= 3.10 you have to add
+   a new conda env with `mamba create -n poetry_env python=3.10` then activate
+   this env with `conda activate poetry_env`
+1. Run `poetry install` (this does configuration based on pyproject.toml)
+1. now you can perform following linting, testing and building of docs to check
+   things work as expected:
+   1. `nox -s lint # Lint only`
+   1. `nox -s tests # Python tests`
+   1. `nox -s docs -- --serve` # Build and serve the docs so that you can check
+      them locally in your browser
+   1. `nox -s build` # Make an SDist and wheel, which is the same package that
+      would be uploaded to PyPi
+1. Install pre-commit with `mamba install pre-commit` (assuming you are in a
+   conde environment) and activate the pre-commit hook with `pre-commit install`
+   (this is based on config in pyproject.toml and .pre-commit-config.yaml) so
+   that you can run `pre-commit run -a`` to check if all files pass the style
+   checks prior to a git commit. The pre-commit hook will be run for all staged
+   files before I commit is accepted. Many checks do automatic updates, e.g. of
+   formatting. You just have to add these changes then to your commit and try to
+   commit again.
 
-Note: If you need to commit quickly, just have things document, you can use $
-git commit --no-verify
+Note: If you need to commit quickly, just have things document, you can use
+`git commit --no-verify`. But this will results in errors during the linting of
+the CI run.
 
-## Info on usage of `nox` and `poetry`
+## More detailed info on usage of `nox` and `poetry`
 
 See the [Scientific Python Developer Guide][spc-dev-intro] for a detailed
 description of best practices for developing scientific packages.
