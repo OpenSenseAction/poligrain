@@ -9,6 +9,7 @@
 :hidden:
 
 installation.md
+data_model.md
 ```
 
 ```{toctree}
@@ -16,6 +17,7 @@ installation.md
 :hidden:
 
 notebooks/Plotting.ipynb
+notebooks/Calculate_distances.ipynb
 ```
 
 ```{toctree}
