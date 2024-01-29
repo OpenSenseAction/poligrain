@@ -40,6 +40,7 @@ xarray = "^2023.12.0"
 matplotlib = "^3.8.2"
 nbmake = "^1.4.6"
 pyproj = "^3.6.1"
+scipy = "^1.12.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
@@ -104,7 +105,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = "numpy,numpy.testing,xarray,matplotlib,matplotlib.pyplot,matplotlib.collections,netCDF4,poligrain"
+module = "numpy,numpy.testing,xarray,matplotlib,matplotlib.pyplot,matplotlib.collections,netCDF4,poligrain,pyproj,scipy"
 ignore_missing_imports = true
 
 [tool.ruff]

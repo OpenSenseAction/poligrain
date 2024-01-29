@@ -1,41 +1,55 @@
 """Functions for calculating spatial distance, intersections and finding neighbors"""
 
 import pyproj
+import scipy
+import xarray as xr
 
 
-def project_coordinates(x, y, target_projection, source_projection="EPSG:4326"):
-    x, y = pyproj.transform(
-        pyproj.Proj(target_projection),
-        pyproj.Proj(source_projection),
-        x,
-        y,
-        always_xy=True,
+def get_point_xy(ds_points: xr.DataArray) -> tuple[xr.DataArray, xr.DataArray]:
+    assert len(ds_points.x.dims) == 1
+    assert len(ds_points.y.dims) == 1
+    assert ds_points.x.dims == ds_points.y.dims
+    return ds_points.x, ds_points.y
+
+
+def project_point_coordinates(
+    x: xr.DataArray,
+    y: xr.DataArray,
+    target_projection: str,
+    source_projection: str = "EPSG:4326",
+) -> tuple[xr.DataArray, xr.DataArray]:
+    transformer = pyproj.Transformer.from_crs(
+        crs_to=target_projection, crs_from=source_projection, always_xy=True
     )
+    x_projected, y_projected = transformer.transform(x, y)
+
+    x_projected = xr.DataArray(data=x_projected, dims=x.dims, name="x")
+    y_projected = xr.DataArray(data=y_projected, dims=y.dims, name="y")
+    x_projected.attrs["projection"] = target_projection
+    y_projected.attrs["projection"] = target_projection
+    return x_projected, y_projected
 
 
 def calc_point_to_point_distances(
-    ds_points_a, ds_points_b, project_coordinates_to=None
-):
-    """Calcualte the distance between two datasets of points"""
+    ds_points_a: xr.DataArray, ds_points_b: xr.DataArray
+) -> xr.DataArray:
+    """Calculate the distance between two datasets of points"""
 
-    if project_coordinates_to is None:
-        try:
-            x_a, y_a = ds_points_a.x, ds_points_a.y
-            x_b, y_b = ds_points_b.x, ds_points_b.y
-        except:
-            raise AttributeError(
-                "if `x` and `y` are not present in `ds_points` a projection has to be provided as EPSG string via `project_coordinates_to"
-            )
-    else:
-        x_a, y_a = project_coordinates_to(
-            ds_points_a.x,
-            ds_points_a.y,
-            target_projection=project_coordinates_to,
-        )
-        x_b, y_b = project_coordinates_to(
-            ds_points_b.x,
-            ds_points_b.y,
-            target_projection=project_coordinates_to,
-        )
+    x_a, y_a = get_point_xy(ds_points_a)
+    x_b, y_b = get_point_xy(ds_points_b)
 
-    # calc distance...
+    distance_matrix = scipy.spatial.distance_matrix(
+        x=list(zip(x_a.values, y_a.values, strict=True)),
+        y=list(zip(x_b.values, y_b.values, strict=True)),
+    )
+
+    dim_a = x_a.dims[0]
+    dim_b = x_b.dims[0] + "_neighbor"
+    return xr.DataArray(
+        data=distance_matrix,
+        dims=(dim_a, dim_b),
+        coords={
+            dim_a: (dim_a, x_a[x_a.dims[0]].to_numpy()),
+            dim_b: (dim_b, x_b[x_b.dims[0]].to_numpy()),
+        },
+    )
