@@ -69,7 +69,7 @@ def project_point_coordinates(
 
 
 def calc_point_to_point_distances(
-    ds_points_a: xr.DataArray, ds_points_b: xr.DataArray
+    ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
     """Calculate the distance between two datasets of points
 
