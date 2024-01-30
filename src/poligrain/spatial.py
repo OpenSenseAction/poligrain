@@ -29,7 +29,7 @@ def get_point_xy(
     assert len(ds_points.x.dims) == 1
     assert len(ds_points.y.dims) == 1
     assert ds_points.x.dims == ds_points.y.dims
-    return ds_points.x, ds_points
+    return ds_points.x, 1
 
 
 def project_point_coordinates(
