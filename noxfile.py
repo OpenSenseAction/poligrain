@@ -16,10 +16,11 @@ def lint(session: nox.Session) -> None:
     """
     Run the linter.
     """
-    session.install("pre-commit")
+    session.install("pre-commit", "mypy", "xarray")
     session.run(
         "pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs
     )
+    # session.run("mypy", "--no-incremental")
 
 
 @nox.session
