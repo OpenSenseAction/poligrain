@@ -16,10 +16,11 @@ def lint(session: nox.Session) -> None:
     """
     Run the linter.
     """
-    session.install("pre-commit")
+    session.install("pre-commit", "mypy", "xarray")
     session.run(
         "pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs
     )
+    # session.run("mypy", "--no-incremental")
 
 
 @nox.session
@@ -33,13 +34,13 @@ def pylint(session: nox.Session) -> None:
     session.run("pylint", "poligrain", *session.posargs)
 
 
-@nox.session
+@nox.session(reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests.
     """
     session.install(".[test]")
-    session.run("python", "-m", "pip", "freeze")
+    # session.run("python", "-m", "pip", "freeze")
     session.run("pytest", *session.posargs)
 
 

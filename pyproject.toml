@@ -39,6 +39,8 @@ netcdf4 = "^1.6.5"
 xarray = "^2023.12.0"
 matplotlib = "^3.8.2"
 nbmake = "^1.4.6"
+pyproj = "^3.6.1"
+scipy = "^1.12.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
@@ -155,7 +157,7 @@ ignore = [
 
 
 [tool.pylint]
-py-version = "3.8"
+py-version = "3.10"
 ignore-paths = [".*/_version.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
