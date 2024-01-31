@@ -105,7 +105,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = "numpy,numpy.testing,matplotlib,matplotlib.pyplot,matplotlib.collections,netCDF4,poligrain,pyproj,scipy"
+module = "numpy,numpy.testing,xarray,matplotlib,matplotlib.pyplot,matplotlib.collections,netCDF4,poligrain,pyproj,scipy"
 ignore_missing_imports = true
 
 [tool.ruff]
