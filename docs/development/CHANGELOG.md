@@ -10,7 +10,6 @@
 
 ### Breaking changes
 
-
 ## v0.0.3
 
 ### New features
@@ -33,7 +32,6 @@
   linting of notebooks ([@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
-
 
 ## v0.0.2
 
