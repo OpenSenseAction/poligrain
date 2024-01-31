@@ -24,6 +24,7 @@ notebooks/Plotting.ipynb
 
 development/CONTRIBUTING.md
 development/automation.md
+development/CHANGELOG.md
 ```
 
 ## Indices and tables
