@@ -38,23 +38,34 @@ def project_point_coordinates(
     target_projection: str,
     source_projection: str = "EPSG:4326",
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """_summary_
+    """Project coordinates x and y of point data
+
+    Note that `x` and `y` have to be `xarray.DataArray` so that we can return
+    the projected coordinates also as `xarray.DataArray` with the correct
+    `coord` data so that they can easily and safely added to an existing
+    `xarray.Dataset`, e.g. like the following code:
+
+    >>> ds_gauges.coords["x"], ds_gauges.coords["y"] = plg.spatial.project_point_coordinates(
+    ...     ds_gauges.lon, ds_gauges.lat, target_projection="EPSG:25832",
+    ...     )
 
     Parameters
     ----------
     x : xr.DataArray
-        _description_
+        The coordinates along the x-axis
     y : xr.DataArray
-        _description_
+        The coordinates along the y-axis
     target_projection : str
-        _description_
-    source_projection : _type_, optional
-        _description_, by default "EPSG:4326"
+        An EPSG string that defines the projection the points shall be projected too,
+        e.g. "EPSG:25832" for UTM zone 32N
+    source_projection : str, optional
+        An EPSG string that defines the projection of the supplied `x` and `y` data,
+        by default "EPSG:4326"
 
     Returns
     -------
     tuple[xr.DataArray, xr.DataArray]
-        _description_
+        The projected coordinates
     """
     transformer = pyproj.Transformer.from_crs(
         crs_to=target_projection, crs_from=source_projection, always_xy=True
@@ -71,13 +82,24 @@ def project_point_coordinates(
 def calc_point_to_point_distances(
     ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
-    """Calculate the distance between two datasets of points
+    """Calculate the distance between the point coordinates of two datasets.
+
+    Parameters
+    ----------
+    ds_points_a : xr.DataArray | xr.Dataset
+        _description_
+    ds_points_b : xr.DataArray | xr.Dataset
+        _description_
 
     Returns
     -------
-    _type_
-        _description_
+    xr.DataArray
+        Distance matrix in meters, assuming `x` and `y` coordinate variables in the
+        supplied data are projected to something like UTM. The dimensions of the matrix
+        are the `id` dimensions of the two input datasets. The `id` values are also
+        provided along each dimension. The second dimension name is appended with `_neighbor`.
     """
+
     x_a, y_a = get_point_xy(ds_points_a)
     x_b, y_b = get_point_xy(ds_points_b)
 
