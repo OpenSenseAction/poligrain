@@ -26,6 +26,7 @@ notebooks/Calculate_distances.ipynb
 
 development/CONTRIBUTING.md
 development/automation.md
+development/CHANGELOG.md
 ```
 
 ## Indices and tables
