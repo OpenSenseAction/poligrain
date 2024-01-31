@@ -34,11 +34,35 @@ def test_project_point_coordinates():
     )
     x_expected = np.array([106756.46571167826, 149635.93311767105, 234545.23195888632])
     y_expected = np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935])
-
     assert x.data == pytest.approx(x_expected, abs=1e-9)
     assert y.data == pytest.approx(y_expected, abs=1e-9)
 
-    # TODO: Add variants with other args
+    # With different source and targe projection, using the opposite direction
+    # of the test above from UTM 32N to WGS 80
+    x_source = xr.DataArray(
+        data=np.array([106756.46571167826, 149635.93311767105, 234545.23195888632]),
+        coords={"id": ds_gauge.id.data},
+    )
+    y_source = xr.DataArray(
+        data=np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935]),
+        coords={"id": ds_gauge.id.data},
+    )
+
+    x, y = plg.spatial.project_point_coordinates(
+        x=x_source,
+        y=y_source,
+        source_projection="EPSG:25832",
+        target_projection="EPSG:4326",
+    )
+
+    x_expected = lon
+    y_expected = lat
+    assert x.data == pytest.approx(x_expected, abs=1e-6)
+    assert y.data == pytest.approx(y_expected, abs=1e-6)
+
+    # Check that returned DataArray has correct ids
+    assert list(x.id.data) == ["g1", "g2", "g3"]
+    assert list(y.id.data) == ["g1", "g2", "g3"]
 
 
 def test_calc_point_to_point_distances():

@@ -61,8 +61,8 @@ def project_point_coordinates(
     )
     x_projected, y_projected = transformer.transform(x, y)  # pylint: disable=unpacking-non-sequence
 
-    x_projected = xr.DataArray(data=x_projected, dims=x.dims, name="x")
-    y_projected = xr.DataArray(data=y_projected, dims=y.dims, name="y")
+    x_projected = xr.DataArray(data=x_projected, coords=x.coords, name="x")
+    y_projected = xr.DataArray(data=y_projected, coords=y.coords, name="y")
     x_projected.attrs["projection"] = target_projection
     y_projected.attrs["projection"] = target_projection
     return x_projected, y_projected
