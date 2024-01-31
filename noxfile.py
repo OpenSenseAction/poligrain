@@ -34,13 +34,13 @@ def pylint(session: nox.Session) -> None:
     session.run("pylint", "poligrain", *session.posargs)
 
 
-@nox.session
+@nox.session(reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests.
     """
     session.install(".[test]")
-    session.run("python", "-m", "pip", "freeze")
+    # session.run("python", "-m", "pip", "freeze")
     session.run("pytest", *session.posargs)
 
 
