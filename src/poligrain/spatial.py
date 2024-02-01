@@ -525,3 +525,4 @@ def calc_point_to_point_distances(
             dim_b: (dim_b, x_b[x_b.dims[0]].data),
         },
     )
+
