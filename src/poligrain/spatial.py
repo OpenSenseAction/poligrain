@@ -1,31 +1,32 @@
-#spatial.py
-#|── find_closest_points_to_line()
-#|── find_closest_lines_to_line()
-#|── get_line_grid_intersections()
-#|── get_line_grid_intersection_timeseries()
-#|── SensorAtGrid() <-- absract base class similar to RawAtObs from wradlib, but more generic so that it can also handle line-grid
-#|── LineAtGrid() <-- subclass of base class above, doing grid intersection (can also be provided as arg or be cached in object) and extraction of path-averages
-#|── PointAtGrid() <-- subclass of base class above
+# spatial.py
+# |── find_closest_points_to_line()
+# |── find_closest_lines_to_line()
+# |── get_line_grid_intersections()
+# |── get_line_grid_intersection_timeseries()
+# |── SensorAtGrid() <-- absract base class similar to RawAtObs from wradlib, but more generic so that it can also handle line-grid
+# |── LineAtGrid() <-- subclass of base class above, doing grid intersection (can also be provided as arg or be cached in object) and extraction of path-averages
+# |── PointAtGrid() <-- subclass of base class above
 from __future__ import annotations
 
-from __future__ import division
 from builtins import zip
 from collections import namedtuple
-import xarray as xr
+
 import numpy as np
 import sparse
+import xarray as xr
 from shapely.geometry import LineString, Polygon
 
+
 def calc_sparse_intersect_weights_for_several_cmls(
-        x1_line,
-        y1_line,
-        x2_line,
-        y2_line,
-        cml_id,
-        x_grid,
-        y_grid,
-        grid_point_location="center",
-        offset=None,
+    x1_line,
+    y1_line,
+    x2_line,
+    y2_line,
+    cml_id,
+    x_grid,
+    y_grid,
+    grid_point_location="center",
+    offset=None,
 ):
     """Calculate sparse intersection weights matrix for several CMLs
 
@@ -74,8 +75,7 @@ def calc_sparse_intersect_weights_for_several_cmls(
             y_grid=y_grid,
             grid_point_location=grid_point_location,
         )
-        intersect_weights_list.append(
-            sparse.COO.from_numpy(intersect_weights))
+        intersect_weights_list.append(sparse.COO.from_numpy(intersect_weights))
 
     da_intersect_weights = xr.DataArray(
         data=sparse.stack(intersect_weights_list),
@@ -89,16 +89,17 @@ def calc_sparse_intersect_weights_for_several_cmls(
 
     return da_intersect_weights
 
+
 def calc_intersect_weights(
-        x1_line,
-        y1_line,
-        x2_line,
-        y2_line,
-        x_grid,
-        y_grid,
-        grid_point_location="center",
-        offset=None,
-        return_pixel_poly_list=False,
+    x1_line,
+    y1_line,
+    x2_line,
+    y2_line,
+    x_grid,
+    y_grid,
+    grid_point_location="center",
+    offset=None,
+    return_pixel_poly_list=False,
 ):
     """Calculate intersecting weights for a line and a grid
 
@@ -163,11 +164,9 @@ def calc_intersect_weights(
     x_min = min([x1_line, x2_line])
     y_max = max([y1_line, y2_line])
     y_min = min([y1_line, y2_line])
-    bounding_box = ((x_grid > x_min - offset) & (
-                x_grid < x_max + offset)) & (
-                           (y_grid > y_min - offset) & (
-                               y_grid < y_max + offset)
-                   )
+    bounding_box = ((x_grid > x_min - offset) & (x_grid < x_max + offset)) & (
+        (y_grid > y_min - offset) & (y_grid < y_max + offset)
+    )
 
     # Calculate polygon corners assuming that `grid` defines the center
     # of each grid cell
@@ -206,6 +205,7 @@ def calc_intersect_weights(
     else:
         return intersect
 
+
 def _calc_grid_corners_for_center_location(grid):
     """
 
@@ -228,31 +228,23 @@ def _calc_grid_corners_for_center_location(grid):
     # Upper right
     ur_grid = np.zeros_like(grid)
     ur_grid[0:-1, 0:-1, :] = (grid[0:-1, 0:-1, :] + grid[1:, 1:, :]) / 2.0
-    ur_grid[-1, :, :] = ur_grid[-2, :, :] + (
-                ur_grid[-2, :, :] - ur_grid[-3, :, :])
-    ur_grid[:, -1, :] = ur_grid[:, -2, :] + (
-                ur_grid[:, -2, :] - ur_grid[:, -3, :])
+    ur_grid[-1, :, :] = ur_grid[-2, :, :] + (ur_grid[-2, :, :] - ur_grid[-3, :, :])
+    ur_grid[:, -1, :] = ur_grid[:, -2, :] + (ur_grid[:, -2, :] - ur_grid[:, -3, :])
     # Upper left
     ul_grid = np.zeros_like(grid)
     ul_grid[0:-1, 1:, :] = (grid[0:-1, 1:, :] + grid[1:, :-1, :]) / 2.0
-    ul_grid[-1, :, :] = ul_grid[-2, :, :] + (
-                ul_grid[-2, :, :] - ul_grid[-3, :, :])
-    ul_grid[:, 0, :] = ul_grid[:, 1, :] - (
-                ul_grid[:, 2, :] - ul_grid[:, 1, :])
+    ul_grid[-1, :, :] = ul_grid[-2, :, :] + (ul_grid[-2, :, :] - ul_grid[-3, :, :])
+    ul_grid[:, 0, :] = ul_grid[:, 1, :] - (ul_grid[:, 2, :] - ul_grid[:, 1, :])
     # Lower right
     lr_grid = np.zeros_like(grid)
     lr_grid[1:, 0:-1, :] = (grid[1:, 0:-1, :] + grid[:-1, 1:, :]) / 2.0
-    lr_grid[0, :, :] = lr_grid[1, :, :] - (
-                lr_grid[2, :, :] - lr_grid[1, :, :])
-    lr_grid[:, -1, :] = lr_grid[:, -2, :] + (
-                lr_grid[:, -2, :] - lr_grid[:, -3, :])
+    lr_grid[0, :, :] = lr_grid[1, :, :] - (lr_grid[2, :, :] - lr_grid[1, :, :])
+    lr_grid[:, -1, :] = lr_grid[:, -2, :] + (lr_grid[:, -2, :] - lr_grid[:, -3, :])
     # Lower left
     ll_grid = np.zeros_like(grid)
     ll_grid[1:, 1:, :] = (grid[1:, 1:, :] + grid[:-1, :-1, :]) / 2.0
-    ll_grid[0, :, :] = ll_grid[1, :, :] - (
-                ll_grid[2, :, :] - ll_grid[1, :, :])
-    ll_grid[:, 0, :] = ll_grid[:, 1, :] - (
-                ll_grid[:, 2, :] - ll_grid[:, 1, :])
+    ll_grid[0, :, :] = ll_grid[1, :, :] - (ll_grid[2, :, :] - ll_grid[1, :, :])
+    ll_grid[:, 0, :] = ll_grid[:, 1, :] - (ll_grid[:, 2, :] - ll_grid[:, 1, :])
 
     GridCorners = namedtuple(
         "GridCorners", ["ur_grid", "ul_grid", "lr_grid", "ll_grid"]
@@ -261,6 +253,7 @@ def _calc_grid_corners_for_center_location(grid):
     return GridCorners(
         ur_grid=ur_grid, ul_grid=ul_grid, lr_grid=lr_grid, ll_grid=ll_grid
     )
+
 
 def _calc_grid_corners_for_lower_left_location(grid):
     """
@@ -289,24 +282,18 @@ def _calc_grid_corners_for_lower_left_location(grid):
     # Upper right
     ur_grid = np.zeros_like(grid)
     ur_grid[0:-1, 0:-1, :] = grid[1:, 1:, :]
-    ur_grid[-1, :, :] = ur_grid[-2, :, :] + (
-                ur_grid[-2, :, :] - ur_grid[-3, :, :])
-    ur_grid[:, -1, :] = ur_grid[:, -2, :] + (
-                ur_grid[:, -2, :] - ur_grid[:, -3, :])
+    ur_grid[-1, :, :] = ur_grid[-2, :, :] + (ur_grid[-2, :, :] - ur_grid[-3, :, :])
+    ur_grid[:, -1, :] = ur_grid[:, -2, :] + (ur_grid[:, -2, :] - ur_grid[:, -3, :])
     # Upper left
     ul_grid = np.zeros_like(grid)
     ul_grid[0:-1, 0:-1, :] = grid[1:, 0:-1, :]
-    ul_grid[-1, :, :] = ul_grid[-2, :, :] + (
-                ul_grid[-2, :, :] - ul_grid[-3, :, :])
-    ul_grid[:, -1, :] = ul_grid[:, -2, :] + (
-                ul_grid[:, -2, :] - ul_grid[:, -3, :])
+    ul_grid[-1, :, :] = ul_grid[-2, :, :] + (ul_grid[-2, :, :] - ul_grid[-3, :, :])
+    ul_grid[:, -1, :] = ul_grid[:, -2, :] + (ul_grid[:, -2, :] - ul_grid[:, -3, :])
     # Lower right
     lr_grid = np.zeros_like(grid)
     lr_grid[0:-1, 0:-1, :] = grid[0:-1, 1:, :]
-    lr_grid[-1, :, :] = lr_grid[-2, :, :] + (
-                lr_grid[-2, :, :] - lr_grid[-3, :, :])
-    lr_grid[:, -1, :] = lr_grid[:, -2, :] + (
-                lr_grid[:, -2, :] - lr_grid[:, -3, :])
+    lr_grid[-1, :, :] = lr_grid[-2, :, :] + (lr_grid[-2, :, :] - lr_grid[-3, :, :])
+    lr_grid[:, -1, :] = lr_grid[:, -2, :] + (lr_grid[:, -2, :] - lr_grid[:, -3, :])
     # Lower left
     ll_grid = grid.copy()
 
@@ -317,6 +304,7 @@ def _calc_grid_corners_for_lower_left_location(grid):
     return GridCorners(
         ur_grid=ur_grid, ul_grid=ul_grid, lr_grid=lr_grid, ll_grid=ll_grid
     )
+
 
 def get_grid_time_series_at_intersections(grid_data, intersect_weights):
     """Get time series from gird data using sparse intersection weights
@@ -405,6 +393,8 @@ def get_grid_time_series_at_intersections(grid_data, intersect_weights):
         )
 
     return grid_intersect_timeseries
+
+
 """Functions for calculating spatial distance, intersections and finding neighbors"""
 
 import pyproj
@@ -525,4 +515,3 @@ def calc_point_to_point_distances(
             dim_b: (dim_b, x_b[x_b.dims[0]].data),
         },
     )
-

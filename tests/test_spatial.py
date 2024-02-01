@@ -1,15 +1,15 @@
 import unittest
-import pytest
-import numpy as np
 from collections import namedtuple
+
+import numpy as np
+import pytest
 import xarray as xr
-import sparse
+
 import poligrain as plg
 
 
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
-
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
 
         x1_list = [0, 0]
@@ -29,7 +29,7 @@ class TestSparseIntersectWeights(unittest.TestCase):
         )
 
         for x1, y1, x2, y2, cml_id in zip(
-            x1_list, y1_list, x2_list, y2_list, cml_id_list
+            x1_list, y1_list, x2_list, y2_list, cml_id_list, strict=False
         ):
             expected = plg.spatial.grid_intersection.calc_intersect_weights(
                 x1_line=x1,
@@ -322,7 +322,6 @@ class TestGetGridTimeseries(unittest.TestCase):
         np.testing.assert_array_equal(result.cml_id.values, cml_ids)
         assert result.dims == ("time", "cml_id")
 
-
     def test_dataarray_grid_dataarray_weights(self):
         grid_data, intersect_weights, expected = get_grid_intersect_ts_test_data()
 
@@ -350,6 +349,8 @@ class TestGetGridTimeseries(unittest.TestCase):
         np.testing.assert_array_equal(result.time.values, time)
 
         assert result.dims == ("time", "cml_id")
+
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -431,4 +432,3 @@ def test_calc_point_to_point_distances():
     assert distance_matrix.data == pytest.approx(expected, abs=1e-6)
     assert list(distance_matrix.id.data) == ["g1", "g2", "g3"]
     assert list(distance_matrix.id_neighbor.data) == ["g2", "g3"]
-
