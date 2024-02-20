@@ -8,7 +8,7 @@ from matplotlib.collections import LineCollection
 
 
 def plot_lines(
-    cmls: xr.Dataset, linewidth: float = 1, ax: matplotlib.axes.Axes = None
+    cmls: xr.Dataset, linewidth: float = 1, ax: (matplotlib.axes.Axes | None) = None
 ) -> LineCollection:
     """Plot CML paths"""
     if ax is None:
