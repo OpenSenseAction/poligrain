@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from matplotlib.collections import LineCollection
 
 
-def plot_lines(cmls: xr.Dataset, linewidth: float = 1) -> LineCollection:
+def plot_lines(
+    cmls: xr.Dataset, linewidth: float = 1, ax: matplotlib.axes.Axes = None
+) -> LineCollection:
     """Plot CML paths"""
-    _, ax = plt.subplots()
+    if ax is None:
+        _, ax = plt.subplots()
 
     x0 = np.atleast_1d(cmls.site_0_lon.values)
     y0 = np.atleast_1d(cmls.site_0_lat.values)
