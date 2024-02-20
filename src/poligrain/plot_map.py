@@ -6,12 +6,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize
+from matplotlib.colors import Colormap, Normalize
 
 
 def plot_lines(
     cmls: (xr.Dataset | xr.DataArray),
+    vmin: (float | None) = None,
+    vmax: (float | None) = None,
+    cmap: (str | Colormap) = "turbo",
     linewidth: float = 1,
+    pad_width: float = 1,
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> LineCollection:
     """Plot CML paths"""
@@ -38,14 +42,15 @@ def plot_lines(
         )
 
     else:
-        vmax = np.nanmax(data)
-        vmin = np.nanmin(data)
+        if vmax is None:
+            vmax = np.nanmax(data)
+        if vmin is None:
+            vmin = np.nanmin(data)
         norm = Normalize(vmin=vmin, vmax=vmax)
-        pad_width = 1
         lines = LineCollection(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
             norm=norm,
-            cmap="turbo",
+            cmap=cmap,
             linewidth=linewidth,
             linestyles="solid",
             capstyle="round",
