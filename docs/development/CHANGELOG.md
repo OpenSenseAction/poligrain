@@ -8,6 +8,9 @@
 
 ### Maintenance
 
+- [PR 23](https://github.com/OpenSenseAction/poligrain/pull/23) Make syntax
+  highliting work on readthedocs [@cchwala](https://github.com/cchwala))
+
 ### Breaking changes
 
 ## v0.0.3
