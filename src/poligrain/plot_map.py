@@ -19,31 +19,39 @@ def plot_lines(
     pad_width: float = 1,
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> LineCollection:
-    """_summary_
+    """Plot paths of line-based sensors like CMLs.
+
+    If a `xarray.Dataset` is passed, the paths are plotted using the defined
+    `line_color`. If a `xarray.DataArray` is passed its content is used to
+    color the lines based on `cmap`, `vmin` and `vmax`. The `xarray.DataArray`
+    has to be 1D with one entry per line.
 
     Parameters
     ----------
     cmls : xr.Dataset  |  xr.DataArray
-        _description_
+        The line-based sensors data with coordinates defined according to the
+        OPENSENSE data format conventions.
     vmin : float  |  None, optional
-        _description_, by default None
+        Minimum value of colormap, by default None.
     vmax : float  |  None, optional
-        _description_, by default None
+        Maximum value of colormap, by default None.
     cmap : str  |  Colormap, optional
-        _description_, by default "turbo"
+        A matplotlib colormap either as string or a `Colormap` object, by default "turbo".
     line_color : str, optional
-        bla, by default "k"
+        The color of the lines when plotting based on a `xarray.Dataset`, by default "k".
     line_width : float, optional
-        _description_, by default 1
+        The width of the lines. In case of coloring lines with a `cmap`, this is the
+        width of the colored line, which is extend by `pad_width` with a black outline.
+        By default 1.
     pad_width : float, optional
-        _description_, by default 1
+        The width of the outline in black around the lines colored via a `cmap`, by default 1.
     ax : matplotlib.axes.Axes  |  None, optional
-        _description_, by default None
+        A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
+        will be created. By default None.
 
     Returns
     -------
     LineCollection
-        _description_
 
     """
     if ax is None:
