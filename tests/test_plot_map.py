@@ -13,7 +13,7 @@ import poligrain as plg
 
 def test_plot_lines_dataset():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    lines = plg.plot_map.plot_lines(ds_cmls)
+    lines = plg.plot_map.plot_lines(ds_cmls, line_width=2, line_color="r")
     numpy.testing.assert_almost_equal(
         lines.get_paths()[19].vertices,
         np.array([[11.93019, 57.68762], [11.93377, 57.67562]]),

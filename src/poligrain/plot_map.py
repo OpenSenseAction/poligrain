@@ -14,11 +14,38 @@ def plot_lines(
     vmin: (float | None) = None,
     vmax: (float | None) = None,
     cmap: (str | Colormap) = "turbo",
-    linewidth: float = 1,
+    line_color: str = "k",
+    line_width: float = 1,
     pad_width: float = 1,
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> LineCollection:
-    """Plot CML paths"""
+    """_summary_
+
+    Parameters
+    ----------
+    cmls : xr.Dataset  |  xr.DataArray
+        _description_
+    vmin : float  |  None, optional
+        _description_, by default None
+    vmax : float  |  None, optional
+        _description_, by default None
+    cmap : str  |  Colormap, optional
+        _description_, by default "turbo"
+    line_color : str, optional
+        bla, by default "k"
+    line_width : float, optional
+        _description_, by default 1
+    pad_width : float, optional
+        _description_, by default 1
+    ax : matplotlib.axes.Axes  |  None, optional
+        _description_, by default None
+
+    Returns
+    -------
+    LineCollection
+        _description_
+
+    """
     if ax is None:
         _, ax = plt.subplots()
 
@@ -38,7 +65,8 @@ def plot_lines(
     if data is None:
         lines = LineCollection(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
-            linewidth=linewidth,
+            linewidth=line_width,
+            color=line_color,
         )
 
     else:
@@ -51,12 +79,12 @@ def plot_lines(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
             norm=norm,
             cmap=cmap,
-            linewidth=linewidth,
+            linewidth=line_width,
             linestyles="solid",
             capstyle="round",
             path_effects=[
                 pe.Stroke(
-                    linewidth=linewidth + pad_width, foreground="k", capstyle="round"
+                    linewidth=line_width + pad_width, foreground="k", capstyle="round"
                 ),
                 pe.Normal(),
             ],
@@ -64,6 +92,7 @@ def plot_lines(
         lines.set_array(data)
 
     ax.add_collection(lines)
+    # This is required because x and y bounds are not adjusted after adding the `lines`.
     ax.autoscale()
 
     return lines
