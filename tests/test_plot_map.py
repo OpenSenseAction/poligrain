@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import tempfile
+
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.testing
@@ -29,7 +31,8 @@ def test_plot_lines_with_dataarray_colored_lines():
     # plot_lines only has an effect if the plot is created, e.g. in a notebook
     # or via plt.show(), but we do not want plt.show() because windows have to
     # be closed manually
-    plt.savefig("foo.png")
+    with tempfile.NamedTemporaryFile(delete=True) as f:
+        plt.savefig(f)
     result = lines.get_colors()[3:5]
     expected = np.array(
         [
