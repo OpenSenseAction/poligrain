@@ -4,6 +4,10 @@
 
 ### New features
 
+- [PR 24](https://github.com/OpenSenseAction/poligrain/pull/24) Allow to color
+  CML paths when plotting on map using a cmap
+  [@cchwala](https://github.com/cchwala))
+
 ### Bug fixes
 
 ### Maintenance
