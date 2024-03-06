@@ -108,6 +108,8 @@ def plot_lines(
 
 @xr.register_dataset_accessor("plg")
 class PoligrainDatasetAccessor:
+    """Accessor for functionality of poligrain"""
+
     def __init__(self, dataset: xr.Dataset):
         self._dataset = dataset
 
@@ -150,6 +152,8 @@ class PoligrainDatasetAccessor:
 
 @xr.register_dataarray_accessor("plg")
 class PoligrainDataArrayAccessor:
+    """Accessor for functionality of poligrain"""
+
     def __init__(self, data_array: xr.DataArray):
         self._data_array = data_array
 
