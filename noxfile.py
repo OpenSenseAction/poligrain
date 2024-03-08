@@ -13,9 +13,7 @@ nox.options.sessions = ["lint", "pylint", "tests"]
 
 @nox.session
 def lint(session: nox.Session) -> None:
-    """
-    Run the linter.
-    """
+    """Run the linter."""
     session.install("pre-commit", "mypy", "xarray")
     session.run(
         "pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs
@@ -25,9 +23,7 @@ def lint(session: nox.Session) -> None:
 
 @nox.session
 def pylint(session: nox.Session) -> None:
-    """
-    Run PyLint.
-    """
+    """Run PyLint."""
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
     session.install(".", "pylint")
@@ -36,9 +32,7 @@ def pylint(session: nox.Session) -> None:
 
 @nox.session(reuse_venv=True)
 def tests(session: nox.Session) -> None:
-    """
-    Run the unit and regular tests.
-    """
+    """Run the unit and regular tests."""
     session.install(".[test]")
     # session.run("python", "-m", "pip", "freeze")
     session.run("pytest", *session.posargs)
@@ -46,10 +40,7 @@ def tests(session: nox.Session) -> None:
 
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
-    """
-    Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links.
-    """
-
+    """Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--serve", action="store_true", help="Serve after building")
     parser.add_argument(
@@ -89,10 +80,7 @@ def docs(session: nox.Session) -> None:
 
 @nox.session
 def build_api_docs(session: nox.Session) -> None:
-    """
-    Build (regenerate) API docs.
-    """
-
+    """Build (regenerate) API docs."""
     session.install("sphinx")
     session.chdir("docs")
     session.run(
@@ -108,10 +96,7 @@ def build_api_docs(session: nox.Session) -> None:
 
 @nox.session
 def build(session: nox.Session) -> None:
-    """
-    Build an SDist and wheel.
-    """
-
+    """Build an SDist and wheel."""
     build_path = DIR.joinpath("build")
     if build_path.exists():
         shutil.rmtree(build_path)

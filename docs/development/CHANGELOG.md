@@ -5,18 +5,20 @@
 ### New features
 
 - [PR 24](https://github.com/OpenSenseAction/poligrain/pull/24) Allow to color
-  CML paths when plotting on map using a cmap
-  [@cchwala](https://github.com/cchwala)
+  CML paths when plotting on map using a cmap (by
+  [@cchwala](https://github.com/cchwala))
 
 ### Bug fixes
 
 ### Maintenance
 
 - [PR 23](https://github.com/OpenSenseAction/poligrain/pull/23) Make syntax
-  highliting work on readthedocs [@cchwala](https://github.com/cchwala)
+  highliting work on readthedocs (by [@cchwala](https://github.com/cchwala))
 - [PR 31](https://github.com/OpenSenseAction/poligrain/pull/31) Fix pandoc
-  dependencies for local build of documentation
-  [@cchwala](https://github.com/cchwala)
+  dependencies for local build of documentation (by
+  [@cchwala](https://github.com/cchwala))
+- [PR 33](https://github.com/OpenSenseAction/poligrain/pull/33) Add numpy
+  docstring linting rules (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 
@@ -39,7 +41,7 @@
   because it does not work as expected for now due to problems with envs in
   pre-commit and CI (by [@cchwala](https://github.com/cchwala))
 - [PR 7](https://github.com/OpenSenseAction/poligrain/pull/7) Add testing and
-  linting of notebooks ([@cchwala](https://github.com/cchwala))
+  linting of notebooks (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 

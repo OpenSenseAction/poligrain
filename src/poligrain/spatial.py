@@ -1,4 +1,4 @@
-"""Functions for calculating spatial distance, intersections and finding neighbors"""
+"""Functions for calculating spatial distance, intersections and finding neighbors."""
 
 import pyproj
 import scipy
@@ -8,7 +8,7 @@ import xarray as xr
 def get_point_xy(
     ds_points: xr.DataArray | xr.Dataset,
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Get x and y coordinate data for point Dataset or DataArray
+    """Get x and y coordinate data for point Dataset or DataArray.
 
     Use this function instead of just getting the x and y variables from the
     xarray.Dataset or DataArray, because it will do some additional checks.
@@ -38,15 +38,15 @@ def project_point_coordinates(
     target_projection: str,
     source_projection: str = "EPSG:4326",
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Project coordinates x and y of point data
+    """Project coordinates x and y of point data.
 
     Note that `x` and `y` have to be `xarray.DataArray` so that we can return
     the projected coordinates also as `xarray.DataArray` with the correct
     `coord` data so that they can easily and safely added to an existing
     `xarray.Dataset`, e.g. like the following code:
 
-    >>> ds_gauges.coords["x"], ds_gauges.coords["y"] = plg.spatial.project_point_coordinates(
-    ...     ds_gauges.lon, ds_gauges.lat, target_projection="EPSG:25832",
+    >>> ds.coords["x"], ds.coords["y"] = plg.spatial.project_point_coordinates(
+    ...     ds.lon, ds.lat, target_projection="EPSG:25832",
     ...     )
 
     Parameters
@@ -95,11 +95,11 @@ def calc_point_to_point_distances(
     -------
     xr.DataArray
         Distance matrix in meters, assuming `x` and `y` coordinate variables in the
-        supplied data are projected to something like UTM. The dimensions of the matrix
-        are the `id` dimensions of the two input datasets. The `id` values are also
-        provided along each dimension. The second dimension name is appended with `_neighbor`.
+        supplied data are projected to something like UTM. The dimensions of the
+        matrix are the `id` dimensions of the two input datasets. The `id` values
+        are also provided along each dimension. The second dimension name is appended
+        with `_neighbor`.
     """
-
     x_a, y_a = get_point_xy(ds_points_a)
     x_b, y_b = get_point_xy(ds_points_b)
 
