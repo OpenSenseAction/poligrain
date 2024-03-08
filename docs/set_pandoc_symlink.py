@@ -1,6 +1,6 @@
 """
-This sets a symbolic link from the `bin` directory of the `poetry` venv to the
-pandoc binary which was installed via pip and the package `pypandoc-binary`.
+This sets a symbolic link from the `bin` directory of the nox session's env to the
+pandoc binary which was installed via pip install of the package `pypandoc-binary`.
 """
 
 import pathlib
