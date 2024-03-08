@@ -11,12 +11,12 @@ from matplotlib.colors import Colormap, Normalize
 
 
 def scatter_lines(
-    x0: np.ndarray | npt.ArrayLike | float,
-    x1: np.ndarray | npt.ArrayLike | float,
-    y1: np.ndarray | npt.ArrayLike | float,
-    y0: np.ndarray | npt.ArrayLike | float,
+    x0: npt.ArrayLike | float,
+    y0: npt.ArrayLike | float,
+    x1: npt.ArrayLike | float,
+    y1: npt.ArrayLike | float,
     s: float = 3,
-    c: str | np.array = "C0",
+    c: (str | npt.ArrayLike) = "C0",
     line_style: str = "-",
     pad_width: float = 1,
     cap_style: str = "round",
