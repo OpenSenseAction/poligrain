@@ -6,14 +6,17 @@
 
 - [PR 24](https://github.com/OpenSenseAction/poligrain/pull/24) Allow to color
   CML paths when plotting on map using a cmap
-  [@cchwala](https://github.com/cchwala))
+  [@cchwala](https://github.com/cchwala)
 
 ### Bug fixes
 
 ### Maintenance
 
 - [PR 23](https://github.com/OpenSenseAction/poligrain/pull/23) Make syntax
-  highliting work on readthedocs [@cchwala](https://github.com/cchwala))
+  highliting work on readthedocs [@cchwala](https://github.com/cchwala)
+- [PR 31](https://github.com/OpenSenseAction/poligrain/pull/31) Fix pandoc
+  dependencies for local build of documentation
+  [@cchwala](https://github.com/cchwala)
 
 ### Breaking changes
 

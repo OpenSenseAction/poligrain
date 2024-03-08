@@ -64,6 +64,7 @@ def docs(session: nox.Session) -> None:
 
     session.install("-e.[docs]", *extra_installs)
     session.chdir("docs")
+    session.run("python", "set_pandoc_symlink.py")
 
     if args.builder == "linkcheck":
         session.run(
