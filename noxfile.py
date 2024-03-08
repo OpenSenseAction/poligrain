@@ -44,7 +44,7 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=False)
 def docs(session: nox.Session) -> None:
     """
     Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links.
@@ -64,6 +64,7 @@ def docs(session: nox.Session) -> None:
 
     session.install("-e.[docs]", *extra_installs)
     session.chdir("docs")
+    session.run("python", "set_pandoc_symlink.py")
 
     if args.builder == "linkcheck":
         session.run(
