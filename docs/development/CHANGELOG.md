@@ -17,6 +17,8 @@
 - [PR 31](https://github.com/OpenSenseAction/poligrain/pull/31) Fix pandoc
   dependencies for local build of documentation
   [@cchwala](https://github.com/cchwala)
+- [PR 33](https://github.com/OpenSenseAction/poligrain/pull/33) Add numpy
+  docstring linting rules [@cchwala](https://github.com/cchwala)
 
 ### Breaking changes
 
