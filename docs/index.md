@@ -10,7 +10,6 @@
 
 installation.md
 data_model.md
-API <api/poligrain>
 ```
 
 ```{toctree}
