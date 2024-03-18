@@ -16,7 +16,11 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
     "nbsphinx",
+    "autoapi.extension",
 ]
+
+autoapi_dirs = ["../src"]
+autoapi_root = ["api"]
 
 source_suffix = [".rst", ".md"]
 exclude_patterns = [
