@@ -19,6 +19,8 @@
   [@cchwala](https://github.com/cchwala))
 - [PR 33](https://github.com/OpenSenseAction/poligrain/pull/33) Add numpy
   docstring linting rules (by [@cchwala](https://github.com/cchwala))
+- [PR 36](https://github.com/OpenSenseAction/poligrain/pull/36) Add API to docs
+  (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 
