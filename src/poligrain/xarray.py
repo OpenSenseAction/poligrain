@@ -56,7 +56,7 @@ class PoligrainDataArrayAccessor:
         cmap: (str | Colormap) = "turbo",
         line_color: str = "k",
         line_width: float = 1,
-        pad_width: float = 1,
+        pad_width: float = 0,
         pad_color: str = "k",
         line_style: str = "-",
         cap_style: str = "round",
