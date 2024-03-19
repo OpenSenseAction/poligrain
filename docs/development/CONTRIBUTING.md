@@ -54,7 +54,7 @@ These are our recommended steps:
    `mamba install poetry nox pre-commit`.
 1. Run `poetry install` (this does all configurations based on pyproject.toml)
 1. To make sure that everything is working correctly you can now perform the
-   following linting, testing and building of doc:
+   following linting, testing of the code and building of the docs:
    - `nox -s lint # Lint only`
    - `nox -s tests # Python tests` # You have to run test
    - `nox -s docs -- --serve` # Build and serve the docs so that you can check
@@ -72,22 +72,23 @@ installed and activated. We provide code examples as notebooks that are then
 added to the docs. Hence, you need Jupyterlab to work with notebooks. The
 notebooks have to run in the `poetry` environment where `poligrain` is available
 as development install, so that you always import the current state of the
-codebase.
+`poligrain` codebase.
 
 These are the steps to get a suitable setup:
 
-1. Activate the pre-commit hook with `pre-commit install` (this is based on
+1. Activate the pre-commit hooks with `pre-commit install` (this is based on
    config in pyproject.toml and .pre-commit-config.yaml) so that you can run
-   `pre-commit run -a`` to check if all files pass the style checks prior to a git commit. The `pre-commit`
-   hook will be run for all files that are staged for commit before a commit is
-   accepted. Many checks do automatic updates, e.g. of formatting. You just have
-   to stage these automatically applied changes to your commit and try to commit
-   again. Some checks will require manual adjustment, though.
+   `pre-commit run -a` to check if all files pass the style checks prior to a
+   git commit. The `pre-commit` hook will be run for all files that are staged
+   for commit before a commit is accepted. Many checks do automatic updates,
+   e.g. of formatting. You just have to stage these automatically applied
+   changes to your commit and try to commit again. Some checks will require
+   manual adjustment, though.
 1. To run Jupyterlab inside the `poetry` environment run `poetry shell`, which
    opens a shell inside the `poetry` env, which might be indicated in your
    terminal prompt by e.g. `(poligrain-py3.10)`. Then run `jupyter-lab` and go
    to the browser where it is viewed. If you open a new notebook there, or if
-   you run one of the existing ones, you should be able to do
+   you run one of the existing notebooks, you should be able to do
    `import poligrain`.
 1. You can now change the code under `src/poligrain` which is then directly
    available in the notebook via `import poligrain`. Since imports in Python are
@@ -104,10 +105,10 @@ These are the steps to get a suitable setup:
    `pre-commit` checks, which are run automatically, see info about `pre-commit`
    above. Note that if you need to commit quickly, e.g. to just have things
    document, you can use `git commit --no-verify`. But this will results in
-   errors during the linting of the CI run.
+   errors during the linting of the CI run on github.
 1. It is recommended that you create a new branch when working on a new feature
-   or a fix, because it might take longer than expected and you might want to go
-   back to your working `main` branch.
+   or a fix. The reason is that it might take longer than expected to finish
+   your feature and you might want to go back to your working `main` branch.
 1. You should also regularly push your commits to your branch so that others are
    aware of your changes. If you do `git push` while you are on your newly
    generated feature branch, git will give you an error message that is does not
@@ -116,7 +117,8 @@ These are the steps to get a suitable setup:
    now already recommend that you generate a pull-request (PR), see details
    below, which is generally recommended unless you do not intent to ever merge
    your changes into the parent repository. If your code is in an early stage,
-   you can just as "[WIP]" to your PR title.
+   you can just add "[WIP]" to your PR title to indicate that it is not yet
+   meant to be merged.
 
 ### Contributing via a pull request
 
@@ -136,14 +138,14 @@ the parent repo.
 1. To sync to the newest change in the parent epo, go to your fork on github and
    click the `sync fork` button, see the github docs
    [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork).
-1. Then you have get your updated `main` branch from your fork to your local
+1. Then you have to get your updated `main` branch from your fork to your local
    machine. This is done via `git fetch origin` (assuming `origin` is referring
    to your fork, which is the default if you followed this step-by-step guide)
    or just `git fetch`. Then switch to your `main` branch and either do a merge
-   or a rebase on `origin/main`. You can also stay on your feature branch and do
-   the same merge or rebase. If you are not 100% sure that a rebase is a good
-   idea, please use `git merge origin/main`. If you are sure that a rebase is a
-   good idea, do `git rebase origin/main`.
+   or a rebase on `origin/main` by doing `git merge origin/main`. You can also
+   stay on your feature branch and do the same merge or rebase. If you are not
+   100% sure that a rebase is a good idea, please use `git merge origin/main`.
+   If you are sure that a rebase is a good idea, do `git rebase origin/main`.
 1. Create a pull-request on github, which is typically shown as a recommendation
    when going to the `poligrain` repo or it is directly recommended when doing a
    `git push` of your feature branch for the first time.
@@ -162,8 +164,8 @@ the parent repo.
 
 Please be aware that the maintainers might request several updates of your code
 before it can be merged. This might seem cumbersome, but is is important to have
-good code quality when merging the PR, because very often there is not time
-later to think through and fix merged code.
+good code quality when merging the PR, because very often there is not time (or
+incentive) later to think through and fix merged code.
 
 ### Writing tests
 
@@ -178,13 +180,15 @@ writing tests.
    unit, i.e. individual functions.
 1. A test should be named `test_foo_condition` e.g. for function `foo` which is
    called with a specific condition, e.g. with a specific type of keyword
-   argument. An example is `test_plot_lines_with_dataarray_colored_lines()`.
+   argument. An example is `test_plot_lines_with_dataarray_colored_lines()` for
+   the function `plot_lines()`.
 1. For your test you will need the expected output. If you do not know
    beforehand what the expected output is, e.g. because your implemented method
    does some complex processing of a long time series, you should apply your
-   function in a notebook and then check in detail the output. If you are sure
-   that this is the expected output, use it as expected output in the test.
-1. Please note that you have to cover all if and else statements in your
+   function in a notebook and then check in detail the output. If you are 100%
+   sure that the output is correct, use it as expected output in the test. See
+   existing test for how to check expected output vs. actual function output.
+1. Please note that you have to cover all if- and else-statements in your
    function, also those that just raise an error. Look at existing test to see
    how this is done.
 1. You can also check test coverage locally by running `pytest --cov=poligrain`,
