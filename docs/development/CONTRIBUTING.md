@@ -46,10 +46,11 @@ Inc, everybody can upload and provide packages.
 
 These are our recommended steps:
 
-1. Make sure that your `conda` environment is on Python >=3.10. If this is the
-   case you can do the next step in you base environment. If not you, have to
-   add a new environment with `mamba create -n poetry_env python=3.10` and then
-   activate this env with `conda activate poetry_env`.
+1. Make sure that your `conda` environment is on Python 3.10 or 3.11 (3.12 is
+   not yet supported). If this is the case you can do the next step in you base
+   environment. If not you, have to add a new environment with
+   `mamba create -n poetry_env python=3.10` and then activate this env with
+   `conda activate poetry_env`.
 1. In your `conda` environment, install `poetry`, `nox` and `pre-commit` via
    `mamba install poetry nox pre-commit`.
 1. Run `poetry install` (this does all configurations based on pyproject.toml)
