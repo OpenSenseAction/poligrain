@@ -51,7 +51,8 @@ def test_scatter_lines_with_different_args():
     )
 
     # Testing different padding
-    # ...no idea how to do that....
+    lines = plg.plot_map.scatter_lines(x0, y0, x1, y1, cap_style="butt", pad_width=1)
+    # ...no idea how to do test now if the correct padding was applied...
 
     # test passing ax
     fig, ax = plt.subplots(figsize=(9, 3))
