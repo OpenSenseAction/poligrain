@@ -21,6 +21,7 @@ def scatter_lines(
     c: (str | npt.ArrayLike) = "C0",
     line_style: str = "-",
     pad_width: float = 1,
+    pad_color: str = "k",
     cap_style: str = "round",
     vmin: float | None = None,
     vmax: float | None = None,
@@ -47,6 +48,8 @@ def scatter_lines(
         _description_, by default "-"
     pad_width : float, optional
         _description_, by default 1
+    pad_color: str, optional
+        _description_, by default "k"
     cap_style : str, optional
         _description_, by default "round"
     vmin : float | None, optional
@@ -78,7 +81,14 @@ def scatter_lines(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
             linewidth=s,
             linestyles=line_style,
+            capstyle=cap_style,
             color=c,
+            path_effects=[
+                pe.Stroke(
+                    linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
+                ),
+                pe.Normal(),
+            ],
         )
 
     else:
@@ -95,7 +105,9 @@ def scatter_lines(
             linestyles=line_style,
             capstyle=cap_style,
             path_effects=[
-                pe.Stroke(linewidth=s + pad_width, foreground="k", capstyle=cap_style),
+                pe.Stroke(
+                    linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
+                ),
                 pe.Normal(),
             ],
         )
