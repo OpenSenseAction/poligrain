@@ -33,11 +33,16 @@
 **Preface**: There are different ways to set up all dependencies and tools. We
 recommend to start from a `conda` environment where you, as a user, can install
 new packages without admin rights. In the `conda` environment we only need some
-"tools" to handle our dev workflow, but these tools are not part of our actual
-package `poligrain`. On top of the `conda` environment we need a `poetry`
-environment in which all package dependencies are managed and synchronized with
-the `pyproject.toml` file which is later used to build the package that can be
-uploaded to pypi.org.
+"tools" to handle our dev workflow (in our case these are `poetry`, `pre-commit`
+and `nox`), but these tools are not part of our actual package `poligrain`. On
+top of the `conda` environment we need a `poetry` environment in which all
+package dependencies are managed and synchronized with the `pyproject.toml`
+file, which is later used to build the package that can be uploaded to pypi.org.
+
+We recommend to use `miniforge` as basis for working with `conda` because it
+includes the fast dependency solver `mamba` and is based on packages from the
+`conda-forge` channel, where, in contrast to the "default channel" of Anaconda
+Inc, everybody can upload and provide packages.
 
 These are our recommended steps:
 
