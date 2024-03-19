@@ -17,32 +17,17 @@ class PoligrainDatasetAccessor:
 
     def plot_cmls(
         self,
-        line_color: str = "k",
+        line_color: str = "C0",
         line_width: float = 1,
-        pad_width: float = 1,
+        pad_width: float = 0,
+        pad_color: str = "k",
+        line_style: str = "-",
+        cap_style: str = "round",
         ax: (matplotlib.axes.Axes | None) = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.
 
-        Parameters
-        ----------
-        line_color : str, optional
-            The color of the lines when plotting based on a `xarray.Dataset`,
-            by default "k".
-        line_width : float, optional
-            The width of the lines. In case of coloring lines with a `cmap`, this is the
-            width of the colored line, which is extend by `pad_width` with
-            a black outline. By default 1.
-        pad_width : float, optional
-            The width of the outline in black around the lines colored via a `cmap`,
-            by default 1.
-        ax : matplotlib.axes.Axes  |  None, optional
-            A `Axes` object on which to plot. If not supplied, a new figure with
-            an `Axes` will be created. By default None.
-
-        Returns
-        -------
-        LineCollection
+        See `plot_map.plot_lines` for description of the parameters
 
         """
         return plot_map.plot_lines(
@@ -50,6 +35,9 @@ class PoligrainDatasetAccessor:
             line_color=line_color,
             line_width=line_width,
             pad_width=pad_width,
+            pad_color=pad_color,
+            line_style=line_style,
+            cap_style=cap_style,
             ax=ax,
         )
 
@@ -69,36 +57,14 @@ class PoligrainDataArrayAccessor:
         line_color: str = "k",
         line_width: float = 1,
         pad_width: float = 1,
+        pad_color: str = "k",
+        line_style: str = "-",
+        cap_style: str = "round",
         ax: (matplotlib.axes.Axes | None) = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.
 
-        Parameters
-        ----------
-        vmin : float  |  None, optional
-            Minimum value of colormap, by default None.
-        vmax : float  |  None, optional
-            Maximum value of colormap, by default None.
-        cmap : str  |  Colormap, optional
-            A matplotlib colormap either as string or a `Colormap` object,
-            by default "turbo".
-        line_color : str, optional
-            The color of the lines when plotting based on a `xarray.Dataset`,
-            by default "k".
-        line_width : float, optional
-            The width of the lines. In case of coloring lines with a `cmap`, this is the
-            width of the colored line, which is extend by `pad_width` with
-            a black outline. By default 1.
-        pad_width : float, optional
-            The width of the outline in black around the lines colored via a `cmap`,
-            by default 1.
-        ax : matplotlib.axes.Axes  |  None, optional
-            A `Axes` object on which to plot. If not supplied, a new figure with
-            an `Axes` will be created. By default None.
-
-        Returns
-        -------
-        LineCollection
+        See `plot_map.plot_lines` for description of the parameters
 
         """
         return plot_map.plot_lines(
@@ -109,5 +75,8 @@ class PoligrainDataArrayAccessor:
             line_color=line_color,
             line_width=line_width,
             pad_width=pad_width,
+            pad_color=pad_color,
+            line_style=line_style,
+            cap_style=cap_style,
             ax=ax,
         )
