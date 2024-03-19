@@ -27,6 +27,42 @@ def scatter_lines(
     cmap: (str | Colormap) = "viridis",
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> LineCollection:
+    """Plot lines as if you would use plt.scatter for points.
+
+    Parameters
+    ----------
+    x0 : npt.ArrayLike | float
+        _description_
+    y0 : npt.ArrayLike | float
+        _description_
+    x1 : npt.ArrayLike | float
+        _description_
+    y1 : npt.ArrayLike | float
+        _description_
+    s : float, optional
+        _description_, by default 3
+    c : str  |  npt.ArrayLike, optional
+        _description_, by default "C0"
+    line_style : str, optional
+        _description_, by default "-"
+    pad_width : float, optional
+        _description_, by default 1
+    cap_style : str, optional
+        _description_, by default "round"
+    vmin : float | None, optional
+        _description_, by default None
+    vmax : float | None, optional
+        _description_, by default None
+    cmap : str  |  Colormap, optional
+        _description_, by default "viridis"
+    ax : matplotlib.axes.Axes  |  None, optional
+        _description_, by default None
+
+    Returns
+    -------
+    LineCollection
+        _description_
+    """
     if ax is None:
         _, ax = plt.subplots()
 
@@ -127,8 +163,9 @@ def plot_lines(
         color_data = cmls.data
         if len(color_data.shape) != 1:
             msg = (
-                f"If you pass an xarray.DataArray it has to be 1D, with the length of the "
-                f"cml_id dimension. You passed in something with shape {color_data.shape}"
+                f"If you pass an xarray.DataArray it has to be 1D, with the length of "
+                f"the cml_id dimension. You passed in something with shape "
+                f"{color_data.shape}"
             )
             raise ValueError(msg)
     except AttributeError:
