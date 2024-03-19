@@ -20,7 +20,7 @@ def scatter_lines(
     s: float = 3,
     c: (str | npt.ArrayLike) = "C0",
     line_style: str = "-",
-    pad_width: float = 1,
+    pad_width: float = 0,
     pad_color: str = "k",
     cap_style: str = "round",
     vmin: float | None = None,
@@ -33,33 +33,39 @@ def scatter_lines(
     Parameters
     ----------
     x0 : npt.ArrayLike | float
-        _description_
+        x coordinate of start point of line
     y0 : npt.ArrayLike | float
-        _description_
+        y coordinate of start point of line
     x1 : npt.ArrayLike | float
-        _description_
+        x coordinate of end point of line
     y1 : npt.ArrayLike | float
-        _description_
+        y coordinate of end point of line
     s : float, optional
-        _description_, by default 3
+        The width of the lines. In case of coloring lines with a `cmap`, this is the
+        width of the colored line, which is extend by `pad_width` with colored outline
+        using `pad_color`. By default 1.
     c : str  |  npt.ArrayLike, optional
-        _description_, by default "C0"
+        The color of the lines. If something array-like is passe, this data is used
+        to color the lines based on the `cmap`, `vmin` and `vmax`. By default "C0".
     line_style : str, optional
-        _description_, by default "-"
+        Line style as used by matplotlib, default is "-".
     pad_width : float, optional
-        _description_, by default 1
+        The width of the outline, i.e. edge width, around the lines, by default 0.
     pad_color: str, optional
-        _description_, by default "k"
-    cap_style : str, optional
-        _description_, by default "round"
-    vmin : float | None, optional
-        _description_, by default None
-    vmax : float | None, optional
-        _description_, by default None
+        Color of the padding, i.e. the edge color of the lines. Default is "k".
+    cap_style: str, optional
+        Whether to have "round" or rectangular ("butt") ends of the lines.
+        Default is "round".
+    vmin : float  |  None, optional
+        Minimum value of colormap, by default None.
+    vmax : float  |  None, optional
+        Maximum value of colormap, by default None.
     cmap : str  |  Colormap, optional
-        _description_, by default "viridis"
+        A matplotlib colormap either as string or a `Colormap` object,
+        by default "turbo".
     ax : matplotlib.axes.Axes  |  None, optional
-        _description_, by default None
+        A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
+        will be created. By default None.
 
     Returns
     -------
@@ -76,6 +82,16 @@ def scatter_lines(
 
     data = None if isinstance(c, str) else c
 
+    if pad_width == 0:
+        path_effects = None
+    else:
+        path_effects = [
+            pe.Stroke(
+                linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
+            ),
+            pe.Normal(),
+        ]
+
     if data is None:
         lines = LineCollection(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
@@ -83,12 +99,7 @@ def scatter_lines(
             linestyles=line_style,
             capstyle=cap_style,
             color=c,
-            path_effects=[
-                pe.Stroke(
-                    linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
-                ),
-                pe.Normal(),
-            ],
+            path_effects=path_effects,
         )
 
     else:
@@ -104,12 +115,7 @@ def scatter_lines(
             linewidth=s,
             linestyles=line_style,
             capstyle=cap_style,
-            path_effects=[
-                pe.Stroke(
-                    linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
-                ),
-                pe.Normal(),
-            ],
+            path_effects=path_effects,
         )
         lines.set_array(data)
 
@@ -125,9 +131,12 @@ def plot_lines(
     vmin: (float | None) = None,
     vmax: (float | None) = None,
     cmap: (str | Colormap) = "turbo",
-    line_color: str = "k",
+    line_color: str = "C0",
     line_width: float = 1,
-    pad_width: float = 1,
+    pad_width: float = 0,
+    pad_color: str = "k",
+    line_style: str = "-",
+    cap_style: str = "round",
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> LineCollection:
     """Plot paths of line-based sensors like CMLs.
@@ -157,8 +166,14 @@ def plot_lines(
         width of the colored line, which is extend by `pad_width` with a black outline.
         By default 1.
     pad_width : float, optional
-        The width of the outline in black around the lines colored via a `cmap`,
-        by default 1.
+        The width of the outline, i.e. edge width, around the lines, by default 0.
+    pad_color: str, optional
+        Color of the padding, i.e. the edge color of the lines. Default is "k".
+    line_style : str, optional
+        Line style as used by matplotlib, default is "-".
+    cap_style: str, optional
+        Whether to have "round" or rectangular ("butt") ends of the lines.
+        Default is "round".
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
@@ -191,7 +206,9 @@ def plot_lines(
         s=line_width,
         c=color_data,
         pad_width=pad_width,
-        line_style="-",
+        pad_color=pad_color,
+        cap_style=cap_style,
+        line_style=line_style,
         ax=ax,
         vmin=vmin,
         vmax=vmax,
