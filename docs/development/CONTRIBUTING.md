@@ -51,11 +51,13 @@ These are our recommended steps:
 1. To make sure that everything is working correctly you can now perform the
    following linting, testing and building of doc:
    - `nox -s lint # Lint only`
-   - `nox -s tests # Python tests`
+   - `nox -s tests # Python tests` # You have to run test
    - `nox -s docs -- --serve` # Build and serve the docs so that you can check
-     them locally in your browser
+     them locally in your browser (this is handy to debug problems with the
+     docs)
    - `nox -s build` # Make an SDist and wheel, which is the same package that
-     would be uploaded to PyPi
+     would be uploaded to PyPi (this is not required for you to do, but it
+     should work)
 
 ### Write code and commit the changes
 
@@ -185,6 +187,16 @@ writing tests.
    your changes and wait till the CI run has completed. Be aware, that resources
    are wasted if you push a lot of small changes which all do not results in
    fixing a problem. Try to fix problems locally first.
+
+### Know problems
+
+As with all software-related things, there can be problems even though a
+step-by-step guide is followed. It is hard to foresee these problems. Here we
+list problems that occurred and were documented.
+
+- `poetry install` gives `ModuleNotFoundError: No module named 'poetry.console'`
+  error. Possible fixes are in
+  [this Stackoverflow post](https://stackoverflow.com/questions/67813396/modulenotfounderror-no-module-named-poetry-console).
 
 ## More info on dev workflow and the used tools
 
