@@ -43,6 +43,8 @@ matplotlib = "^3.8.2"
 nbmake = "^1.4.6"
 pyproj = "^3.6.1"
 scipy = "^1.12.0"
+sparse = "*"
+shapely = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
