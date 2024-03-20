@@ -174,6 +174,22 @@ class TestIntersectWeights(unittest.TestCase):
             ),
         )
 
+    def test_unknown_grid_location(self):
+        x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(10))
+
+        x1, y1 = 0.5, 0
+        x2, y2 = 0.5, 9
+        with pytest.raises("ValueError"):
+            plg.spatial.calc_intersect_weights(
+                x1_line=x1,
+                y1_line=y1,
+                x2_line=x2,
+                y2_line=y2,
+                x_grid=x_grid,
+                y_grid=y_grid,
+                grid_point_location="upper_middel",
+            )
+
 
 class TestCalcGridCorners(unittest.TestCase):
     def test_location_at_grid_center(self):
