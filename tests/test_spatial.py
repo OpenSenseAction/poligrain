@@ -18,7 +18,9 @@ class TestSparseIntersectWeights(unittest.TestCase):
         y2_list = [9, 9]
         cml_id_list = ["abc1", "cde2"]
 
-        da_intersect_weights = plg.spatial.grid_intersection.calc_sparse_intersect_weights_for_several_cmls(
+        da_intersect_weights = (
+            plg.spatial.grid_intersection.calc_sparse_intersect_weights_for_several_cmls
+        )(
             x1_line=x1_list,
             y1_line=y1_list,
             x2_line=x2_list,
@@ -350,12 +352,6 @@ class TestGetGridTimeseries(unittest.TestCase):
 
         assert result.dims == ("time", "cml_id")
 
-
-import numpy as np
-import pytest
-import xarray as xr
-
-import poligrain as plg
 
 ds_gauge = xr.Dataset(
     data_vars={
