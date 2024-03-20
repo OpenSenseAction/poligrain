@@ -179,7 +179,9 @@ class TestIntersectWeights(unittest.TestCase):
 
         x1, y1 = 0.5, 0
         x2, y2 = 0.5, 9
-        with pytest.raises("ValueError"):
+        with pytest.raises(
+            ValueError, match="`grid_point_location` = upper_middle not implemented"
+        ):
             plg.spatial.calc_intersect_weights(
                 x1_line=x1,
                 y1_line=y1,
@@ -187,7 +189,7 @@ class TestIntersectWeights(unittest.TestCase):
                 y2_line=y2,
                 x_grid=x_grid,
                 y_grid=y_grid,
-                grid_point_location="upper_middel",
+                grid_point_location="upper_middle",
             )
 
 
