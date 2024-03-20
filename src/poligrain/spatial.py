@@ -177,9 +177,7 @@ def calc_sparse_intersect_weights_for_several_cmls(
             y_grid=y_grid,
             grid_point_location=grid_point_location,
         )
-        intersect_weights_list.append(
-            sparse.COO.from_numpy(intersect_weights)  # codespell:ignore COO
-        )
+        intersect_weights_list.append(sparse.COO.from_numpy(intersect_weights))
 
     da_intersect_weights = xr.DataArray(
         data=sparse.stack(intersect_weights_list),
@@ -278,7 +276,7 @@ def calc_intersect_weights(
         grid_corners = _calc_grid_corners_for_lower_left_location(grid)
     else:
         raise ValueError(
-            "`grid_point_location` = %s not implemented" % grid_point_location
+            "`grid_point_location` = %s not implemented" % grid_point_location  # pylint: disable=C0209
         )
 
     # Find intersection
@@ -286,7 +284,7 @@ def calc_intersect_weights(
     pixel_poly_list = []
     # Iterate only over the indices within the bounding box and
     # calculate the intersect weigh for each pixel
-    ix_in_bbox = np.where(bounding_box == True)  # noqa: E712
+    ix_in_bbox = np.where(bounding_box == True)  # noqa: E712 # pylint: disable=C0121
     for i, j in zip(ix_in_bbox[0], ix_in_bbox[1], strict=False):
         pixel_poly = Polygon(
             [
@@ -302,7 +300,7 @@ def calc_intersect_weights(
         if not c.is_empty:
             intersect[i][j] = c.length / link.length
 
-    if return_pixel_poly_list:
+    if return_pixel_poly_list:  # pylint: disable=R1705
         return intersect, pixel_poly_list
     else:  # noqa: RET505
         return intersect
