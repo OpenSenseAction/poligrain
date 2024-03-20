@@ -2,6 +2,7 @@ import unittest
 from collections import namedtuple
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -19,7 +20,7 @@ class TestSparseIntersectWeights(unittest.TestCase):
         cml_id_list = ["abc1", "cde2"]
 
         da_intersect_weights = (
-            plg.spatial.grid_intersection.calc_sparse_intersect_weights_for_several_cmls
+            plg.spatial.calc_sparse_intersect_weights_for_several_cmls
         )(
             x1_line=x1_list,
             y1_line=y1_list,
@@ -33,7 +34,7 @@ class TestSparseIntersectWeights(unittest.TestCase):
         for x1, y1, x2, y2, cml_id in zip(
             x1_list, y1_list, x2_list, y2_list, cml_id_list, strict=False
         ):
-            expected = plg.spatial.grid_intersection.calc_intersect_weights(
+            expected = plg.spatial.calc_intersect_weights(
                 x1_line=x1,
                 y1_line=y1,
                 x2_line=x2,
@@ -53,7 +54,7 @@ class TestIntersectWeights(unittest.TestCase):
         x1, y1 = 0, 0
         x2, y2 = 0, 9
 
-        intersec_weights = plg.spatial.grid_intersection.calc_intersect_weights(
+        intersec_weights = plg.spatial.calc_intersect_weights(
             x1_line=x1, y1_line=y1, x2_line=x2, y2_line=y2, x_grid=x_grid, y_grid=y_grid
         )
 
@@ -80,7 +81,7 @@ class TestIntersectWeights(unittest.TestCase):
         x1, y1 = 0, 0
         x2, y2 = 9, 9
 
-        intersec_weights = plg.spatial.grid_intersection.calc_intersect_weights(
+        intersec_weights = plg.spatial.calc_intersect_weights(
             x1_line=x1, y1_line=y1, x2_line=x2, y2_line=y2, x_grid=x_grid, y_grid=y_grid
         )
 
@@ -110,7 +111,7 @@ class TestIntersectWeights(unittest.TestCase):
         x1, y1 = 0.5, 0
         x2, y2 = 0.5, 9
 
-        intersec_weights = plg.spatial.grid_intersection.calc_intersect_weights(
+        intersec_weights = plg.spatial.calc_intersect_weights(
             x1_line=x1,
             y1_line=y1,
             x2_line=x2,
@@ -143,7 +144,7 @@ class TestIntersectWeights(unittest.TestCase):
         x1, y1 = 0.5, 0.5
         x2, y2 = 9.5, 9.5
 
-        intersec_weights = plg.spatial.grid_intersection.calc_intersect_weights(
+        intersec_weights = plg.spatial.calc_intersect_weights(
             x1_line=x1,
             y1_line=y1,
             x2_line=x2,
@@ -179,9 +180,7 @@ class TestCalcGridCorners(unittest.TestCase):
         x_grid, y_grid = np.meshgrid(np.arange(10, 20, 1), np.arange(50, 70, 1))
         grid = np.stack([x_grid, y_grid], axis=2)
 
-        result = plg.spatial.grid_intersection._calc_grid_corners_for_center_location(
-            grid=grid
-        )
+        result = plg.spatial._calc_grid_corners_for_center_location(grid=grid)
 
         GridCorners = namedtuple(
             "GridCorners", ["ur_grid", "ul_grid", "lr_grid", "ll_grid"]
@@ -202,11 +201,7 @@ class TestCalcGridCorners(unittest.TestCase):
         x_grid, y_grid = np.meshgrid(np.arange(10, 20, 1), np.arange(50, 70, 1))
         grid = np.stack([x_grid, y_grid], axis=2)
 
-        result = (
-            plg.spatial.grid_intersection._calc_grid_corners_for_lower_left_location(
-                grid=grid
-            )
-        )
+        result = plg.spatial._calc_grid_corners_for_lower_left_location(grid=grid)
 
         GridCorners = namedtuple(
             "GridCorners", ["ur_grid", "ul_grid", "lr_grid", "ll_grid"]
@@ -228,18 +223,14 @@ class TestCalcGridCorners(unittest.TestCase):
         grid = np.stack([x_grid, y_grid], axis=2)
 
         with pytest.raises(ValueError, match="x values must be ascending along axis 1"):
-            plg.spatial.grid_intersection._calc_grid_corners_for_lower_left_location(
-                grid=grid
-            )
+            plg.spatial._calc_grid_corners_for_lower_left_location(grid=grid)
 
     def test_location_at_lower_left_descending_y_error(self):
         x_grid, y_grid = np.meshgrid(np.arange(10, 20, 1), np.arange(70, 50, -1))
         grid = np.stack([x_grid, y_grid], axis=2)
 
         with pytest.raises(ValueError, match="y values must be ascending along axis 0"):
-            plg.spatial.grid_intersection._calc_grid_corners_for_lower_left_location(
-                grid=grid
-            )
+            plg.spatial._calc_grid_corners_for_lower_left_location(grid=grid)
 
 
 def get_grid_intersect_ts_test_data():
@@ -282,7 +273,7 @@ class TestGetGridTimeseries(unittest.TestCase):
     def test_numpy_grid_numpy_weights(self):
         grid_data, intersect_weights, expected = get_grid_intersect_ts_test_data()
 
-        result = plg.spatial.grid_intersection.get_grid_time_series_at_intersections(
+        result = plg.spatial.get_grid_time_series_at_intersections(
             grid_data=grid_data,
             intersect_weights=intersect_weights,
         )
@@ -290,14 +281,14 @@ class TestGetGridTimeseries(unittest.TestCase):
 
     def test_dataarray_grid_numpy_weights(self):
         grid_data, intersect_weights, expected = get_grid_intersect_ts_test_data()
-        time = np.arange(np.datetime64("2017-01-01"), np.datetime64("2017-01-11"))
+        time = pd.date_range("2017-01-01", "2017-01-10")
         da_grid_data = xr.DataArray(
             data=grid_data,
             dims=("time", "y", "x"),
             coords={"time": time},
         )
 
-        result = plg.spatial.grid_intersection.get_grid_time_series_at_intersections(
+        result = plg.spatial.get_grid_time_series_at_intersections(
             grid_data=da_grid_data,
             intersect_weights=intersect_weights,
         )
@@ -315,7 +306,7 @@ class TestGetGridTimeseries(unittest.TestCase):
             coords={"cml_id": cml_ids},
         )
 
-        result = plg.spatial.grid_intersection.get_grid_time_series_at_intersections(
+        result = plg.spatial.get_grid_time_series_at_intersections(
             grid_data=grid_data,
             intersect_weights=da_intersect_weights,
         )
@@ -327,7 +318,7 @@ class TestGetGridTimeseries(unittest.TestCase):
     def test_dataarray_grid_dataarray_weights(self):
         grid_data, intersect_weights, expected = get_grid_intersect_ts_test_data()
 
-        time = np.arange(np.datetime64("2017-01-01"), np.datetime64("2017-01-11"))
+        time = pd.date_range("2017-01-01", "2017-01-10")
         da_grid_data = xr.DataArray(
             data=grid_data,
             dims=("time", "y", "x"),
@@ -341,7 +332,7 @@ class TestGetGridTimeseries(unittest.TestCase):
             coords={"cml_id": cml_ids},
         )
 
-        result = plg.spatial.grid_intersection.get_grid_time_series_at_intersections(
+        result = plg.spatial.get_grid_time_series_at_intersections(
             grid_data=da_grid_data,
             intersect_weights=da_intersect_weights,
         )
