@@ -1,7 +1,7 @@
-"""
-Copyright (c) 2023 Christian Chwala. All rights reserved.
+"""Copyright (c) 2023 Christian Chwala. All rights reserved.
 
-poligrain: Effortlessly plot and compare (rainfall) sensor data with point, line and grid geometry.
+poligrain: Effortlessly plot and compare (rainfall) sensor data
+           with point, line and grid geometry.
 """
 
 
@@ -16,6 +16,6 @@ import netCDF4  # noqa: F401
 
 __version__ = "0.0.0"
 
-from . import plot_map, spatial
+from . import plot_map, spatial, xarray
 
-__all__ = ["__version__", "plot_map", "spatial"]
+__all__ = ["__version__", "plot_map", "spatial", "xarray"]

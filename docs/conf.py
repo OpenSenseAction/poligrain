@@ -3,8 +3,8 @@ from __future__ import annotations
 import importlib.metadata
 
 project = "poligrain"
-copyright = "2023, Christian Chwala"
-author = "Christian Chwala"
+copyright = "2023-2024, poligrain developers"
+author = "poligrain developers"
 version = release = importlib.metadata.version("poligrain")
 
 extensions = [
