@@ -25,4 +25,6 @@ def test_shape_length_frequency_arrays():
 def test_length_values_of_sublinks():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     length = ds_cmls.length.broadcast_like(ds_cmls.frequency)
-    assert length.isel(sublink_id=0).to_numpy() == length.isel(sublink_id=1).to_numpy()
+    assert (
+        length.isel(sublink_id=0).values.all() == length.isel(sublink_id=1).values.all()  # noqa: PD011
+    )
