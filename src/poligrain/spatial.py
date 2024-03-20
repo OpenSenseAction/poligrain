@@ -201,7 +201,6 @@ def calc_intersect_weights(
     y_grid,
     grid_point_location="center",
     offset=None,
-    return_pixel_poly_list=False,
 ):
     """Calculate intersecting weights for a line and a grid.
 
@@ -227,9 +226,6 @@ def calc_intersect_weights(
         of intersection to a bounding box around the CML coordinates. The
         offset specifies by how much this bounding box will be larger then
         the width- and height-extent of the CML coordinates.
-    return_pixel_poly_list : bool, optional
-        If `True`, also return the list of shapely.Polygon objects which were
-        used to calculate the intersection weights. Defaults to `False`.
 
     Returns
     -------
@@ -300,10 +296,7 @@ def calc_intersect_weights(
         if not c.is_empty:
             intersect[i][j] = c.length / link.length
 
-    if return_pixel_poly_list:  # pylint: disable=R1705
-        return intersect, pixel_poly_list
-    else:  # noqa: RET505
-        return intersect
+    return intersect
 
 
 def _calc_grid_corners_for_center_location(grid):
