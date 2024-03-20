@@ -1,7 +1,6 @@
 # %%
 from __future__ import annotations
 
-import numpy as np
 import xarray as xr
 
 
@@ -26,8 +25,4 @@ def test_shape_length_frequency_arrays():
 def test_length_values_of_sublinks():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     length = ds_cmls.length.broadcast_like(ds_cmls.frequency)
-    n = np.random.Generator(0, length.shape[1])
-    assert (
-        length.isel(sublink_id=0, cml_id=n).to_numpy()
-        == length.isel(sublink_id=1, cml_id=n).to_numpy()
-    )
+    assert length.isel(sublink_id=0).to_numpy() == length.isel(sublink_id=1).to_numpy()
