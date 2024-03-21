@@ -1,4 +1,5 @@
 """xarray Accessors."""
+from __future__ import annotations
 
 import matplotlib.axes
 import xarray as xr
