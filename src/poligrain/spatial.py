@@ -111,8 +111,8 @@ def calc_point_to_point_distances(
     x_b, y_b = get_point_xy(ds_points_b)
 
     distance_matrix = scipy.spatial.distance_matrix(
-        x=list(zip(x_a.values, y_a.values, strict=True)),
-        y=list(zip(x_b.values, y_b.values, strict=True)),
+        x=list(zip(x_a.values, y_a.values)),
+        y=list(zip(x_b.values, y_b.values)),
     )
 
     dim_a = x_a.dims[0]
@@ -281,7 +281,7 @@ def calc_intersect_weights(
     # Iterate only over the indices within the bounding box and
     # calculate the intersect weigh for each pixel
     ix_in_bbox = np.where(bounding_box == True)  # noqa: E712 # pylint: disable=C0121
-    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1], strict=False):
+    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1]):
         pixel_poly = Polygon(
             [
                 grid_corners.ll_grid[i, j],
