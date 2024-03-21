@@ -32,7 +32,7 @@ class TestSparseIntersectWeights(unittest.TestCase):
         )
 
         for x1, y1, x2, y2, cml_id in zip(
-            x1_list, y1_list, x2_list, y2_list, cml_id_list, strict=False
+            x1_list, y1_list, x2_list, y2_list, cml_id_list
         ):
             expected = plg.spatial.calc_intersect_weights(
                 x1_line=x1,
