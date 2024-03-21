@@ -26,6 +26,8 @@
   docstring linting rules (by [@cchwala](https://github.com/cchwala))
 - [PR 36](https://github.com/OpenSenseAction/poligrain/pull/36) Add API to docs
   (by [@cchwala](https://github.com/cchwala))
+- [PR 42](https://github.com/OpenSenseAction/poligrain/pull/42) Add back support
+  for Python 3.9 (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 
