@@ -35,11 +35,13 @@ def test_length_values_of_sublinks():
 
 def test_plot_len_vs_freq():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    fig, ax = plt.subplots(figsize=(8, 6))
-    scatter = plg.plot_metadata.plot_len_vs_freq(
-        ds_cmls.length, ds_cmls.frequency, ax=ax
-    )
+    scatter = plg.plot_metadata.plot_len_vs_freq(ds_cmls.length, ds_cmls.frequency)
     len_values = ds_cmls.length.broadcast_like(ds_cmls.frequency).to_numpy() / 1000
     freq_values = ds_cmls.frequency.to_numpy() / 1000
     assert len_values[0][0] == scatter.get_offsets().data[0][0]
     assert freq_values[0][0] == scatter.get_offsets().data[0][1]
+
+    # test passing ax
+    fig, ax = plt.subplots(figsize=(5, 4))
+    _ = plg.plot_metadata.plot_len_vs_freq(ds_cmls.length, ds_cmls.frequency, ax=ax)
+    assert fig.get_figwidth() == 5
