@@ -16,6 +16,6 @@ import netCDF4  # noqa: F401
 
 __version__ = "0.0.0"
 
-from . import plot_map, spatial
+from . import plot_map, plot_metadata, spatial
 
-__all__ = ["__version__", "plot_map", "spatial"]
+__all__ = ["__version__", "plot_map", "spatial", "plot_metadata"]

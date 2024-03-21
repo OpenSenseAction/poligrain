@@ -41,7 +41,7 @@ def plot_len_vs_freq(
     ax : matplotlib.axes.Axes  |  None, optional
         An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
-    **kwargs : dict
+    **kwargs
         Optional keyword arguments to pass to the `scatter` function.
 
     Returns
