@@ -10,7 +10,8 @@
 - [PR 29](https://github.com/OpenSenseAction/poligrain/pull/29) Add `xarray`
   Accessor for plotting CML paths (by [@cchwala](https://github.com/cchwala))
 - [PR 19](https://github.com/OpenSenseAction/poligrain/pull/19) Add code for
-  grid intersection calculation (by [@maxmargraf](https://github.com/maxmargraf))
+  grid intersection calculation (by
+  [@maxmargraf](https://github.com/maxmargraf))
 
 ### Bug fixes
 
