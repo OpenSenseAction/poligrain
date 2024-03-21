@@ -142,10 +142,10 @@ class GridAtLines():
                 sensor_id = ds_line_data.sml_id
 
         self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
-            x1_line=ds_line_data.site_0_lon,
-            y1_line=ds_line_data.site_0_lat,
-            x2_line=ds_line_data.site_1_lon,
-            y2_line=ds_line_data.site_1_lat,
+            x1_line=ds_line_data.site_0_lon.values,
+            y1_line=ds_line_data.site_0_lat.values,
+            x2_line=ds_line_data.site_1_lon.values,
+            y2_line=ds_line_data.site_1_lat.values,
             cml_id=ds_line_data.cml_id,
             x_grid=da_gridded_data.lon.values,
             y_grid=da_gridded_data.lat.values,
@@ -154,8 +154,8 @@ class GridAtLines():
 
     def __call__(self, da_gridded_data):
         gridded_data_along_line = get_grid_time_series_at_intersections(
-            grid_data=da_gridded_data.values,
-            intersect_weights=self.intersect_weights
+            grid_data=da_gridded_data,
+            intersect_weights=self.intersect_weights,
         )
 
         gridded_data_along_line['time'] = da_gridded_data.time
