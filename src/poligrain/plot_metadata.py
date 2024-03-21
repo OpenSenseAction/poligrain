@@ -15,6 +15,7 @@ def plot_len_vs_freq(
     marker_size: float = 10,
     grid: bool = True,
     ax: (matplotlib.axes.Axes | None) = None,
+    **kwargs,
 ) -> PathCollection:
     """Scatter plot of length vs. frequency of line-based sensors like CMLs.
 
@@ -26,11 +27,11 @@ def plot_len_vs_freq(
     Parameters
     ----------
     length : xr.DataArray
-        Path length of line-based sensors, according to the OPENSENSE data format
-        conventions in meters.
+        Path length of line-based sensors, units in meters, according to the OPENSENSE
+        data format.
     frequency : xr.DataArray
-        Frequency of line-based sensors, according to the OPENSENSE data format
-        conventions in megahertz.
+        Frequency of line-based sensors, units in megahertz, according to the OPENSENSE
+        data format.
     marker_color : str, optional
         Color of the markers. By default "k".
     marker_size : float, optional
@@ -40,6 +41,8 @@ def plot_len_vs_freq(
     ax : matplotlib.axes.Axes  |  None, optional
         An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
+    **kwargs : dict
+        Optional keyword arguments to pass to the `scatter` function.
 
     Returns
     -------
@@ -54,7 +57,7 @@ def plot_len_vs_freq(
 
     # scatter plot
     scatter = ax.scatter(
-        len_values, freq_values, color=marker_color, marker=".", s=marker_size
+        len_values, freq_values, color=marker_color, marker=".", s=marker_size, **kwargs
     )
 
     # add axis labels
@@ -64,5 +67,4 @@ def plot_len_vs_freq(
     # add grid
     if grid:
         ax.grid()
-
     return scatter
