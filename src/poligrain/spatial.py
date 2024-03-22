@@ -127,13 +127,13 @@ def calc_point_to_point_distances(
     )
 
 
-class GridAtLines():
+class GridAtLines:
     def __init__(
-            self,
-            da_gridded_data,
-            ds_line_data,
-            grid_point_location='center',
-            sensor_id=None,
+        self,
+        da_gridded_data,
+        ds_line_data,
+        grid_point_location="center",
+        sensor_id=None,
     ):
         if sensor_id is None:
             try:
@@ -158,21 +158,20 @@ class GridAtLines():
             intersect_weights=self.intersect_weights,
         )
 
-        gridded_data_along_line['time'] = da_gridded_data.time
-        gridded_data_along_line['site_0_lon'] = self.intersect_weights.site_0_lon
-        gridded_data_along_line['site_1_lat'] = self.intersect_weights.site_1_lat
-        gridded_data_along_line['site_1_lon'] = self.intersect_weights.site_1_lon
-        gridded_data_along_line['site_0_lat'] = self.intersect_weights.site_0_lat
+        gridded_data_along_line["time"] = da_gridded_data.time
+        gridded_data_along_line["site_0_lon"] = self.intersect_weights.site_0_lon
+        gridded_data_along_line["site_1_lat"] = self.intersect_weights.site_1_lat
+        gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
+        gridded_data_along_line["site_0_lat"] = self.intersect_weights.site_0_lat
 
         return gridded_data_along_line
 
 
-class GridAtPoints():
-    def __init__(self, da_gridded_data, da_point_data, nnear=9, stat='best'):
+class GridAtPoints:
+    def __init__(self, da_gridded_data, da_point_data, nnear=9, stat="best"):
         # TODO: account for `grid_point_location` which is not yet done here.
 
         # TODO: Copy-paste the relevant stuff from wradlib and add to own code
-        import wradlib
 
         # Get radar pixel coordinates as (N, 2) array
         x_grid = da_gridded_data.lon.to_numpy()
@@ -181,12 +180,12 @@ class GridAtPoints():
 
         # Initialize function to get grid values at points
         xy_points = np.stack([da_point_data.lon, da_point_data.lat], axis=1)
-        self.raw_at_obs_adjuster = wradlib.adjust.RawAtObs(
-            obs_coords=xy_points, #df_stations.loc[:, ["x", "y"]].values,
-            raw_coords=xy_grid,
-            nnear=nnear,
-            stat=stat,
-        )
+
+        # copy-paste code from wradlib.adjust.RawAtObs.__init__
+        obs_coords = xy_points
+        raw_coords = xy_grid
+        self.statfunc = _get_statfunc(stat)
+        self.raw_ix = _get_neighbours_ix(obs_coords, raw_coords, nnear)
 
     def __call__(self, da_gridded_data, da_point_data):
         gridded_data_at_point_list = []
@@ -194,22 +193,122 @@ class GridAtPoints():
             da_gridded_data_t = da_gridded_data.sel(time=t)
             da_point_data_t = da_point_data.sel(time=t)
 
-            gridded_data_at_point_list.append(
-                self.raw_at_obs_adjuster(
-                    obs=da_point_data_t.to_numpy(),
-                    raw=da_gridded_data_t.to_numpy().flatten(),
-                )
-            )
+            # copy-paste code from wradlib.adjust.RawAtObs.__call__
+            raw = da_gridded_data_t.to_numpy().flatten()
+            obs = da_point_data_t.to_numpy()
+            # get the values of the raw neighbours of obs
+            raw_neighbs = raw[self.raw_ix]
+            # and summarize the values of these neighbours
+            # by using a statistics option
+            # (only needed in case nnear > 1, i.e. multiple neighbours
+            # per observation location)
+            if raw_neighbs.ndim > 1:
+                gridded_data_at_point = self.statfunc(obs, raw_neighbs)
+            else:
+                gridded_data_at_point = raw_neighbs
+
+            gridded_data_at_point_list.append(gridded_data_at_point)
 
         return xr.DataArray(
             data=gridded_data_at_point_list,
             dims=da_point_data.dims,
             coords={
-                'time': da_gridded_data.time,
-                'lon':  da_point_data.lon,
-                'lat': da_point_data.lat,
-            }
+                "time": da_gridded_data.time,
+                "lon": da_point_data.lon,
+                "lat": da_point_data.lat,
+            },
         )
+
+
+def _get_neighbours_ix(obs_coords, raw_coords, nnear):
+    """Return ``nnear`` neighbour indices per ``obs_coords`` coordinate pair.
+
+    Parameters
+    ----------
+    obs_coords : :py:class:`numpy:numpy.ndarray`
+        array of float of shape (num_points,ndim)
+        in the neighbourhood of these coordinate pairs we look for neighbours
+    raw_coords : :py:class:`numpy:numpy.ndarray`
+        array of float of shape (num_points,ndim)
+        from these coordinate pairs the neighbours are selected
+    nnear : int
+        number of neighbours to be selected per coordinate ``obs_coords``
+
+    """
+    # plant a tree
+    tree = scipy.spatial.cKDTree(raw_coords)
+    # return nearest neighbour indices
+    return tree.query(obs_coords, k=nnear)[1]
+
+
+def _get_statfunc(funcname):
+    """Return a function that corresponds to parameter ``funcname``.
+
+    This is a copy-paste function from `wradlib.adjust` that we need
+    for our implementation that is similar to their `RawAtObs`.
+
+    Parameters
+    ----------
+    funcname : str
+        a name of a numpy function OR another option known by _get_statfunc
+        Potential options: 'mean', 'median', 'best'
+
+    """
+    if funcname == "best":
+        newfunc = best
+    else:
+        try:
+            # try to find a numpy function which corresponds to <funcname>
+            func = getattr(np, funcname)
+
+            def newfunc(x, y):
+                return func(y, axis=1)
+
+        except Exception as err:
+            raise NameError(f"Unknown function name option: {funcname!r}") from err  # noqa: EM102
+    return newfunc
+
+
+def best(x, y, /):
+    """Find the values of y which corresponds best to x.
+
+    If x is an array, the comparison is carried out for each element of x.
+
+    This is a copy-paste function from `wradlib.adjust` that we need
+    for our implementation that is similar to their `RawAtObs`.
+
+    Parameters
+    ----------
+    x : float | :py:class:`numpy:numpy.ndarray`
+        float or 1-d array of float
+    y : :py:class:`numpy:numpy.ndarray`
+        array of float
+
+    Returns
+    -------
+    output : :py:class:`numpy:numpy.ndarray`
+        1-d array of float with length len(y)
+
+    """
+    if type(x) == np.ndarray:
+        if x.ndim != 1:
+            raise ValueError("`x` must be a 1-d array of floats or a float.")  # noqa: EM101
+        if len(x) != len(y):
+            raise ValueError(
+                f"Length of `x` ({len(x)}) and `y` ({len(y)}) must be equal."  # noqa: EM102
+            )
+    if type(y) == np.ndarray:
+        if y.ndim > 2:
+            raise ValueError("'y' must be 1-d or 2-d array of floats.")  # noqa: EM101
+    else:
+        raise ValueError("`y` must be 1-d or 2-d array of floats.")  # noqa: EM101
+    x = np.array(x).reshape((-1, 1))
+    if y.ndim == 1:
+        y = np.array(y).reshape((1, -1))
+        axis = None
+    else:
+        axis = 1
+    return y[np.arange(len(y)), np.argmin(np.abs(x - y), axis=axis)]
 
 
 def get_grid_time_series_at_intersections(grid_data, intersect_weights):
