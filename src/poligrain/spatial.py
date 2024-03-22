@@ -127,6 +127,276 @@ def calc_point_to_point_distances(
     )
 
 
+class GridAtLines:
+    def __init__(
+        self,
+        da_gridded_data,
+        ds_line_data,
+        grid_point_location="center",
+        sensor_id=None,
+    ):
+        if sensor_id is None:
+            try:
+                sensor_id = ds_line_data.cml_id
+            except AttributeError:
+                sensor_id = ds_line_data.sml_id
+
+        self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
+            x1_line=ds_line_data.site_0_lon.values,
+            y1_line=ds_line_data.site_0_lat.values,
+            x2_line=ds_line_data.site_1_lon.values,
+            y2_line=ds_line_data.site_1_lat.values,
+            cml_id=ds_line_data.cml_id,
+            x_grid=da_gridded_data.lon.values,
+            y_grid=da_gridded_data.lat.values,
+            grid_point_location=grid_point_location,
+        )
+
+    def __call__(self, da_gridded_data):
+        gridded_data_along_line = get_grid_time_series_at_intersections(
+            grid_data=da_gridded_data,
+            intersect_weights=self.intersect_weights,
+        )
+
+        gridded_data_along_line["time"] = da_gridded_data.time
+        gridded_data_along_line["site_0_lon"] = self.intersect_weights.site_0_lon
+        gridded_data_along_line["site_1_lat"] = self.intersect_weights.site_1_lat
+        gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
+        gridded_data_along_line["site_0_lat"] = self.intersect_weights.site_0_lat
+
+        return gridded_data_along_line
+
+
+class GridAtPoints:
+    def __init__(self, da_gridded_data, da_point_data, nnear=9, stat="best"):
+        # TODO: account for `grid_point_location` which is not yet done here.
+
+        # TODO: Copy-paste the relevant stuff from wradlib and add to own code
+
+        # Get radar pixel coordinates as (N, 2) array
+        x_grid = da_gridded_data.lon.to_numpy()
+        y_grid = da_gridded_data.lat.to_numpy()
+        xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten(), strict=True)))
+
+        # Initialize function to get grid values at points
+        xy_points = np.stack([da_point_data.lon, da_point_data.lat], axis=1)
+
+        # copy-paste code from wradlib.adjust.RawAtObs.__init__
+        obs_coords = xy_points
+        raw_coords = xy_grid
+        self.statfunc = _get_statfunc(stat)
+        self.raw_ix = _get_neighbours_ix(obs_coords, raw_coords, nnear)
+
+    def __call__(self, da_gridded_data, da_point_data):
+        gridded_data_at_point_list = []
+        for t in da_gridded_data.time.to_numpy():
+            da_gridded_data_t = da_gridded_data.sel(time=t)
+            da_point_data_t = da_point_data.sel(time=t)
+
+            # copy-paste code from wradlib.adjust.RawAtObs.__call__
+            raw = da_gridded_data_t.to_numpy().flatten()
+            obs = da_point_data_t.to_numpy()
+            # get the values of the raw neighbours of obs
+            raw_neighbs = raw[self.raw_ix]
+            # and summarize the values of these neighbours
+            # by using a statistics option
+            # (only needed in case nnear > 1, i.e. multiple neighbours
+            # per observation location)
+            if raw_neighbs.ndim > 1:
+                gridded_data_at_point = self.statfunc(obs, raw_neighbs)
+            else:
+                gridded_data_at_point = raw_neighbs
+
+            gridded_data_at_point_list.append(gridded_data_at_point)
+
+        return xr.DataArray(
+            data=gridded_data_at_point_list,
+            dims=da_point_data.dims,
+            coords={
+                "time": da_gridded_data.time,
+                "lon": da_point_data.lon,
+                "lat": da_point_data.lat,
+            },
+        )
+
+
+def _get_neighbours_ix(obs_coords, raw_coords, nnear):
+    """Return ``nnear`` neighbour indices per ``obs_coords`` coordinate pair.
+
+    Parameters
+    ----------
+    obs_coords : :py:class:`numpy:numpy.ndarray`
+        array of float of shape (num_points,ndim)
+        in the neighbourhood of these coordinate pairs we look for neighbours
+    raw_coords : :py:class:`numpy:numpy.ndarray`
+        array of float of shape (num_points,ndim)
+        from these coordinate pairs the neighbours are selected
+    nnear : int
+        number of neighbours to be selected per coordinate ``obs_coords``
+
+    """
+    # plant a tree
+    tree = scipy.spatial.cKDTree(raw_coords)
+    # return nearest neighbour indices
+    return tree.query(obs_coords, k=nnear)[1]
+
+
+def _get_statfunc(funcname):
+    """Return a function that corresponds to parameter ``funcname``.
+
+    This is a copy-paste function from `wradlib.adjust` that we need
+    for our implementation that is similar to their `RawAtObs`.
+
+    Parameters
+    ----------
+    funcname : str
+        a name of a numpy function OR another option known by _get_statfunc
+        Potential options: 'mean', 'median', 'best'
+
+    """
+    if funcname == "best":
+        newfunc = best
+    else:
+        try:
+            # try to find a numpy function which corresponds to <funcname>
+            func = getattr(np, funcname)
+
+            def newfunc(x, y):
+                return func(y, axis=1)
+
+        except Exception as err:
+            raise NameError(f"Unknown function name option: {funcname!r}") from err  # noqa: EM102
+    return newfunc
+
+
+def best(x, y):
+    """Find the values of y which corresponds best to x.
+
+    If x is an array, the comparison is carried out for each element of x.
+
+    This is a copy-paste function from `wradlib.adjust` that we need
+    for our implementation that is similar to their `RawAtObs`.
+
+    Parameters
+    ----------
+    x : float | :py:class:`numpy:numpy.ndarray`
+        float or 1-d array of float
+    y : :py:class:`numpy:numpy.ndarray`
+        array of float
+
+    Returns
+    -------
+    output : :py:class:`numpy:numpy.ndarray`
+        1-d array of float with length len(y)
+
+    """
+    if type(x) == np.ndarray:
+        if x.ndim != 1:
+            raise ValueError("`x` must be a 1-d array of floats or a float.")  # noqa: EM101
+        if len(x) != len(y):
+            raise ValueError(
+                f"Length of `x` ({len(x)}) and `y` ({len(y)}) must be equal."  # noqa: EM102
+            )
+    if type(y) == np.ndarray:
+        if y.ndim > 2:
+            raise ValueError("'y' must be 1-d or 2-d array of floats.")  # noqa: EM101
+    else:
+        raise ValueError("`y` must be 1-d or 2-d array of floats.")  # noqa: EM101
+    x = np.array(x).reshape((-1, 1))
+    if y.ndim == 1:
+        y = np.array(y).reshape((1, -1))
+        axis = None
+    else:
+        axis = 1
+    return y[np.arange(len(y)), np.argmin(np.abs(x - y), axis=axis)]
+
+
+def get_grid_time_series_at_intersections(grid_data, intersect_weights):
+    """Get time series from gird data using sparse intersection weights.
+
+    Time series of grid data are derived via intersection weights of CMLs.
+    Please note that it is crucial to have the correct order of dimensions, see
+    parameter list below.
+
+    Input can be ndarrays or xarray.DataArrays. If at least one input is a
+    DataArray, a DataArray is returned.
+
+    Parameters
+    ----------
+    grid_data: ndarray or xarray.DataArray
+        3-D data of the gridded data we want to extract time series from at the
+        given pixel intersection. The order of dimensions must be ('time', 'y', 'x').
+        The size in the `x` and `y` dimension must be the same as in the intersection
+        weights.
+    intersect_weights: ndarray or xarray.DataArray
+        3-D data of intersection weights. The order of dimensions must be
+        ('cml_id', 'y', 'x'). The size in the `x` and `y` dimension must be the
+        same as in the grid data. Intersection weights do not have to be a
+        `sparse.array` but will be converted to one internally before doing a
+        `sparse.tensordot` contraction.
+
+    Returns
+    -------
+    grid_intersect_timeseries: ndarray or xarray.DataArray
+        The time series for each grid intersection. If at least one of the inputs is
+        a xarray.DataArray, a xarray.DataArray is returned. Coordinates are
+        derived from the input.
+    DataArrays.
+
+    """
+    return_a_dataarray = False
+    try:
+        intersect_weights_coords = intersect_weights.coords
+        # from here on we only want to deal with the actual array
+        intersect_weights = intersect_weights.data
+        return_a_dataarray = True
+    except AttributeError:
+        pass
+    try:
+        grid_data_coords = grid_data.coords
+        # from here on we only want to deal with the actual array
+        grid_data = grid_data.data
+        return_a_dataarray = True
+    except AttributeError:
+        pass
+
+    # Assure that we use a sparse matrix for the weights, because, besides
+    # being much faster for large tensordot computation, it can deal with
+    # NaN better. If the weights are passed to `sparse.tensordot` as numpy
+    # arrays, the value for each time series for a certain point in time is NaN
+    # if there is at least one nan in the grid at that point in time. We only
+    # want NaN in the time series if the intersection intersects with a NaN grid pixel.
+    intersect_weights = sparse.asCOO(intersect_weights, check=False)
+
+    grid_intersect_timeseries = sparse.tensordot(
+        grid_data,
+        intersect_weights,
+        axes=[[1, 2], [1, 2]],
+    )
+
+    if return_a_dataarray:
+        coords = {}
+        try:
+            dim_0_name = grid_data_coords.dims[0]
+            dim_0_values = grid_data_coords[dim_0_name].values
+        except NameError:
+            dim_0_name = "time"
+            dim_0_values = np.arange(grid_intersect_timeseries.shape[0])
+        try:
+            dim_1_name = intersect_weights_coords.dims[0]
+            dim_1_values = intersect_weights_coords[dim_1_name].values
+        except NameError:
+            dim_1_name = "cml_id"
+            dim_1_values = np.arange(grid_intersect_timeseries.shape[1])
+        grid_intersect_timeseries = xr.DataArray(
+            data=grid_intersect_timeseries,
+            dims=(dim_0_name, dim_1_name),
+            coords={dim_0_name: dim_0_values, dim_1_name: dim_1_values},
+        )
+
+    return grid_intersect_timeseries
+
+
 def calc_sparse_intersect_weights_for_several_cmls(
     x1_line,
     y1_line,
