@@ -269,7 +269,7 @@ def _get_statfunc(funcname):
     return newfunc
 
 
-def best(x, y, /):
+def best(x, y):
     """Find the values of y which corresponds best to x.
 
     If x is an array, the comparison is carried out for each element of x.
