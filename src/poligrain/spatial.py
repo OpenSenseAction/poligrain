@@ -9,7 +9,8 @@ import pyproj
 import scipy
 import sparse
 import xarray as xr
-from shapely.geometry import LineString, Polygon
+from scipy.spatial import KDTree
+from shapely.geometry import LineString, Point, Polygon
 
 
 def get_point_xy(
@@ -477,3 +478,122 @@ def get_grid_time_series_at_intersections(grid_data, intersect_weights):
         )
 
     return grid_intersect_timeseries
+
+
+def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
+    """Get closest points to line.
+
+    Finds n closest points from a CML within given offset distance. Note that the
+    function guarantees that all returned points are within offset distance to
+    the CML, not that all points that are within offset are returned. Uses
+    KDTree for fast processing of large datasets.
+
+    Parameters
+    ----------
+    ds_cmls: xarray.Dataset
+        Dataset of line data using the OpenSense naming convention for CMLs. It
+        must contain the coordinate cml_id with the cml names. It must also
+        contain projected coordinates y_a, x_a, y_b and x_b as well as the
+        projected midpoint coorinates x and y and the CML length.
+    ds_gauges: xarray.Dataset
+        Dataset of point data using the OpenSense data format conventions for PWS.
+        The dataset must contain the coordinate 'id' with the PWS names. It must
+        also contain projected coordinates x and y.
+    offset: float
+        Maximum distance a point can have to the CML, measured as the smallest
+        distance from the point to the line. Points outside this range is not
+        considered close to the CML.
+    n_closest: int
+        Maximum number of points that are returned.
+
+    Returns
+    -------
+    closest_gauges: xarray.Dataset
+        Dataset with CML ids and corresponding n_closest point names and distance.
+        If a CML has less that "n_closest" nearby points, the reminding entries
+        are filled with 'nan'.
+
+    """
+    # transfer raingauge and CML coordinates to numpy, for faster access in loop
+    coords_cml = np.hstack(
+        [ds_cmls.y.data.reshape(-1, 1), ds_cmls.x.data.reshape(-1, 1)]
+    )
+
+    coords_cml_a = np.hstack(
+        [ds_cmls.y_a.data.reshape(-1, 1), ds_cmls.x_a.data.reshape(-1, 1)]
+    )
+
+    coords_cml_b = np.hstack(
+        [ds_cmls.y_b.data.reshape(-1, 1), ds_cmls.x_b.data.reshape(-1, 1)]
+    )
+
+    coords_gauge = np.hstack(
+        [ds_gauges.y.data.reshape(-1, 1), ds_gauges.x.data.reshape(-1, 1)]
+    )
+
+    cml_lengths = ds_cmls.length.data / 2
+
+    # extend offset to include diagonal length
+    offset_add = np.sqrt(2 * offset**2)
+
+    # array for storing indices of gauges close to CML, -1 represent no gauge
+    list_gauges = np.ones([ds_cmls.cml_id.size, n_closest]).astype(int) * (-1)
+
+    # array for storing distances from CML to close gauges
+    cml_gauge_dist = np.zeros([ds_cmls.cml_id.size, n_closest]) * np.nan
+
+    # create KDTree object for all gauges
+    kd_tree2 = KDTree(coords_gauge)
+
+    for i in range(len(ds_cmls.cml_id)):
+        # create KDTree object for midpoint of CML_i
+        kd_tree1 = KDTree([coords_cml[i]])  # select cml i
+
+        # find points within
+        sdm = kd_tree1.sparse_distance_matrix(kd_tree2, cml_lengths[i] + offset_add)
+
+        # to sparese distance matrix
+        sdm_coo = sdm.tocoo()
+
+        # get indices of gauges within offset
+        non_zero_cols = sdm_coo.col
+
+        # create line object for this CML
+        line = LineString([coords_cml_a[i], coords_cml_b[i]])
+
+        # calculate distance from CML to close gauges
+        d_to_gauges = line.distance(
+            [Point([coords_gauge[j, 0], coords_gauge[j, 1]]) for j in non_zero_cols]
+        )
+
+        # sort distances and get corresponding indices
+        sorted_indices = np.argsort(d_to_gauges)
+
+        # get distance of gauges close to CML
+        d_to_closest_gauges = d_to_gauges[sorted_indices[0:n_closest]]
+
+        # get indices of gauges close to CML
+        ind_closest_gauges = non_zero_cols[sorted_indices[0:n_closest]]
+
+        # remove points outside offset
+        d_to_closest_gauges[d_to_closest_gauges > offset] = np.nan
+        ind_closest_gauges = ind_closest_gauges[~np.isnan(d_to_closest_gauges)]
+
+        # store results for this CML
+        list_gauges[i, : ind_closest_gauges.size] = ind_closest_gauges
+
+        cml_gauge_dist[i, : d_to_closest_gauges.size] = d_to_closest_gauges
+
+    # create xarray object showing name and distance from cml to nearest points
+    return xr.Dataset(
+        data_vars={
+            "distance": (("cml_id", "n_closest"), cml_gauge_dist),
+            "id_neighbor": (
+                ("cml_id", "n_closest"),
+                np.where(list_gauges == -1, np.nan, ds_gauges.id.data[list_gauges]),
+            ),
+        },
+        coords={
+            "cml_id": ds_cmls.cml_id.data,
+        },
+    )

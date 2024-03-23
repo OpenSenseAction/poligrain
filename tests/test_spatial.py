@@ -376,6 +376,23 @@ ds_gauge = xr.Dataset(
     },
 )
 
+ds_cmls = xr.Dataset(
+    data_vars={
+        "R": (("cml_id", "time"), np.reshape(np.arange(1, 13), (3, 4))),
+    },
+    coords={
+        "cml_id": ("cml_id", ["cml1", "cml2", "cml3"]),
+        "time": ("time", np.arange(0, 4)),
+        "x": ("cml_id", [0, 1, 1]),
+        "y": ("cml_id", [0, 0, 2]),
+        "x_a": ("cml_id", [-1, 0, 0]),
+        "y_a": ("cml_id", [-1, -1, 1]),
+        "x_b": ("cml_id", [1, 2, 2]),
+        "y_b": ("cml_id", [1, 1, 3]),
+        "length": ("cml_id", [2, 2, 2]),
+    },
+)
+
 
 def test_get_point_xy():
     x, y = plg.spatial.get_point_xy(ds_points=ds_gauge)
@@ -437,3 +454,13 @@ def test_calc_point_to_point_distances():
     assert distance_matrix.data == pytest.approx(expected, abs=1e-6)
     assert list(distance_matrix.id.data) == ["g1", "g2", "g3"]
     assert list(distance_matrix.id_neighbor.data) == ["g2", "g3"]
+
+
+def test_get_closest_points_to_line():
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls, ds_gauges=ds_gauge.sel(id=["g2", "g3"])
+    )
+    expected = np.array([0, np.sqrt(2) / 2])
+    assert closest_gauges.distance.data == pytest.approx(expected, abs=1e-6)
+    assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
+    assert list(closest_gauges.id_neighbor.data) == ["g2", "g3"]
