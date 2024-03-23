@@ -458,9 +458,10 @@ def test_calc_point_to_point_distances():
 
 def test_get_closest_points_to_line():
     closest_gauges = plg.spatial.get_closest_points_to_line(
-        ds_cmls=ds_cmls, ds_gauges=ds_gauge.sel(id=["g2", "g3"])
+        ds_cmls=ds_cmls, ds_gauges=ds_gauge.sel(id=["g2", "g3"]), offset=3, n_closest=1
     )
-    expected = np.array([0, np.sqrt(2) / 2])
+    expected = np.array([[0], [0], [np.sqrt(2) / 2]])
+
     assert closest_gauges.distance.data == pytest.approx(expected, abs=1e-6)
     assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
-    assert list(closest_gauges.id_neighbor.data) == ["g2", "g3"]
+    assert list(closest_gauges.id_neighbor.data) == ["g3", "g2", "g3"]  # g3 is close
