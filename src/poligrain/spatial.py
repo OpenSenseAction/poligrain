@@ -480,12 +480,12 @@ def get_grid_time_series_at_intersections(grid_data, intersect_weights):
     return grid_intersect_timeseries
 
 
-def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
+def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
     """Get closest points to line.
 
-    Finds n closest points from a CML within given offset distance. Note that the
-    function guarantees that all returned points are within offset distance to
-    the CML, not that all points that are within offset are returned. Uses
+    Finds n closest points from a CML within given max distance. Note that the
+    function guarantees that all returned points are within max distance to
+    the CML, not that all points that are within max distance are returned. Uses
     KDTree for fast processing of large datasets.
 
     Parameters
@@ -493,13 +493,13 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
     ds_cmls: xarray.Dataset
         Dataset of line data using the OpenSense naming convention for CMLs. It
         must contain the coordinate cml_id with the cml names. It must also
-        contain projected coordinates y_a, x_a, y_b and x_b as well as the
-        projected midpoint coorinates x and y and the CML length.
+        contain projected coordinates site_0_y, site_0_x, site_1_y and site_1_x
+        as well as the CML length.
     ds_gauges: xarray.Dataset
         Dataset of point data using the OpenSense data format conventions for PWS.
         The dataset must contain the coordinate 'id' with the PWS names. It must
         also contain projected coordinates x and y.
-    offset: float
+    max_distance: float
         Maximum distance a point can have to the CML, measured as the smallest
         distance from the point to the line. Points outside this range is not
         considered close to the CML.
@@ -515,16 +515,12 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
 
     """
     # transfer raingauge and CML coordinates to numpy, for faster access in loop
-    coords_cml = np.hstack(
-        [ds_cmls.y.data.reshape(-1, 1), ds_cmls.x.data.reshape(-1, 1)]
-    )
-
     coords_cml_a = np.hstack(
-        [ds_cmls.y_a.data.reshape(-1, 1), ds_cmls.x_a.data.reshape(-1, 1)]
+        [ds_cmls.site_0_y.data.reshape(-1, 1), ds_cmls.site_0_x.data.reshape(-1, 1)]
     )
 
     coords_cml_b = np.hstack(
-        [ds_cmls.y_b.data.reshape(-1, 1), ds_cmls.x_b.data.reshape(-1, 1)]
+        [ds_cmls.site_1_y.data.reshape(-1, 1), ds_cmls.site_1_x.data.reshape(-1, 1)]
     )
 
     coords_gauge = np.hstack(
@@ -533,8 +529,16 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
 
     cml_lengths = ds_cmls.length.data / 2
 
-    # extend offset to include diagonal length
-    offset_add = np.sqrt(2 * offset**2)
+    # calculate CML midpoints by using the average of site a and b
+    coords_cml = np.hstack(
+        [
+            ((coords_cml_a[:, 0] + coords_cml_b[:, 0]) / 2).reshape(-1, 1),
+            ((coords_cml_a[:, 1] + coords_cml_b[:, 1]) / 2).reshape(-1, 1),
+        ]
+    )
+
+    # extend max_distance to include diagonal length
+    max_distance_add = np.sqrt(2 * max_distance**2)
 
     # array for storing indices of gauges close to CML, -1 represent no gauge
     list_gauges = np.ones([ds_cmls.cml_id.size, n_closest]).astype(int) * (-1)
@@ -550,12 +554,14 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
         kd_tree1 = KDTree([coords_cml[i]])  # select cml i
 
         # find points within
-        sdm = kd_tree1.sparse_distance_matrix(kd_tree2, cml_lengths[i] + offset_add)
+        sdm = kd_tree1.sparse_distance_matrix(
+            kd_tree2, cml_lengths[i] + max_distance_add
+        )
 
         # to sparese distance matrix
         sdm_coo = sdm.tocoo()
 
-        # get indices of gauges within offset
+        # get indices of gauges within max_distance
         non_zero_cols = sdm_coo.col
 
         # create line object for this CML
@@ -575,8 +581,8 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, offset, n_closest):
         # get indices of gauges close to CML
         ind_closest_gauges = non_zero_cols[sorted_indices[0:n_closest]]
 
-        # remove points outside offset
-        d_to_closest_gauges[d_to_closest_gauges > offset] = np.nan
+        # remove points outside max_distance
+        d_to_closest_gauges[d_to_closest_gauges > max_distance] = np.nan
         ind_closest_gauges = ind_closest_gauges[~np.isnan(d_to_closest_gauges)]
 
         # store results for this CML

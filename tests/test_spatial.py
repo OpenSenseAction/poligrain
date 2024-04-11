@@ -385,10 +385,10 @@ ds_cmls = xr.Dataset(
         "time": ("time", np.arange(0, 4)),
         "x": ("cml_id", [0, 1, 1]),
         "y": ("cml_id", [0, 0, 2]),
-        "x_a": ("cml_id", [-1, 0, 0]),
-        "y_a": ("cml_id", [-1, -1, 1]),
-        "x_b": ("cml_id", [1, 2, 2]),
-        "y_b": ("cml_id", [1, 1, 3]),
+        "site_0_x": ("cml_id", [-1, 0, 0]),
+        "site_0_y": ("cml_id", [-1, -1, 1]),
+        "site_1_x": ("cml_id", [1, 2, 2]),
+        "site_1_y": ("cml_id", [1, 1, 3]),
         "length": ("cml_id", [2, 2, 2]),
     },
 )
@@ -457,11 +457,29 @@ def test_calc_point_to_point_distances():
 
 
 def test_get_closest_points_to_line():
+    # Test that the correct distance is calculated and cml-gauge pairs identified
     closest_gauges = plg.spatial.get_closest_points_to_line(
-        ds_cmls=ds_cmls, ds_gauges=ds_gauge.sel(id=["g2", "g3"]), offset=3, n_closest=1
+        ds_cmls=ds_cmls,
+        ds_gauges=ds_gauge.sel(id=["g2", "g3"]),
+        max_distance=2,
+        n_closest=1,
     )
+
     expected = np.array([[0], [0], [np.sqrt(2) / 2]])
 
     assert closest_gauges.distance.data == pytest.approx(expected, abs=1e-6)
     assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
     assert list(closest_gauges.id_neighbor.data) == ["g3", "g2", "g3"]  # g3 is close
+
+    # Test that getting the 2 nearest gauges for cml 3 sets nan when the
+    # maximum distance is too short
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls,
+        ds_gauges=ds_gauge.sel(id=["g2", "g3"]),
+        max_distance=1,
+        n_closest=2,
+    )
+
+    expected = np.array([[False, False], [False, False], [False, True]])
+
+    assert (np.isnan(closest_gauges.distance.data) == expected).all()
