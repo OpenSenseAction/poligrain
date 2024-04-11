@@ -383,8 +383,6 @@ ds_cmls = xr.Dataset(
     coords={
         "cml_id": ("cml_id", ["cml1", "cml2", "cml3"]),
         "time": ("time", np.arange(0, 4)),
-        "x": ("cml_id", [0, 1, 1]),
-        "y": ("cml_id", [0, 0, 2]),
         "site_0_x": ("cml_id", [-1, 0, 0]),
         "site_0_y": ("cml_id", [-1, -1, 1]),
         "site_1_x": ("cml_id", [1, 2, 2]),
