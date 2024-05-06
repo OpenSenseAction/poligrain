@@ -437,3 +437,18 @@ def test_calc_point_to_point_distances():
     assert distance_matrix.data == pytest.approx(expected, abs=1e-6)
     assert list(distance_matrix.id.data) == ["g1", "g2", "g3"]
     assert list(distance_matrix.id_neighbor.data) == ["g2", "g3"]
+
+    # Test with max_distance to get sparse matrix
+    distance_matrix = plg.spatial.calc_point_to_point_distances(
+        ds_points_a=ds_gauge,
+        ds_points_b=ds_gauge.sel(id=["g2", "g3"]),
+        max_distance=1,
+    )
+    expected = np.array(
+        [
+            [1, np.sqrt(2)],
+            [0, 1],
+            [1, 0],
+        ]
+    )
+    assert distance_matrix.data.todense() == pytest.approx(expected, abs=1e-6)

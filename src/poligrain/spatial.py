@@ -87,7 +87,10 @@ def project_point_coordinates(
 
 
 def calc_point_to_point_distances(
-    ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
+    ds_points_a: xr.DataArray | xr.Dataset,
+    ds_points_b: xr.DataArray | xr.Dataset,
+    max_distance: float | None = None,
+    allow_large_dense_matrix: bool = False,
 ) -> xr.DataArray:
     """Calculate the distance between the point coordinates of two datasets.
 
@@ -110,10 +113,26 @@ def calc_point_to_point_distances(
     x_a, y_a = get_point_xy(ds_points_a)
     x_b, y_b = get_point_xy(ds_points_b)
 
-    distance_matrix = scipy.spatial.distance_matrix(
-        x=list(zip(x_a.values, y_a.values)),
-        y=list(zip(x_b.values, y_b.values)),
-    )
+    if max_distance is None:
+        N_matrix = len(x_a) * len(x_b)
+        if not allow_large_dense_matrix and N_matrix > 1000 * 1000:
+            msg = (
+                "Calculating a large dense distance matrix with"
+                f"{len(x_a)} x {len(x_b)} entries is not allowed"
+            )
+            raise ValueError(msg)
+        distance_matrix = scipy.spatial.distance_matrix(
+            x=list(zip(x_a.values, y_a.values)),
+            y=list(zip(x_b.values, y_b.values)),
+        )
+    else:
+        tree_a = scipy.spatial.KDTree(data=list(zip(x_a.values, y_a.values)))
+        tree_b = scipy.spatial.KDTree(data=list(zip(x_b.values, y_b.values)))
+        distance_matrix = tree_a.sparse_distance_matrix(
+            tree_b,
+            max_distance=max_distance,
+        )
+        distance_matrix = sparse.COO.from_scipy_sparse(distance_matrix)
 
     dim_a = x_a.dims[0]
     dim_b = x_b.dims[0] + "_neighbor"
