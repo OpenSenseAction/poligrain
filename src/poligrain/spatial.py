@@ -86,6 +86,55 @@ def project_point_coordinates(
     return x_projected, y_projected
 
 
+def get_closest_points_to_point(
+    ds_points, ds_points_neighbors, max_distance, n_closets
+):
+    """_summary_ bla.
+
+    Parameters
+    ----------
+    ds_points : _type_
+        _description_
+    ds_points_neighbors : _type_
+        _description_
+    max_distance : _type_
+        _description_
+    n_closets : _type_
+        _description_
+    """
+    x, y = get_point_xy(ds_points)
+    x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
+    tree_neighbors = scipy.spatial.KDTree(
+        data=list(zip(x_neighbors.values, y_neighbors.values))
+    )
+    distances, ixs = tree_neighbors.query(
+        list(zip(x.values, y.values)),
+        k=n_closets,
+        distance_upper_bound=max_distance,
+    )
+    # Where no neighboring station within max_distance was found the ixs is
+    # filled with the value n, the length of the neighbor dataset. We want to
+    # return NaN as ID in the cases the index is n. For this we must pad the
+    # array of neighbor IDs with NaN, and then slice off the padding on the left.
+    # This way the index n points to this last entry on the right which has NaNs.
+    # Note that `constant_values=None` results in nan from numpy.float64, while
+    # `constant_values=np.nan` results in a string `nan`.
+    id_neighbors_nan_padded = ds_points_neighbors.id.pad(
+        id=1,
+        mode="constant",
+        constant_values=None,
+    ).isel(id=slice(1, None))
+    neighbor_ids = id_neighbors_nan_padded.data[ixs]
+
+    return xr.Dataset(
+        data_vars={
+            "distance": (("id", "n_closest"), distances),
+            "neighbor_id": (("id", "n_closest"), neighbor_ids),
+        },
+        coords={"id": ds_points.id},
+    )
+
+
 def calc_point_to_point_distances(
     ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
