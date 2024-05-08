@@ -382,6 +382,23 @@ def test_get_point_xy():
     assert x.data == pytest.approx(np.array([0, 1, 1]))
     assert y.data == pytest.approx(np.array([0, 0, 1]))
 
+    # check for case with only one point
+    x, y = plg.spatial.get_point_xy(ds_points=ds_gauge.isel(id=0))
+    assert x.data == pytest.approx(
+        np.array(
+            [
+                0,
+            ]
+        )
+    )
+    assert y.data == pytest.approx(
+        np.array(
+            [
+                0,
+            ]
+        )
+    )
+
 
 def test_project_point_coordinates():
     lon, lat = ds_gauge.lon, ds_gauge.lat
