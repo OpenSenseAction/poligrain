@@ -399,6 +399,13 @@ def test_get_point_xy():
         )
     )
 
+    # check for case where x is 2D (which should not happen, but we
+    # have to test the raise)
+    a = np.ones((2, 3))
+    ds_foo = xr.Dataset(coords={"x": (("foo", "bar"), a), "y": (("foo", "bar"), a)})
+    with pytest.raises(ValueError, match="x and y should be 1D or 0D, but are 2D."):
+        x, y = plg.spatial.get_point_xy(ds_points=ds_foo)
+
 
 def test_project_point_coordinates():
     lon, lat = ds_gauge.lon, ds_gauge.lat
