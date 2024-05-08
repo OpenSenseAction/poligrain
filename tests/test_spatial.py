@@ -387,7 +387,7 @@ ds_cmls = xr.Dataset(
         "site_0_y": ("cml_id", [-1, -1, 1]),
         "site_1_x": ("cml_id", [1, 2, 2]),
         "site_1_y": ("cml_id", [1, 1, 3]),
-        "length": ("cml_id", [2, 2, 2]),
+        "length": ("cml_id", [2 * np.sqrt(2), 2 * np.sqrt(2), 2 * np.sqrt(2)]),
     },
 )
 
@@ -463,9 +463,9 @@ def test_get_closest_points_to_line():
         n_closest=1,
     )
 
-    expected = np.array([[0], [0], [np.sqrt(2) / 2]])
+    expected_distances = np.array([[0], [0], [np.sqrt(2) / 2]]).reshape(-1, 1)
 
-    assert closest_gauges.distance.data == pytest.approx(expected, abs=1e-6)
+    assert closest_gauges.distance.data == pytest.approx(expected_distances, abs=1e-6)
     assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
     assert list(closest_gauges.id_neighbor.data) == ["g3", "g2", "g3"]  # g3 is close
 
