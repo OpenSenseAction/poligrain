@@ -384,20 +384,8 @@ def test_get_point_xy():
 
     # check for case with only one point
     x, y = plg.spatial.get_point_xy(ds_points=ds_gauge.isel(id=0))
-    assert x.data == pytest.approx(
-        np.array(
-            [
-                0,
-            ]
-        )
-    )
-    assert y.data == pytest.approx(
-        np.array(
-            [
-                0,
-            ]
-        )
-    )
+    assert x.data == pytest.approx(np.array([0]))
+    assert y.data == pytest.approx(np.array([0]))
 
     # check for case where x is 2D (which should not happen, but we
     # have to test the raise)
