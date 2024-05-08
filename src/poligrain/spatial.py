@@ -511,10 +511,11 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
     closest_gauges: xarray.Dataset
         Dataset with CML ids and corresponding n_closest point names and distance.
         If a CML has less that "n_closest" nearby points, the reminding entries
-        are filled with 'nan'.
+        in variable "distance" are filled with np.nan and the reminding entries
+        in variable "id_neighbor" are filled with None.
 
     """
-    # transfer raingauge and CML coordinates to numpy, for faster access in loop
+    # Transfer raingauge and CML coordinates to numpy, for faster access in loop
     coords_cml_a = np.hstack(
         [ds_cmls.site_0_y.data.reshape(-1, 1), ds_cmls.site_0_x.data.reshape(-1, 1)]
     )
@@ -527,9 +528,10 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
         [ds_gauges.y.data.reshape(-1, 1), ds_gauges.x.data.reshape(-1, 1)]
     )
 
-    cml_lengths = ds_cmls.length.data / 2
+    # Store half length of CML for fast lookup when setting max_distance
+    cml_half_lengths = ds_cmls.length.data / 2
 
-    # calculate CML midpoints by using the average of site a and b
+    # Calculate CML midpoints by using the average of site a and b
     coords_cml = np.hstack(
         [
             ((coords_cml_a[:, 0] + coords_cml_b[:, 0]) / 2).reshape(-1, 1),
@@ -537,67 +539,62 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
         ]
     )
 
-    # extend max_distance to include diagonal length
-    max_distance_add = np.sqrt(2 * max_distance**2)
+    # Array for storing name of gauges close to CML
+    list_gauges = np.full([ds_cmls.cml_id.size, n_closest], None)
 
-    # array for storing indices of gauges close to CML, -1 represent no gauge
-    list_gauges = np.ones([ds_cmls.cml_id.size, n_closest]).astype(int) * (-1)
+    # Array for storing distances between nearby gauges and CML
+    cml_gauge_dist = np.full([ds_cmls.cml_id.size, n_closest], np.nan)
 
-    # array for storing distances from CML to close gauges
-    cml_gauge_dist = np.zeros([ds_cmls.cml_id.size, n_closest]) * np.nan
-
-    # create KDTree object for all gauges
-    kd_tree2 = KDTree(coords_gauge)
+    # Create KDTree object for all gauges
+    kd_tree = KDTree(coords_gauge)
 
     for i in range(len(ds_cmls.cml_id)):
-        # create KDTree object for midpoint of CML_i
-        kd_tree1 = KDTree([coords_cml[i]])  # select cml i
-
-        # find points within
-        sdm = kd_tree1.sparse_distance_matrix(
-            kd_tree2, cml_lengths[i] + max_distance_add
+        # Query KDTree for all points within max_distance +
+        # cml_half_lengths from the CML midpoint
+        ind_nearest_gauges = kd_tree.query_ball_point(
+            coords_cml[i],
+            cml_half_lengths[i] + max_distance,
         )
 
-        # to sparese distance matrix
-        sdm_coo = sdm.tocoo()
+        # Ensure array this is always an array
+        ind_nearest_gauges = np.atleast_1d(ind_nearest_gauges)
 
-        # get indices of gauges within max_distance
-        non_zero_cols = sdm_coo.col
-
-        # create line object for this CML
+        # Create line object for current CML
         line = LineString([coords_cml_a[i], coords_cml_b[i]])
 
-        # calculate distance from CML to close gauges
-        d_to_gauges = line.distance(
-            [Point([coords_gauge[j, 0], coords_gauge[j, 1]]) for j in non_zero_cols]
+        # Calculate the precise distances to nearby gauges
+        distances = np.array(
+            [
+                line.distance(Point(coords_gauge[ind]))
+                if ind != len(coords_gauge)
+                else np.nan
+                for ind in ind_nearest_gauges
+            ]
         )
 
-        # sort distances and get corresponding indices
-        sorted_indices = np.argsort(d_to_gauges)
+        # Set distances above max_distance to nan
+        distances[distances > max_distance] = np.nan
 
-        # get distance of gauges close to CML
-        d_to_closest_gauges = d_to_gauges[sorted_indices[0:n_closest]]
+        # Get indices of the smallest values (get the closest ones first)
+        dist_sort_ind = np.argsort(distances)
 
-        # get indices of gauges close to CML
-        ind_closest_gauges = non_zero_cols[sorted_indices[0:n_closest]]
+        # Select the n_closest gauges if more than 'n_closest' near cml
+        if dist_sort_ind.size > n_closest:
+            dist_sort_ind = dist_sort_ind[:n_closest]
 
-        # remove points outside max_distance
-        d_to_closest_gauges[d_to_closest_gauges > max_distance] = np.nan
-        ind_closest_gauges = ind_closest_gauges[~np.isnan(d_to_closest_gauges)]
+        # Get the indices of the corresponding gauges
+        gauge_ind = ind_nearest_gauges[dist_sort_ind]
 
-        # store results for this CML
-        list_gauges[i, : ind_closest_gauges.size] = ind_closest_gauges
+        # store results
+        if gauge_ind.size > 0:
+            list_gauges[i, : dist_sort_ind.size] = ds_gauges.id.data[gauge_ind]
+            cml_gauge_dist[i, : dist_sort_ind.size] = distances[dist_sort_ind]
 
-        cml_gauge_dist[i, : d_to_closest_gauges.size] = d_to_closest_gauges
-
-    # create xarray object showing name and distance from cml to nearest points
+    # Create xarray object showing name and distance from cml to nearest points
     return xr.Dataset(
         data_vars={
             "distance": (("cml_id", "n_closest"), cml_gauge_dist),
-            "id_neighbor": (
-                ("cml_id", "n_closest"),
-                np.where(list_gauges == -1, np.nan, ds_gauges.id.data[list_gauges]),
-            ),
+            "id_neighbor": (("cml_id", "n_closest"), list_gauges),
         },
         coords={
             "cml_id": ds_cmls.cml_id.data,
