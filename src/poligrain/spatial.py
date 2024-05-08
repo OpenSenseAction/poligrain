@@ -594,9 +594,9 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
     return xr.Dataset(
         data_vars={
             "distance": (("cml_id", "n_closest"), cml_gauge_dist),
-            "id_neighbor": (("cml_id", "n_closest"), list_gauges),
+            "neighbor_id": (("cml_id", "n_closest"), list_gauges),
         },
         coords={
-            "cml_id": ds_cmls.cml_id.data,
+            "cml_id": ds_cmls.cml_id,
         },
     )

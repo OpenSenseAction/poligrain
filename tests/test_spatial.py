@@ -467,7 +467,7 @@ def test_get_closest_points_to_line():
 
     assert closest_gauges.distance.data == pytest.approx(expected_distances, abs=1e-6)
     assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
-    assert list(closest_gauges.id_neighbor.data) == ["g3", "g2", "g3"]  # g3 is close
+    assert list(closest_gauges.neighbor_id.data) == ["g3", "g2", "g3"]  # g3 is close
 
     # Test that getting the 2 nearest gauges for cml 3 sets nan when the
     # maximum distance is too short
