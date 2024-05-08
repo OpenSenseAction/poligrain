@@ -449,22 +449,24 @@ def test_get_closest_points_to_point():
         closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
     ).all()
 
-    # check for different parameters
+    # check with different parameters
     closest_neighbors = plg.spatial.get_closest_points_to_point(
         ds_points=ds_gauge.sel(id=["g2", "g3"]),
         ds_points_neighbors=ds_gauge,
         max_distance=2,
-        n_closest=5,
+        n_closest=4,
     )
     assert closest_neighbors.distance.data[1, 2] == pytest.approx(1.414213562, abs=1e-6)
+    assert closest_neighbors.distance.data.shape == (2, 4)
 
+    # check case with n_closest=1
     closest_neighbors = plg.spatial.get_closest_points_to_point(
         ds_points=ds_gauge.sel(id=["g2", "g3"]),
         ds_points_neighbors=ds_gauge,
         max_distance=2,
-        n_closest=3,
+        n_closest=1,
     )
-    assert closest_neighbors.distance.data.shape == (2, 3)
+    assert closest_neighbors.distance.data.shape == (2, 1)
 
 
 def test_calc_point_to_point_distances():
