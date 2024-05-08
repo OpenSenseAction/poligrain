@@ -87,7 +87,10 @@ def project_point_coordinates(
 
 
 def get_closest_points_to_point(
-    ds_points, ds_points_neighbors, max_distance, n_closets
+    ds_points,
+    ds_points_neighbors,
+    max_distance,
+    n_closest,
 ):
     """_summary_ bla.
 
@@ -99,7 +102,7 @@ def get_closest_points_to_point(
         _description_
     max_distance : _type_
         _description_
-    n_closets : _type_
+    n_closest : _type_
         _description_
     """
     x, y = get_point_xy(ds_points)
@@ -109,7 +112,7 @@ def get_closest_points_to_point(
     )
     distances, ixs = tree_neighbors.query(
         list(zip(x.values, y.values)),
-        k=n_closets,
+        k=n_closest,
         distance_upper_bound=max_distance,
     )
     # Where no neighboring station within max_distance was found the ixs is
