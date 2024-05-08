@@ -107,8 +107,9 @@ def get_closest_points_to_point(
     ds_points_neighbors : xr.DataArray | xr.Dataset
         This is the dataset from which the nearest neighbors will be looked up.
     max_distance : float
-        The maximal allowed distance of neighbors, given in the units used for the
-        projected coordinates `x` and `y` in the two datasets.
+        The allowed distance of neighbors has to be smaller than `max_distance`.
+        The unites are the units used for the projected coordinates `x` and
+        `y` in the two datasets.
     n_closest : int
         The maximum number of nearest neighbors to be returned.
 

@@ -423,6 +423,50 @@ def test_project_point_coordinates():
     assert list(y.id.data) == ["g1", "g2", "g3"]
 
 
+def test_get_closest_points_to_point():
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=1.1,
+        n_closest=5,
+    )
+    expected_distances = np.array(
+        [[0.0, 1.0, 1.0, np.inf, np.inf], [0.0, 1.0, np.inf, np.inf, np.inf]]
+    )
+    nan = np.float64(np.nan)
+    expected_neighbor_ids = np.array(
+        [["g2", "g3", "g1", nan, nan], ["g3", "g2", nan, nan, nan]], dtype=object
+    )
+
+    assert closest_neighbors.distance.data == pytest.approx(
+        expected_distances, abs=1e-6
+    )
+    assert (
+        closest_neighbors.neighbor_id.data[expected_distances != np.inf]
+        == expected_neighbor_ids[expected_distances != np.inf]
+    ).all()
+    assert np.isnan(
+        closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
+    ).all()
+
+    # check for different parameters
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=5,
+    )
+    assert closest_neighbors.distance.data[1, 2] == pytest.approx(1.414213562, abs=1e-6)
+
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=3,
+    )
+    assert closest_neighbors.distance.data.shape == (2, 3)
+
+
 def test_calc_point_to_point_distances():
     distance_matrix = plg.spatial.calc_point_to_point_distances(
         ds_points_a=ds_gauge, ds_points_b=ds_gauge.sel(id=["g2", "g3"])
