@@ -87,23 +87,39 @@ def project_point_coordinates(
 
 
 def get_closest_points_to_point(
-    ds_points,
-    ds_points_neighbors,
-    max_distance,
-    n_closest,
-):
-    """_summary_ bla.
+    ds_points: xr.DataArray | xr.Dataset,
+    ds_points_neighbors: xr.DataArray | xr.Dataset,
+    max_distance: float,
+    n_closest: int,
+) -> xr.Dataset:
+    """Get the closest points for given point locations.
+
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
 
     Parameters
     ----------
-    ds_points : _type_
-        _description_
-    ds_points_neighbors : _type_
-        _description_
-    max_distance : _type_
-        _description_
-    n_closest : _type_
-        _description_
+    ds_points : xr.DataArray | xr.Dataset
+        This is the dataset for which the nearest neighbors will be looked up. That is,
+        for each point location in this dataset the nearest neighbors from
+        `ds_points_neighbors` will be returned.
+    ds_points_neighbors : xr.DataArray | xr.Dataset
+        This is the dataset from which the nearest neighbors will be looked up.
+    max_distance : float
+        The maximal allowed distance of neighbors, given in the units used for the
+        projected coordinates `x` and `y` in the two datasets.
+    n_closest : int
+        The maximum number of nearest neighbors to be returned.
+
+    Returns
+    -------
+    xr.Dataset
+        A dataset which has `distance` and `neighbor_id` as variables along the
+        dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
+        distance follows from the unit of the projected coordinates of the input
+        datasets. The `neighbor_id` entries for point locations that are further
+        away then `max_distance` are set to NaN.
     """
     x, y = get_point_xy(ds_points)
     x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
@@ -115,11 +131,12 @@ def get_closest_points_to_point(
         k=n_closest,
         distance_upper_bound=max_distance,
     )
-    # Where no neighboring station within max_distance was found the ixs is
+    # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
     # return NaN as ID in the cases the index is n. For this we must pad the
-    # array of neighbor IDs with NaN, and then slice off the padding on the left.
-    # This way the index n points to this last entry on the right which has NaNs.
+    # array of neighbor IDs with NaN. Because padding is always done symmetrically,
+    # we have to slice off the padding on the left.
+    # This way the index n points to this last entry on the right which now has NaNs.
     # Note that `constant_values=None` results in nan from numpy.float64, while
     # `constant_values=np.nan` results in a string `nan`.
     id_neighbors_nan_padded = ds_points_neighbors.id.pad(
@@ -143,12 +160,16 @@ def calc_point_to_point_distances(
 ) -> xr.DataArray:
     """Calculate the distance between the point coordinates of two datasets.
 
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
+
     Parameters
     ----------
     ds_points_a : xr.DataArray | xr.Dataset
-        _description_
+        One dataset of points.
     ds_points_b : xr.DataArray | xr.Dataset
-        _description_
+        The other dataset of points.
 
     Returns
     -------
