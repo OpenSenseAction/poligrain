@@ -489,6 +489,17 @@ def test_get_closest_points_to_point():
     )
     assert closest_neighbors.distance.data.shape == (1, 2)
 
+    # check case with only one station in `ds_points`
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge,
+        ds_points_neighbors=ds_gauge.sel(id="g2"),
+        max_distance=2,
+        n_closest=2,
+    )
+    expected_neighbor_ids = np.array(
+        [["g2", nan], ["g2", nan], ["g2", nan]], dtype=object
+    )
+
 
 def test_calc_point_to_point_distances():
     distance_matrix = plg.spatial.calc_point_to_point_distances(
