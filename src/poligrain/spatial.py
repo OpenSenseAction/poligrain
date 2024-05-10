@@ -152,17 +152,19 @@ def get_closest_points_to_point(
         ds_points_neighbors = ds_points_neighbors.expand_dims("id")
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
-    # return NaN as ID in the cases the index is n. For this we must pad the
-    # array of neighbor IDs with NaN. Because padding is always done symmetrically,
-    # we have to slice off the padding on the left.
-    # This way the index n points to this last entry on the right which now has NaNs.
-    # Note that `constant_values=None` results in nan from numpy.float64, while
-    # `constant_values=np.nan` results in a string `nan`.
+    # return None as ID in the cases the index is n. For this we must pad the
+    # array of neighbor IDs with None. Because padding is always done symmetrically,
+    # we have to slice off the padding on the left. But we cannot pad directly with
+    # None. We get NaN even if we do `.pad(constant_values=None)`. Hence, we fill
+    # the NaNs we get from padding with None afterwards.
+    # This way the index n points to this last entry on the right which we want to
+    # be None.
     id_neighbors_nan_padded = ds_points_neighbors.id.pad(
         id=1,
         mode="constant",
-        constant_values=None,
     ).isel(id=slice(1, None))
+    id_isnan = id_neighbors_nan_padded.id.isnull()  # noqa: PD003
+    id_neighbors_nan_padded = xr.where(id_isnan, None, id_neighbors_nan_padded.id)
     neighbor_ids = id_neighbors_nan_padded.data[ixs]
 
     # Make sure that `id` dimension is not 0, which happens if input only
