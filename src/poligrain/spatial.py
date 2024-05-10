@@ -163,8 +163,10 @@ def get_closest_points_to_point(
         id=1,
         mode="constant",
     ).isel(id=slice(1, None))
-    id_isnan = id_neighbors_nan_padded.id.isnull()  # noqa: PD003
-    id_neighbors_nan_padded = xr.where(id_isnan, None, id_neighbors_nan_padded.id)
+    id_neighbors_nan_padded = id_neighbors_nan_padded.where(
+        ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
+        None,
+    )
     neighbor_ids = id_neighbors_nan_padded.data[ixs]
 
     # Make sure that `id` dimension is not 0, which happens if input only
