@@ -34,16 +34,15 @@ def get_point_xy(
         x and y as xr.DataArray
     """
     assert ds_points.x.dims == ds_points.y.dims
+    if len(ds_points.x.dims) > 1:
+        msg = f"x and y should be 1D or 0D, but are {len(ds_points.x.dims)}D."
+        raise ValueError(msg)
     if len(ds_points.x.dims) == 0:
         return (
             ds_points.x.expand_dims(dim={"id": 1}),
             ds_points.y.expand_dims(dim={"id": 1}),
         )
-    elif len(ds_points.x.dims) == 1:  # noqa: RET505
-        return ds_points.x, ds_points.y
-    else:
-        msg = f"x and y should be 1D or 0D, but are {len(ds_points.x.dims)}D."
-        raise ValueError(msg)
+    return ds_points.x, ds_points.y
 
 
 def project_point_coordinates(
