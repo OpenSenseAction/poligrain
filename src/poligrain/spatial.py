@@ -146,10 +146,11 @@ def get_closest_points_to_point(
     distances = np.atleast_2d(distances.T).T
     ixs = np.atleast_2d(ixs.T).T
 
-    # Maker sure that we have 'id' dimension in case only one station is there
-    # in ds_points_neighbors
+    # Make sure that we have 'id' dimension in case only one station is there
+    # in ds_points_neighbors because e.g. ds.isel(id=0) was used to subset.
     if "id" not in ds_points_neighbors.dims:
         ds_points_neighbors = ds_points_neighbors.expand_dims("id")
+
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
     # return None as ID in the cases the index is n. For this we must pad the
@@ -170,7 +171,7 @@ def get_closest_points_to_point(
     neighbor_ids = id_neighbors_nan_padded.data[ixs]
 
     # Make sure that `id` dimension is not 0, which happens if input only
-    # has one station
+    # has one station e.g. because ds.isel(id=0) was used to subset.
     if ds_points.id.ndim == 0:
         ds_points = ds_points.expand_dims("id")
 
