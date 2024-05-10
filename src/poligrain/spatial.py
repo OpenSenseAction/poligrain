@@ -126,7 +126,7 @@ def get_closest_points_to_point(
         dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
         distance follows from the unit of the projected coordinates of the input
         datasets. The `neighbor_id` entries for point locations that are further
-        away then `max_distance` are set to NaN.
+        away then `max_distance` are set to None. The according distances are np.inf.
     """
     x, y = get_point_xy(ds_points)
     x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
