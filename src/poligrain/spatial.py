@@ -139,6 +139,14 @@ def get_closest_points_to_point(
         k=n_closest,
         distance_upper_bound=max_distance,
     )
+    # Note that we need to transpose to have the extended dimension, which
+    # is the one for `n_closest` in the xr.Dataset later on, as last dimension.
+    # To preserve an existing 2D array we need to transpose also before applying
+    # `at_least2d` so that we have two times a transpose and get the origianl 2D
+    # array.
+    distances = np.atleast_2d(distances.T).T
+    ixs = np.atleast_2d(ixs.T).T
+
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
     # return NaN as ID in the cases the index is n. For this we must pad the
@@ -154,12 +162,13 @@ def get_closest_points_to_point(
     ).isel(id=slice(1, None))
     neighbor_ids = id_neighbors_nan_padded.data[ixs]
 
+    ids = ds_points.id.expand_dims("id") if ds_points.id.ndim == 0 else ds_points.id
     return xr.Dataset(
         data_vars={
             "distance": (("id", "n_closest"), distances),
             "neighbor_id": (("id", "n_closest"), neighbor_ids),
         },
-        coords={"id": ds_points.id},
+        coords={"id": ids},
     )
 
 
