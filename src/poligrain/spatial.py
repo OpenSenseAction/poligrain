@@ -147,6 +147,10 @@ def get_closest_points_to_point(
     distances = np.atleast_2d(distances.T).T
     ixs = np.atleast_2d(ixs.T).T
 
+    # Maker sure that we have 'id' dimension in case only one station is there
+    # in ds_points_neighbors
+    if "id" not in ds_points_neighbors.dims:
+        ds_points_neighbors = ds_points_neighbors.expand_dims("id")
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
     # return NaN as ID in the cases the index is n. For this we must pad the
