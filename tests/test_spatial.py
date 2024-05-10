@@ -481,3 +481,13 @@ def test_get_closest_points_to_line():
     expected = np.array([[False, False], [False, False], [False, True]])
 
     assert (np.isnan(closest_gauges.distance.data) == expected).all()
+
+    # Test that when selecting only 1 CML or gauge the dimension is restored
+    # and the function runs as normal
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls.isel(cml_id=0),
+        ds_gauges=ds_gauge.sel(id="g2"),
+        max_distance=1,
+        n_closest=2,
+    )
+    assert closest_gauges.cml_id.size == 1

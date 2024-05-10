@@ -515,6 +515,14 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
         in variable "id_neighbor" are filled with None.
 
     """
+    # Add dim "cml_id" if not present, for instance if user selects only 1 cml
+    if "cml_id" not in ds_cmls.dims:
+        ds_cmls = ds_cmls.expand_dims("cml_id")
+
+    # Add dim "id" if not present, for instance if user selects only 1 gauge
+    if "id" not in ds_gauges.dims:
+        ds_gauges = ds_gauges.expand_dims("id")
+
     # Transfer raingauge and CML coordinates to numpy, for faster access in loop
     coords_cml_a = np.hstack(
         [ds_cmls.site_0_y.data.reshape(-1, 1), ds_cmls.site_0_x.data.reshape(-1, 1)]
@@ -529,7 +537,7 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
     )
 
     # Store half length of CML for fast lookup when setting max_distance
-    cml_half_lengths = ds_cmls.length.data / 2
+    cml_half_lengths = np.atleast_1d(ds_cmls.length.data / 2)
 
     # Calculate CML midpoints by using the average of site a and b
     coords_cml = np.hstack(
