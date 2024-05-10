@@ -165,13 +165,17 @@ def get_closest_points_to_point(
     ).isel(id=slice(1, None))
     neighbor_ids = id_neighbors_nan_padded.data[ixs]
 
-    ids = ds_points.id.expand_dims("id") if ds_points.id.ndim == 0 else ds_points.id
+    # Make sure that `id` dimension is not 0, which happens if input only
+    # has one station
+    if ds_points.id.ndim == 0:
+        ds_points = ds_points.expand_dims("id")
+
     return xr.Dataset(
         data_vars={
             "distance": (("id", "n_closest"), distances),
             "neighbor_id": (("id", "n_closest"), neighbor_ids),
         },
-        coords={"id": ids},
+        coords={"id": ds_points.id.data},
     )
 
 
