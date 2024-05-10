@@ -445,9 +445,8 @@ def test_get_closest_points_to_point():
     expected_distances = np.array(
         [[0.0, 1.0, 1.0, np.inf, np.inf], [0.0, 1.0, np.inf, np.inf, np.inf]]
     )
-    nan = np.float64(np.nan)
     expected_neighbor_ids = np.array(
-        [["g2", "g3", "g1", nan, nan], ["g3", "g2", nan, nan, nan]], dtype=object
+        [["g2", "g3", "g1", None, None], ["g3", "g2", None, None, None]], dtype=object
     )
 
     assert closest_neighbors.distance.data == pytest.approx(
@@ -460,6 +459,7 @@ def test_get_closest_points_to_point():
     assert np.isnan(
         closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
     ).all()
+    assert closest_neighbors.neighbor_id.data[0, 3] is None
 
     # check with different parameters
     closest_neighbors = plg.spatial.get_closest_points_to_point(
@@ -497,7 +497,7 @@ def test_get_closest_points_to_point():
         n_closest=2,
     )
     expected_neighbor_ids = np.array(
-        [["g2", nan], ["g2", nan], ["g2", nan]], dtype=object
+        [["g2", None], ["g2", None], ["g2", None]], dtype=object
     )
 
 
