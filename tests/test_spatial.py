@@ -382,6 +382,18 @@ def test_get_point_xy():
     assert x.data == pytest.approx(np.array([0, 1, 1]))
     assert y.data == pytest.approx(np.array([0, 0, 1]))
 
+    # check for case with only one point
+    x, y = plg.spatial.get_point_xy(ds_points=ds_gauge.isel(id=0))
+    assert x.data == pytest.approx(np.array([0]))
+    assert y.data == pytest.approx(np.array([0]))
+
+    # check for case where x is 2D (which should not happen, but we
+    # have to test the raise)
+    a = np.ones((2, 3))
+    ds_foo = xr.Dataset(coords={"x": (("foo", "bar"), a), "y": (("foo", "bar"), a)})
+    with pytest.raises(ValueError, match="x and y should be 1D or 0D, but are 2D."):
+        x, y = plg.spatial.get_point_xy(ds_points=ds_foo)
+
 
 def test_project_point_coordinates():
     lon, lat = ds_gauge.lon, ds_gauge.lat
@@ -421,6 +433,73 @@ def test_project_point_coordinates():
     # Check that returned DataArray has correct ids
     assert list(x.id.data) == ["g1", "g2", "g3"]
     assert list(y.id.data) == ["g1", "g2", "g3"]
+
+
+def test_get_closest_points_to_point():
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=1.1,
+        n_closest=5,
+    )
+    expected_distances = np.array(
+        [[0.0, 1.0, 1.0, np.inf, np.inf], [0.0, 1.0, np.inf, np.inf, np.inf]]
+    )
+    expected_neighbor_ids = np.array(
+        [["g2", "g3", "g1", None, None], ["g3", "g2", None, None, None]], dtype=object
+    )
+    assert closest_neighbors.distance.data == pytest.approx(
+        expected_distances, abs=1e-6
+    )
+    assert (
+        closest_neighbors.neighbor_id.data[expected_distances != np.inf]
+        == expected_neighbor_ids[expected_distances != np.inf]
+    ).all()
+    assert np.isnan(
+        closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
+    ).all()
+    assert closest_neighbors.neighbor_id.data[0, 3] is None
+
+    # check with different parameters
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=4,
+    )
+    assert closest_neighbors.distance.data[1, 2] == pytest.approx(1.414213562, abs=1e-6)
+    assert closest_neighbors.distance.data.shape == (2, 4)
+
+    # check case with n_closest=1
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=1,
+    )
+    assert closest_neighbors.distance.data.shape == (2, 1)
+
+    # check case with only one station in `ds_points`
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id="g2"),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=2,
+    )
+    assert closest_neighbors.distance.data.shape == (1, 2)
+
+    # check case with only one station in `ds_points`
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge,
+        ds_points_neighbors=ds_gauge.sel(id="g2"),
+        max_distance=2,
+        n_closest=2,
+    )
+    expected_neighbor_ids = np.array(
+        [["g2", None], ["g2", None], ["g2", None]], dtype=object
+    )
+    assert closest_neighbors.neighbor_id.data[0, 0] == expected_neighbor_ids[0, 0]
+    assert closest_neighbors.neighbor_id.data[0, 1] == expected_neighbor_ids[0, 1]
 
 
 def test_calc_point_to_point_distances():
