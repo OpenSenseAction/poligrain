@@ -559,7 +559,7 @@ def test_get_closest_points_to_line():
 
     expected = np.array([[False, False], [False, False], [False, True]])
 
-    assert (np.isnan(closest_gauges.distance.data) == expected).all()
+    assert (np.isinf(closest_gauges.distance.data) == expected).all()
 
     # Test that when selecting only 1 CML or gauge the dimension is restored
     # and the function runs as normal
