@@ -4,6 +4,19 @@
 
 ### New features
 
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.0.4
+
+### New features
+
+- [PR 49](https://github.com/OpenSenseAction/poligrain/pull/49) Add
+  point-to_point nearest neighbor lookup (by
+  [@cchwala](https://github.com/cchwala))
 - [PR 24](https://github.com/OpenSenseAction/poligrain/pull/24) Allow to color
   CML paths when plotting on map using a cmap (by
   [@cchwala](https://github.com/cchwala))

@@ -34,9 +34,15 @@ def get_point_xy(
     tuple[xr.DataArray, xr.DataArray]
         x and y as xr.DataArray
     """
-    assert len(ds_points.x.dims) == 1
-    assert len(ds_points.y.dims) == 1
     assert ds_points.x.dims == ds_points.y.dims
+    if len(ds_points.x.dims) > 1:
+        msg = f"x and y should be 1D or 0D, but are {len(ds_points.x.dims)}D."
+        raise ValueError(msg)
+    if len(ds_points.x.dims) == 0:
+        return (
+            ds_points.x.expand_dims(dim={"id": 1}),
+            ds_points.y.expand_dims(dim={"id": 1}),
+        )
     return ds_points.x, ds_points.y
 
 
@@ -87,17 +93,113 @@ def project_point_coordinates(
     return x_projected, y_projected
 
 
+def get_closest_points_to_point(
+    ds_points: xr.DataArray | xr.Dataset,
+    ds_points_neighbors: xr.DataArray | xr.Dataset,
+    max_distance: float,
+    n_closest: int,
+) -> xr.Dataset:
+    """Get the closest points for given point locations.
+
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
+
+    Parameters
+    ----------
+    ds_points : xr.DataArray | xr.Dataset
+        This is the dataset for which the nearest neighbors will be looked up. That is,
+        for each point location in this dataset the nearest neighbors from
+        `ds_points_neighbors` will be returned.
+    ds_points_neighbors : xr.DataArray | xr.Dataset
+        This is the dataset from which the nearest neighbors will be looked up.
+    max_distance : float
+        The allowed distance of neighbors has to be smaller than `max_distance`.
+        The unites are the units used for the projected coordinates `x` and
+        `y` in the two datasets.
+    n_closest : int
+        The maximum number of nearest neighbors to be returned.
+
+    Returns
+    -------
+    xr.Dataset
+        A dataset which has `distance` and `neighbor_id` as variables along the
+        dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
+        distance follows from the unit of the projected coordinates of the input
+        datasets. The `neighbor_id` entries for point locations that are further
+        away then `max_distance` are set to None. The according distances are np.inf.
+    """
+    x, y = get_point_xy(ds_points)
+    x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
+    tree_neighbors = scipy.spatial.KDTree(
+        data=list(zip(x_neighbors.values, y_neighbors.values))
+    )
+    distances, ixs = tree_neighbors.query(
+        list(zip(x.values, y.values)),
+        k=n_closest,
+        distance_upper_bound=max_distance,
+    )
+    # Note that we need to transpose to have the extended dimension, which
+    # is the one for `n_closest` in the xr.Dataset later on, as last dimension.
+    # To preserve an existing 2D array we need to transpose also before applying
+    # `at_least2d` so that we have two times a transpose and get the origianl 2D
+    # array.
+    distances = np.atleast_2d(distances.T).T
+    ixs = np.atleast_2d(ixs.T).T
+
+    # Make sure that we have 'id' dimension in case only one station is there
+    # in ds_points_neighbors because e.g. ds.isel(id=0) was used to subset.
+    if "id" not in ds_points_neighbors.dims:
+        ds_points_neighbors = ds_points_neighbors.expand_dims("id")
+
+    # Where neighboring station are further away than max_distance the ixs are
+    # filled with the value n, the length of the neighbor dataset. We want to
+    # return None as ID in the cases the index is n. For this we must pad the
+    # array of neighbor IDs with None. Because padding is always done symmetrically,
+    # we have to slice off the padding on the left. But we cannot pad directly with
+    # None. We get NaN even if we do `.pad(constant_values=None)`. Hence, we fill
+    # the NaNs we get from padding with None afterwards.
+    # This way the index n points to this last entry on the right which we want to
+    # be None.
+    id_neighbors_nan_padded = ds_points_neighbors.id.pad(
+        id=1,
+        mode="constant",
+    ).isel(id=slice(1, None))
+    id_neighbors_nan_padded = id_neighbors_nan_padded.where(
+        ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
+        None,
+    )
+    neighbor_ids = id_neighbors_nan_padded.data[ixs]
+
+    # Make sure that `id` dimension is not 0, which happens if input only
+    # has one station e.g. because ds.isel(id=0) was used to subset.
+    if ds_points.id.ndim == 0:
+        ds_points = ds_points.expand_dims("id")
+
+    return xr.Dataset(
+        data_vars={
+            "distance": (("id", "n_closest"), distances),
+            "neighbor_id": (("id", "n_closest"), neighbor_ids),
+        },
+        coords={"id": ds_points.id.data},
+    )
+
+
 def calc_point_to_point_distances(
     ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
     """Calculate the distance between the point coordinates of two datasets.
 
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
+
     Parameters
     ----------
     ds_points_a : xr.DataArray | xr.Dataset
-        _description_
+        One dataset of points.
     ds_points_b : xr.DataArray | xr.Dataset
-        _description_
+        The other dataset of points.
 
     Returns
     -------
