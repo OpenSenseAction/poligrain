@@ -4,6 +4,16 @@
 
 ### New features
 
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.0.4
+
+### New features
+
 - [PR 49](https://github.com/OpenSenseAction/poligrain/pull/49) Add
   point-to_point nearest neighbor lookup (by
   [@cchwala](https://github.com/cchwala))
