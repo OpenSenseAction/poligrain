@@ -13,8 +13,12 @@
 simplify common tasks for working with **po**int, **li**ne and **gr**idded
 sensor data, focusing on **rain**fall observations.
 
-This is currently an early draft of the package and no, or only preliminary
-functionality, is there...
+This is package is currently in an early stage of development. There are already
+useful functionalities there, but beware that their usage and naming might still
+change.
+
+Checkout the [docs](https://poligrain.readthedocs.io/en/latest/index.html) to
+explore the package. The examples can also be run as notebooks locally.
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/OpenSenseAction/poligrain/workflows/CI/badge.svg
