@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR 43](https://github.com/OpenSenseAction/poligrain/pull/43) Add code for
+  finding closest points to lines (by [@eoydvin](https://github.com/eoydvin))
+
 ### Bug fixes
 
 ### Maintenance
