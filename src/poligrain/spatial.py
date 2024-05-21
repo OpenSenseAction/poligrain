@@ -612,8 +612,8 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
     -------
     closest_gauges: xarray.Dataset
         Dataset with CML ids and corresponding n_closest point names and distance.
-        If a CML has less that "n_closest" nearby points, the reminding entries
-        in variable "distance" are filled with np.inf and the reminding entries
+        If a CML has less that "n_closest" nearby points, the remaining entries
+        in variable "distance" are filled with np.inf and the remaining entries
         in variable "id_neighbor" are filled with None.
 
     """
