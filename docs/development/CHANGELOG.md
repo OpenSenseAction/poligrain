@@ -6,7 +6,7 @@
 
 - [PR 43](https://github.com/OpenSenseAction/poligrain/pull/43) Add code for
   finding closest points to lines (by [@eoydvin](https://github.com/eoydvin))
-- [PR ](https://github.com/OpenSenseAction/poligrain/pull/54) Add example code
+- [PR 54](https://github.com/OpenSenseAction/poligrain/pull/54) Add example code
   and notebook to showcase the grid intersection between radar data and CMLs (by
   [@maxmargraf](https://github.com/maxmargraf))
 
