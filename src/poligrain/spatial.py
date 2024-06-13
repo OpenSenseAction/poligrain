@@ -257,8 +257,8 @@ class GridAtLines:
 
     def __init__(
         self,
-        da_gridded_data: (xr.DataArray | xr.Dataset),
-        ds_line_data: (xr.DataArray | xr.Dataset),
+        da_gridded_data: xr.DataArray | xr.Dataset,
+        ds_line_data: xr.DataArray | xr.Dataset,
         grid_point_location: str = "center",
     ):
         self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
@@ -335,8 +335,8 @@ class GridAtPoints:
 
     def __init__(
         self,
-        da_gridded_data: (xr.DataArray | xr.Dataset),
-        da_point_data: (xr.DataArray | xr.Dataset),
+        da_gridded_data: xr.DataArray | xr.Dataset,
+        da_point_data: xr.DataArray | xr.Dataset,
         nnear: int,
         stat: str = "best",
     ):
