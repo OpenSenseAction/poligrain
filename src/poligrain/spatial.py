@@ -457,7 +457,7 @@ def _get_statfunc(funcname):
 
             # To be compatible with `best(x, y)` we wrap `func` and
             # do not use `x`.
-            def newfunc(x, y):  # noqa: ARG001
+            def newfunc(x, y):  # pylint: disable=unused-argument, # noqa: ARG001
                 return func(y, axis=1)
 
         except Exception as err:
@@ -486,14 +486,14 @@ def best(x, y):
         1-d array of float with length len(y)
 
     """
-    if type(x) == np.ndarray:
+    if type(x) == np.ndarray:  # pylint: disable=unidiomatic-typecheck
         if x.ndim != 1:
             raise ValueError("`x` must be a 1-d array of floats or a float.")  # noqa: EM101
         if len(x) != len(y):
             raise ValueError(
                 f"Length of `x` ({len(x)}) and `y` ({len(y)}) must be equal."  # noqa: EM102
             )
-    if type(y) == np.ndarray:
+    if type(y) == np.ndarray:  # pylint: disable=unidiomatic-typecheck
         if y.ndim > 2:
             raise ValueError("'y' must be 1-d or 2-d array of floats.")  # noqa: EM101
     else:
@@ -649,9 +649,8 @@ def calc_intersect_weights(
     elif grid_point_location == "lower_left":
         grid_corners = _calc_grid_corners_for_lower_left_location(grid)
     else:
-        raise ValueError(
-            "`grid_point_location` = %s not implemented" % grid_point_location  # pylint: disable=C0209
-        )
+        msg = f"`grid_point_location` = '{grid_point_location}' not implemented"
+        raise ValueError(msg)
 
     # Find intersection
     intersect = np.zeros([grid.shape[0], grid.shape[1]])
