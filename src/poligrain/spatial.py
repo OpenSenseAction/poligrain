@@ -233,17 +233,33 @@ def calc_point_to_point_distances(
 class GridAtLines:
     def __init__(
         self,
-        da_gridded_data,
-        ds_line_data,
-        grid_point_location="center",
-        sensor_id=None,
+        da_gridded_data: (xr.DataArray | xr.Dataset),
+        ds_line_data: (xr.DataArray | xr.Dataset),
+        grid_point_location: str = "center",
     ):
-        if sensor_id is None:
-            try:
-                sensor_id = ds_line_data.cml_id
-            except AttributeError:
-                sensor_id = ds_line_data.sml_id
+        """Get path-averaged grid values along line.
 
+        For each line, e.g. a CML path, in `ds_line_data` the grid intersections are
+        calculated and stored as sparse matrix during initialization. Via `__call__`
+        the time series of path-averaged grid values for each line can be calculated.
+
+        Note that `da_gridded_data` and `ds_line_data` have to contain the correct
+        coordinate variable names, see below.
+
+        Parameters
+        ----------
+        da_gridded_data
+            The gridded data, typically rainfall fields from weather radar. It has to
+            contain `lon` and `lat` variables with coordinates as 2D matrix.
+        ds_line_data
+            The line data, typically from CMLs. It has to contain lon and lat
+            coordinates for site_0 and site_1 according to the OPENSENSE data
+            format conventions.
+        grid_point_location
+            The location of the grid point for which the coordinates are given. Can
+            be "center" or "lower_right". Default is "center".
+
+        """
         self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
             x1_line=ds_line_data.site_0_lon.values,
             y1_line=ds_line_data.site_0_lat.values,
