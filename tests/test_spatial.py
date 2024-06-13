@@ -9,6 +9,10 @@ import xarray as xr
 import poligrain as plg
 
 
+def test_GridAtPoint():
+    pass
+
+
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
