@@ -231,35 +231,36 @@ def calc_point_to_point_distances(
 
 
 class GridAtLines:
+    """Get path-averaged grid values along lines.
+
+    For each line, e.g. a CML path, in `ds_line_data` the grid intersections are
+    calculated and stored as sparse matrix during initialization. Via `__call__`
+    the time series of path-averaged grid values for each line can be calculated.
+
+    Note that `da_gridded_data` and `ds_line_data` have to contain the correct
+    coordinate variable names, see below.
+
+    Parameters
+    ----------
+    da_gridded_data
+        The gridded data, typically rainfall fields from weather radar. It has to
+        contain `lon` and `lat` variables with coordinates as 2D matrix.
+    ds_line_data
+        The line data, typically from CMLs. It has to contain lon and lat
+        coordinates for site_0 and site_1 according to the OPENSENSE data
+        format conventions.
+    grid_point_location
+        The location of the grid point for which the coordinates are given. Can
+        be "center" or "lower_right". Default is "center".
+
+    """
+
     def __init__(
         self,
         da_gridded_data: (xr.DataArray | xr.Dataset),
         ds_line_data: (xr.DataArray | xr.Dataset),
         grid_point_location: str = "center",
     ):
-        """Get path-averaged grid values along line.
-
-        For each line, e.g. a CML path, in `ds_line_data` the grid intersections are
-        calculated and stored as sparse matrix during initialization. Via `__call__`
-        the time series of path-averaged grid values for each line can be calculated.
-
-        Note that `da_gridded_data` and `ds_line_data` have to contain the correct
-        coordinate variable names, see below.
-
-        Parameters
-        ----------
-        da_gridded_data
-            The gridded data, typically rainfall fields from weather radar. It has to
-            contain `lon` and `lat` variables with coordinates as 2D matrix.
-        ds_line_data
-            The line data, typically from CMLs. It has to contain lon and lat
-            coordinates for site_0 and site_1 according to the OPENSENSE data
-            format conventions.
-        grid_point_location
-            The location of the grid point for which the coordinates are given. Can
-            be "center" or "lower_right". Default is "center".
-
-        """
         self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
             x1_line=ds_line_data.site_0_lon.values,
             y1_line=ds_line_data.site_0_lat.values,
@@ -271,7 +272,23 @@ class GridAtLines:
             grid_point_location=grid_point_location,
         )
 
-    def __call__(self, da_gridded_data):
+    def __call__(self, da_gridded_data: xr.DataArray) -> xr.DataArray:
+        """Calculate path-averaged grid values along lines.
+
+        Parameters
+        ----------
+        da_gridded_data
+            3-D data of the gridded data. The order of dimensions must be
+            ('time', 'y', 'x'). The grid must be the same as in the initialization
+            of the current object because the intersection weights are calculated
+            at initialization.
+
+        Returns
+        -------
+        gridded_data_along_line
+            The time series for each grid intersection of each line. The IDs for each
+            line are taken from `ds_line_data` in `__init__`.
+        """
         gridded_data_along_line = get_grid_time_series_at_intersections(
             grid_data=da_gridded_data,
             intersect_weights=self.intersect_weights,
@@ -287,11 +304,42 @@ class GridAtLines:
 
 
 class GridAtPoints:
-    def __init__(self, da_gridded_data, da_point_data, nnear=9, stat="best"):
-        # TODO: account for `grid_point_location` which is not yet done here.
+    """Get grid values at points or in their neighborhood.
 
-        # TODO: Copy-paste the relevant stuff from wradlib and add to own code
+    This class is based on `wradblib.adjust.RawAtObs` which already implements
+    all required functionality. To make usage simpler and equivalent to `GridAtLines`,
+    we just provide a wrapper around the `RawAtObs` code that was copy-pasted to not
+    rely on a import of `wradlib`. In addition we use `xarray.DataArray` or
+    `xarray.Dataset` as input to avoid reshaping and passing point and grid coordinates.
 
+    Note that `da_gridded_data` and `da_point_data` have to contain the correct
+    coordinate variable names, see below.
+
+    Parameters
+    ----------
+    da_gridded_data
+        The gridded data, typically rainfall fields from weather radar. It has to
+        contain `lon` and `lat` variables with coordinates as 2D matrix.
+    da_point_data
+        The point data, typically from rain gauges. The coordinates must be given
+        as `lon` and `lat` variable according to the OPENSENSE data format conventions.
+    nnear
+        Number of neighbors which should be considered in the vicinity of each
+        point in obs. Note that this is using a nearest-neighbor-lookup and does
+        not guarantee that e.g. `nnear=9` results in a 3x3 grid with the central
+        pixel in the middle.
+    stat
+        Name of stat function to be used to derive one value from all neighboring
+        grid cells in case that `nnear > 1`. Default is "best".
+    """
+
+    def __init__(
+        self,
+        da_gridded_data: (xr.DataArray | xr.Dataset),
+        da_point_data: (xr.DataArray | xr.Dataset),
+        nnear: int,
+        stat: str = "best",
+    ):
         # Get radar pixel coordinates as (N, 2) array
         x_grid = da_gridded_data.lon.to_numpy()
         y_grid = da_gridded_data.lat.to_numpy()
@@ -306,7 +354,33 @@ class GridAtPoints:
         self.statfunc = _get_statfunc(stat)
         self.raw_ix = _get_neighbours_ix(obs_coords, raw_coords, nnear)
 
-    def __call__(self, da_gridded_data, da_point_data):
+    def __call__(
+        self, da_gridded_data: xr.DataArray, da_point_data: xr.DataArray
+    ) -> xr.DataArray:
+        """Return grid values at points.
+
+        Note that here, both inputs must be a `xr.DataArray` with a `time` dimension.
+        We require `da_point_data` as input because it is needed for the calculation
+        in case of `nnear > 1` and `stat="best"`.
+
+        Parameters
+        ----------
+        da_gridded_data
+            The gridded data on the same grid as used in `__init__`. It has to have a
+            time dimension over which it is iterated.
+        da_point_data : xr.DataArray
+            The point data with the same coordinates and exact same ordering as used
+            in `__init__`. There has to be a `time` dimension. The time stamps from
+            `da_gridded_data` are selected. Hence, `da_point_data` and `da_gridded_data`
+            should have matching time stamps. The time period can be longer or shorter,
+            though. Non matching time stamps are just not considered.
+
+        Returns
+        -------
+            The time series of grid values at each point. The IDs for each
+            point are taken from `da_point_data`.
+
+        """
         gridded_data_at_point_list = []
         for t in da_gridded_data.time.to_numpy():
             da_gridded_data_t = da_gridded_data.sel(time=t)
@@ -335,6 +409,7 @@ class GridAtPoints:
                 "time": da_gridded_data.time,
                 "lon": da_point_data.lon,
                 "lat": da_point_data.lat,
+                "id": da_point_data.id,
             },
         )
 
@@ -380,7 +455,9 @@ def _get_statfunc(funcname):
             # try to find a numpy function which corresponds to <funcname>
             func = getattr(np, funcname)
 
-            def newfunc(x, y):
+            # To be compatible with `best(x, y)` we wrap `func` and
+            # do not use `x`.
+            def newfunc(x, y):  # noqa: ARG001
                 return func(y, axis=1)
 
         except Exception as err:
