@@ -343,7 +343,8 @@ class GridAtPoints:
         # Get radar pixel coordinates as (N, 2) array
         x_grid = da_gridded_data.lon.to_numpy()
         y_grid = da_gridded_data.lat.to_numpy()
-        xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten(), strict=True)))
+        assert x_grid.shape == y_grid.shape
+        xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten())))
 
         # Initialize function to get grid values at points
         xy_points = np.stack([da_point_data.lon, da_point_data.lat], axis=1)
