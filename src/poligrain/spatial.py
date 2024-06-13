@@ -430,92 +430,6 @@ def best(x, y):
     return y[np.arange(len(y)), np.argmin(np.abs(x - y), axis=axis)]
 
 
-def get_grid_time_series_at_intersections(grid_data, intersect_weights):
-    """Get time series from gird data using sparse intersection weights.
-
-    Time series of grid data are derived via intersection weights of CMLs.
-    Please note that it is crucial to have the correct order of dimensions, see
-    parameter list below.
-
-    Input can be ndarrays or xarray.DataArrays. If at least one input is a
-    DataArray, a DataArray is returned.
-
-    Parameters
-    ----------
-    grid_data: ndarray or xarray.DataArray
-        3-D data of the gridded data we want to extract time series from at the
-        given pixel intersection. The order of dimensions must be ('time', 'y', 'x').
-        The size in the `x` and `y` dimension must be the same as in the intersection
-        weights.
-    intersect_weights: ndarray or xarray.DataArray
-        3-D data of intersection weights. The order of dimensions must be
-        ('cml_id', 'y', 'x'). The size in the `x` and `y` dimension must be the
-        same as in the grid data. Intersection weights do not have to be a
-        `sparse.array` but will be converted to one internally before doing a
-        `sparse.tensordot` contraction.
-
-    Returns
-    -------
-    grid_intersect_timeseries: ndarray or xarray.DataArray
-        The time series for each grid intersection. If at least one of the inputs is
-        a xarray.DataArray, a xarray.DataArray is returned. Coordinates are
-        derived from the input.
-    DataArrays.
-
-    """
-    return_a_dataarray = False
-    try:
-        intersect_weights_coords = intersect_weights.coords
-        # from here on we only want to deal with the actual array
-        intersect_weights = intersect_weights.data
-        return_a_dataarray = True
-    except AttributeError:
-        pass
-    try:
-        grid_data_coords = grid_data.coords
-        # from here on we only want to deal with the actual array
-        grid_data = grid_data.data
-        return_a_dataarray = True
-    except AttributeError:
-        pass
-
-    # Assure that we use a sparse matrix for the weights, because, besides
-    # being much faster for large tensordot computation, it can deal with
-    # NaN better. If the weights are passed to `sparse.tensordot` as numpy
-    # arrays, the value for each time series for a certain point in time is NaN
-    # if there is at least one nan in the grid at that point in time. We only
-    # want NaN in the time series if the intersection intersects with a NaN grid pixel.
-    intersect_weights = sparse.asCOO(intersect_weights, check=False)
-
-    grid_intersect_timeseries = sparse.tensordot(
-        grid_data,
-        intersect_weights,
-        axes=[[1, 2], [1, 2]],
-    )
-
-    if return_a_dataarray:
-        coords = {}
-        try:
-            dim_0_name = grid_data_coords.dims[0]
-            dim_0_values = grid_data_coords[dim_0_name].values
-        except NameError:
-            dim_0_name = "time"
-            dim_0_values = np.arange(grid_intersect_timeseries.shape[0])
-        try:
-            dim_1_name = intersect_weights_coords.dims[0]
-            dim_1_values = intersect_weights_coords[dim_1_name].values
-        except NameError:
-            dim_1_name = "cml_id"
-            dim_1_values = np.arange(grid_intersect_timeseries.shape[1])
-        grid_intersect_timeseries = xr.DataArray(
-            data=grid_intersect_timeseries,
-            dims=(dim_0_name, dim_1_name),
-            coords={dim_0_name: dim_0_values, dim_1_name: dim_1_values},
-        )
-
-    return grid_intersect_timeseries
-
-
 def calc_sparse_intersect_weights_for_several_cmls(
     x1_line,
     y1_line,
@@ -547,8 +461,8 @@ def calc_sparse_intersect_weights_for_several_cmls(
     y_grid : 2D array
         y-coordinates of grid points
     grid_point_location : str, optional
-        The only option currently is `center` which assumes that the
-        coordinates in `xr_ds` represent the centers of grid cells
+        The location of the grid point for which the coordinates are given. Can
+        be "center" or "lower_right". Default is "center".
 
     Returns
     -------
@@ -608,8 +522,8 @@ def calc_intersect_weights(
     y_grid : 2D array
         y-coordinates of grid points
     grid_point_location : str, optional
-        The only option currently is `center` which assumes that the
-        coordinates in `xr_ds` represent the centers of grid cells
+        The location of the grid point for which the coordinates are given. Can
+        be "center" or "lower_right". Default is "center".
     offset : float, optional
         The offset in units of the coordinates to constrain the calculation
         of intersection to a bounding box around the CML coordinates. The
@@ -621,8 +535,6 @@ def calc_intersect_weights(
     intersect : array
         2D array of intersection weights with shape of the longitudes- and
         latitudes grid of `xr_ds`
-    pixel_poly_list : list, optional
-        List of shapely.Polygons which were used to calculate intersections
 
     """
     x_grid = x_grid.astype("float64")
