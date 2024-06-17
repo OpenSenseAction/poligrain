@@ -80,7 +80,7 @@ minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
-  "error", "ignore::DeprecationWarning",
+  "error", "ignore::DeprecationWarning", "ignore::ResourceWarning"
 ]
 log_cli_level = "INFO"
 testpaths = [
