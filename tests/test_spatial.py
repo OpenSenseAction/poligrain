@@ -10,7 +10,48 @@ import poligrain as plg
 
 
 def test_GridAtPoint():
-    pass
+    da_grid_data, _, _, _ = get_grid_intersect_ts_test_data(return_xarray=True)
+    da_points = xr.DataArray(
+        data=[
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        ],
+        dims=["id", "time"],
+        coords={
+            "lon": ("id", [0, 1]),
+            "lat": ("id", [2, 0]),
+        },
+    )
+    expected_time_series = np.array(
+        [
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        ],
+    )
+
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=1,
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+    # same as above but with changed order of 'time' and 'id'
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data, da_point_data=da_points.transpose("time", "id")
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series.transpose(),
+    )
 
 
 def test_GridAtLines():

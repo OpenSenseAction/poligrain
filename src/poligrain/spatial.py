@@ -403,8 +403,12 @@ class GridAtPoints:
 
             gridded_data_at_point_list.append(gridded_data_at_point)
 
+        gridded_data_at_points = np.array(gridded_data_at_point_list)
+        if da_point_data.dims[0] != "time":
+            gridded_data_at_points = np.transpose(gridded_data_at_points)
+
         return xr.DataArray(
-            data=gridded_data_at_point_list,
+            data=gridded_data_at_points,
             dims=da_point_data.dims,
             coords={
                 "time": da_gridded_data.time,
