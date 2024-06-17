@@ -255,7 +255,7 @@ class TestCalcGridCorners(unittest.TestCase):
             plg.spatial._calc_grid_corners_for_lower_left_location(grid=grid)
 
 
-def get_grid_intersect_ts_test_data():
+def get_grid_intersect_ts_test_data(return_xarray=False):
     grid_data = np.tile(
         np.expand_dims(np.arange(10, dtype="float"), axis=[1, 2]), (1, 4, 4)
     )
@@ -289,7 +289,52 @@ def get_grid_intersect_ts_test_data():
             [9.0, 4.5],
         ]
     )
-    return grid_data, intersect_weights, expected
+    if return_xarray is False:
+        # Note that this is the return statement that was in this function
+        # from the beginning. The stuff below was retrofitted later.
+        return grid_data, intersect_weights, expected
+
+    # Below is the retrofitted stuff to create xarray objects from the
+    # test data np.arrays.
+    # Note that the xarray objects we build here do not contain all coords
+    # and variables that are expected based on the OPENSENSE data format
+    # conventions. To keep it short, we just add what is required for the
+    # tests run here.
+    # Note also that here we also return a CML dataset that fits the
+    # intersections weights.
+
+    x, y = np.arange(4), np.arange(4)
+    lon, lat = np.meshgrid(x, y)
+    grid_data = xr.DataArray(
+        data=grid_data,
+        dims=("time", "y", "x"),
+        coords={
+            "time": np.arange(10),
+            "x": x,
+            "y": y,
+            "lon": (("y", "x"), lon),
+            "lat": (("y", "x"), lat),
+        },
+    )
+
+    # these are the CML paths that fit the intersection weights
+    ds_cmls = xr.Dataset(
+        coords={
+            "site_0_lon": ("cml_id", [0, 0.5]),
+            "site_0_lat": ("cml_id", [-0.5, 0]),
+            "site_1_lon": ("cml_id", [0, 2.5]),
+            "site_1_lat": ("cml_id", [3.5, 0]),
+        },
+    )
+
+    intersect_weights = xr.DataArray(intersect_weights, dims=["cml_id", "y", "x"])
+
+    expected = xr.DataArray(
+        expected,
+        dims=["time", "cml_id"],
+        coords={"cml_id": ds_cmls.cml_id, "time": grid_data.time},
+    )
+    return grid_data, intersect_weights, expected, ds_cmls
 
 
 class TestGetGridTimeseries(unittest.TestCase):
