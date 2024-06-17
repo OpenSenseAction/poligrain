@@ -145,6 +145,21 @@ def test_best():
     assert plg.spatial.best(x, y) == 7.7
 
 
+def test_best_raise_conditions():
+    with pytest.raises(ValueError, match="must be a 1-d array"):
+        # only 1D allowed for x
+        plg.spatial.best(np.ones((2, 2)), 1)
+    with pytest.raises(ValueError, match="must be 1-d or 2-d array"):
+        # only 1D or 2D allowed for y
+        plg.spatial.best(1, np.ones((2, 2, 2)))
+    with pytest.raises(ValueError, match="must be equal"):
+        # length of x and y must be the same
+        plg.spatial.best(np.arange(4), np.arange(2))
+    with pytest.raises(ValueError, match="must be 1-d or 2-d array"):
+        # at least one of x or y must be np.array
+        plg.spatial.best(1, 3)
+
+
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
