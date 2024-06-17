@@ -9,7 +9,8 @@ import pyproj
 import scipy
 import sparse
 import xarray as xr
-from shapely.geometry import LineString, Polygon
+from scipy.spatial import KDTree
+from shapely.geometry import LineString, Point, Polygon
 
 
 def get_point_xy(
@@ -33,9 +34,15 @@ def get_point_xy(
     tuple[xr.DataArray, xr.DataArray]
         x and y as xr.DataArray
     """
-    assert len(ds_points.x.dims) == 1
-    assert len(ds_points.y.dims) == 1
     assert ds_points.x.dims == ds_points.y.dims
+    if len(ds_points.x.dims) > 1:
+        msg = f"x and y should be 1D or 0D, but are {len(ds_points.x.dims)}D."
+        raise ValueError(msg)
+    if len(ds_points.x.dims) == 0:
+        return (
+            ds_points.x.expand_dims(dim={"id": 1}),
+            ds_points.y.expand_dims(dim={"id": 1}),
+        )
     return ds_points.x, ds_points.y
 
 
@@ -86,17 +93,113 @@ def project_point_coordinates(
     return x_projected, y_projected
 
 
+def get_closest_points_to_point(
+    ds_points: xr.DataArray | xr.Dataset,
+    ds_points_neighbors: xr.DataArray | xr.Dataset,
+    max_distance: float,
+    n_closest: int,
+) -> xr.Dataset:
+    """Get the closest points for given point locations.
+
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
+
+    Parameters
+    ----------
+    ds_points : xr.DataArray | xr.Dataset
+        This is the dataset for which the nearest neighbors will be looked up. That is,
+        for each point location in this dataset the nearest neighbors from
+        `ds_points_neighbors` will be returned.
+    ds_points_neighbors : xr.DataArray | xr.Dataset
+        This is the dataset from which the nearest neighbors will be looked up.
+    max_distance : float
+        The allowed distance of neighbors has to be smaller than `max_distance`.
+        The unites are the units used for the projected coordinates `x` and
+        `y` in the two datasets.
+    n_closest : int
+        The maximum number of nearest neighbors to be returned.
+
+    Returns
+    -------
+    xr.Dataset
+        A dataset which has `distance` and `neighbor_id` as variables along the
+        dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
+        distance follows from the unit of the projected coordinates of the input
+        datasets. The `neighbor_id` entries for point locations that are further
+        away then `max_distance` are set to None. The according distances are np.inf.
+    """
+    x, y = get_point_xy(ds_points)
+    x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
+    tree_neighbors = scipy.spatial.KDTree(
+        data=list(zip(x_neighbors.values, y_neighbors.values))
+    )
+    distances, ixs = tree_neighbors.query(
+        list(zip(x.values, y.values)),
+        k=n_closest,
+        distance_upper_bound=max_distance,
+    )
+    # Note that we need to transpose to have the extended dimension, which
+    # is the one for `n_closest` in the xr.Dataset later on, as last dimension.
+    # To preserve an existing 2D array we need to transpose also before applying
+    # `at_least2d` so that we have two times a transpose and get the origianl 2D
+    # array.
+    distances = np.atleast_2d(distances.T).T
+    ixs = np.atleast_2d(ixs.T).T
+
+    # Make sure that we have 'id' dimension in case only one station is there
+    # in ds_points_neighbors because e.g. ds.isel(id=0) was used to subset.
+    if "id" not in ds_points_neighbors.dims:
+        ds_points_neighbors = ds_points_neighbors.expand_dims("id")
+
+    # Where neighboring station are further away than max_distance the ixs are
+    # filled with the value n, the length of the neighbor dataset. We want to
+    # return None as ID in the cases the index is n. For this we must pad the
+    # array of neighbor IDs with None. Because padding is always done symmetrically,
+    # we have to slice off the padding on the left. But we cannot pad directly with
+    # None. We get NaN even if we do `.pad(constant_values=None)`. Hence, we fill
+    # the NaNs we get from padding with None afterwards.
+    # This way the index n points to this last entry on the right which we want to
+    # be None.
+    id_neighbors_nan_padded = ds_points_neighbors.id.pad(
+        id=1,
+        mode="constant",
+    ).isel(id=slice(1, None))
+    id_neighbors_nan_padded = id_neighbors_nan_padded.where(
+        ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
+        None,
+    )
+    neighbor_ids = id_neighbors_nan_padded.data[ixs]
+
+    # Make sure that `id` dimension is not 0, which happens if input only
+    # has one station e.g. because ds.isel(id=0) was used to subset.
+    if ds_points.id.ndim == 0:
+        ds_points = ds_points.expand_dims("id")
+
+    return xr.Dataset(
+        data_vars={
+            "distance": (("id", "n_closest"), distances),
+            "neighbor_id": (("id", "n_closest"), neighbor_ids),
+        },
+        coords={"id": ds_points.id.data},
+    )
+
+
 def calc_point_to_point_distances(
     ds_points_a: xr.DataArray | xr.Dataset, ds_points_b: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
     """Calculate the distance between the point coordinates of two datasets.
 
+    Note that both datasets that are passed as input have to have the
+    variables `x` and `y` which should be projected coordinates that preserve
+    lengths as good as possible.
+
     Parameters
     ----------
     ds_points_a : xr.DataArray | xr.Dataset
-        _description_
+        One dataset of points.
     ds_points_b : xr.DataArray | xr.Dataset
-        _description_
+        The other dataset of points.
 
     Returns
     -------
@@ -111,8 +214,8 @@ def calc_point_to_point_distances(
     x_b, y_b = get_point_xy(ds_points_b)
 
     distance_matrix = scipy.spatial.distance_matrix(
-        x=list(zip(x_a.values, y_a.values, strict=True)),
-        y=list(zip(x_b.values, y_b.values, strict=True)),
+        x=list(zip(x_a.values, y_a.values)),
+        y=list(zip(x_b.values, y_b.values)),
     )
 
     dim_a = x_a.dims[0]
@@ -281,7 +384,7 @@ def calc_intersect_weights(
     # Iterate only over the indices within the bounding box and
     # calculate the intersect weigh for each pixel
     ix_in_bbox = np.where(bounding_box == True)  # noqa: E712 # pylint: disable=C0121
-    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1], strict=False):
+    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1]):
         pixel_poly = Polygon(
             [
                 grid_corners.ll_grid[i, j],
@@ -477,3 +580,134 @@ def get_grid_time_series_at_intersections(grid_data, intersect_weights):
         )
 
     return grid_intersect_timeseries
+
+
+def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
+    """Get closest points to line.
+
+    Finds n closest points from a CML within given max distance. Note that the
+    function guarantees that all returned points are within max distance to
+    the CML, not that all points that are within max distance are returned. Uses
+    KDTree for fast processing of large datasets.
+
+    Parameters
+    ----------
+    ds_cmls: xarray.Dataset
+        Dataset of line data using the OpenSense naming convention for CMLs. It
+        must contain the coordinate cml_id with the cml names. It must also
+        contain projected coordinates site_0_y, site_0_x, site_1_y and site_1_x
+        as well as the CML length.
+    ds_gauges: xarray.Dataset
+        Dataset of point data using the OpenSense data format conventions for PWS.
+        The dataset must contain the coordinate 'id' with the PWS names. It must
+        also contain projected coordinates x and y.
+    max_distance: float
+        Maximum distance a point can have to the CML, measured as the smallest
+        distance from the point to the line. Points outside this range is not
+        considered close to the CML.
+    n_closest: int
+        Maximum number of points that are returned.
+
+    Returns
+    -------
+    closest_gauges: xarray.Dataset
+        Dataset with CML ids and corresponding n_closest point names and distance.
+        If a CML has less that "n_closest" nearby points, the remaining entries
+        in variable "distance" are filled with np.inf and the remaining entries
+        in variable "id_neighbor" are filled with None.
+
+    """
+    # Add dim "cml_id" if not present, for instance if user selects only 1 cml
+    if "cml_id" not in ds_cmls.dims:
+        ds_cmls = ds_cmls.expand_dims("cml_id")
+
+    # Add dim "id" if not present, for instance if user selects only 1 gauge
+    if "id" not in ds_gauges.dims:
+        ds_gauges = ds_gauges.expand_dims("id")
+
+    # Transfer raingauge and CML coordinates to numpy, for faster access in loop
+    coords_cml_a = np.hstack(
+        [ds_cmls.site_0_y.data.reshape(-1, 1), ds_cmls.site_0_x.data.reshape(-1, 1)]
+    )
+    coords_cml_b = np.hstack(
+        [ds_cmls.site_1_y.data.reshape(-1, 1), ds_cmls.site_1_x.data.reshape(-1, 1)]
+    )
+    coords_gauge = np.hstack(
+        [ds_gauges.y.data.reshape(-1, 1), ds_gauges.x.data.reshape(-1, 1)]
+    )
+
+    # Store half length of CML for fast lookup when setting max_distance
+    cml_half_lengths = np.atleast_1d(ds_cmls.length.data / 2)
+
+    # Calculate CML midpoints by using the average of site a and b
+    coords_cml = np.hstack(
+        [
+            ((coords_cml_a[:, 0] + coords_cml_b[:, 0]) / 2).reshape(-1, 1),
+            ((coords_cml_a[:, 1] + coords_cml_b[:, 1]) / 2).reshape(-1, 1),
+        ]
+    )
+
+    # Array for storing name of gauges close to CML
+    list_gauges = np.full([ds_cmls.cml_id.size, n_closest], None)
+
+    # Array for storing distances between nearby gauges and CML
+    cml_gauge_dist = np.full([ds_cmls.cml_id.size, n_closest], np.inf)
+
+    # Create KDTree object for all gauges
+    kd_tree = KDTree(coords_gauge)
+
+    for i in range(len(ds_cmls.cml_id)):
+        # Query KDTree for all points within max_distance +
+        # cml_half_lengths from the CML midpoint
+        ind_nearest_gauges = kd_tree.query_ball_point(
+            coords_cml[i],
+            cml_half_lengths[i] + max_distance,
+        )
+
+        # Ensure this is always an array
+        ind_nearest_gauges = np.atleast_1d(ind_nearest_gauges)
+
+        # Create line object for current CML
+        line = LineString([coords_cml_a[i], coords_cml_b[i]])
+
+        # Calculate the precise distances to nearby gauges
+        distances = np.array(
+            [
+                line.distance(Point(coords_gauge[ind]))
+                if ind != len(coords_gauge)
+                else np.inf  # set to np.inf if outside max_distance
+                for ind in ind_nearest_gauges
+            ]
+        )
+
+        # Get the sorted indices
+        dist_sort_ind = np.argsort(distances)
+
+        # Select the n_closest gauges if more than 'n_closest' near cml
+        if dist_sort_ind.size > n_closest:
+            dist_sort_ind = dist_sort_ind[:n_closest]
+
+        # Get the indices of the corresponding gauges
+        gauge_ind = ind_nearest_gauges[dist_sort_ind]
+
+        # store results if there are any nearby gauges
+        if gauge_ind.size > 0:
+            list_gauges[i, : dist_sort_ind.size] = ds_gauges.id.data[gauge_ind]
+            cml_gauge_dist[i, : dist_sort_ind.size] = distances[dist_sort_ind]
+
+    # Set IDs above max_distance to None
+    list_gauges[cml_gauge_dist > max_distance] = None
+
+    # Set distances above max_distance to inf
+    cml_gauge_dist[cml_gauge_dist > max_distance] = np.inf
+
+    # Create xarray object showing name and distance from cml to nearest points
+    return xr.Dataset(
+        data_vars={
+            "distance": (("cml_id", "n_closest"), cml_gauge_dist),
+            "neighbor_id": (("cml_id", "n_closest"), list_gauges),
+        },
+        coords={
+            "cml_id": ds_cmls.cml_id.data,
+        },
+    )

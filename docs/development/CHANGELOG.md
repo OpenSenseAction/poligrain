@@ -4,6 +4,25 @@
 
 ### New features
 
+- [PR 43](https://github.com/OpenSenseAction/poligrain/pull/43) Add code for
+  finding closest points to lines (by [@eoydvin](https://github.com/eoydvin))
+- [PR 54](https://github.com/OpenSenseAction/poligrain/pull/54) Add example code
+  and notebook to showcase the grid intersection between radar data and CMLs (by
+  [@maxmargraf](https://github.com/maxmargraf))
+
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.0.4
+
+### New features
+
+- [PR 49](https://github.com/OpenSenseAction/poligrain/pull/49) Add
+  point-to_point nearest neighbor lookup (by
+  [@cchwala](https://github.com/cchwala))
 - [PR 24](https://github.com/OpenSenseAction/poligrain/pull/24) Allow to color
   CML paths when plotting on map using a cmap (by
   [@cchwala](https://github.com/cchwala))
@@ -26,6 +45,8 @@
   docstring linting rules (by [@cchwala](https://github.com/cchwala))
 - [PR 36](https://github.com/OpenSenseAction/poligrain/pull/36) Add API to docs
   (by [@cchwala](https://github.com/cchwala))
+- [PR 42](https://github.com/OpenSenseAction/poligrain/pull/42) Add back support
+  for Python 3.9 (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 

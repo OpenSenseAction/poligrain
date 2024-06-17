@@ -32,7 +32,7 @@ class TestSparseIntersectWeights(unittest.TestCase):
         )
 
         for x1, y1, x2, y2, cml_id in zip(
-            x1_list, y1_list, x2_list, y2_list, cml_id_list, strict=False
+            x1_list, y1_list, x2_list, y2_list, cml_id_list
         ):
             expected = plg.spatial.calc_intersect_weights(
                 x1_line=x1,
@@ -376,11 +376,38 @@ ds_gauge = xr.Dataset(
     },
 )
 
+ds_cmls = xr.Dataset(
+    data_vars={
+        "R": (("cml_id", "time"), np.reshape(np.arange(1, 13), (3, 4))),
+    },
+    coords={
+        "cml_id": ("cml_id", ["cml1", "cml2", "cml3"]),
+        "time": ("time", np.arange(0, 4)),
+        "site_0_x": ("cml_id", [-1, 0, 0]),
+        "site_0_y": ("cml_id", [-1, -1, 1]),
+        "site_1_x": ("cml_id", [1, 2, 2]),
+        "site_1_y": ("cml_id", [1, 1, 3]),
+        "length": ("cml_id", [2 * np.sqrt(2), 2 * np.sqrt(2), 2 * np.sqrt(2)]),
+    },
+)
+
 
 def test_get_point_xy():
     x, y = plg.spatial.get_point_xy(ds_points=ds_gauge)
     assert x.data == pytest.approx(np.array([0, 1, 1]))
     assert y.data == pytest.approx(np.array([0, 0, 1]))
+
+    # check for case with only one point
+    x, y = plg.spatial.get_point_xy(ds_points=ds_gauge.isel(id=0))
+    assert x.data == pytest.approx(np.array([0]))
+    assert y.data == pytest.approx(np.array([0]))
+
+    # check for case where x is 2D (which should not happen, but we
+    # have to test the raise)
+    a = np.ones((2, 3))
+    ds_foo = xr.Dataset(coords={"x": (("foo", "bar"), a), "y": (("foo", "bar"), a)})
+    with pytest.raises(ValueError, match="x and y should be 1D or 0D, but are 2D."):
+        x, y = plg.spatial.get_point_xy(ds_points=ds_foo)
 
 
 def test_project_point_coordinates():
@@ -423,6 +450,73 @@ def test_project_point_coordinates():
     assert list(y.id.data) == ["g1", "g2", "g3"]
 
 
+def test_get_closest_points_to_point():
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=1.1,
+        n_closest=5,
+    )
+    expected_distances = np.array(
+        [[0.0, 1.0, 1.0, np.inf, np.inf], [0.0, 1.0, np.inf, np.inf, np.inf]]
+    )
+    expected_neighbor_ids = np.array(
+        [["g2", "g3", "g1", None, None], ["g3", "g2", None, None, None]], dtype=object
+    )
+    assert closest_neighbors.distance.data == pytest.approx(
+        expected_distances, abs=1e-6
+    )
+    assert (
+        closest_neighbors.neighbor_id.data[expected_distances != np.inf]
+        == expected_neighbor_ids[expected_distances != np.inf]
+    ).all()
+    assert np.isnan(
+        closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
+    ).all()
+    assert closest_neighbors.neighbor_id.data[0, 3] is None
+
+    # check with different parameters
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=4,
+    )
+    assert closest_neighbors.distance.data[1, 2] == pytest.approx(1.414213562, abs=1e-6)
+    assert closest_neighbors.distance.data.shape == (2, 4)
+
+    # check case with n_closest=1
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id=["g2", "g3"]),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=1,
+    )
+    assert closest_neighbors.distance.data.shape == (2, 1)
+
+    # check case with only one station in `ds_points`
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge.sel(id="g2"),
+        ds_points_neighbors=ds_gauge,
+        max_distance=2,
+        n_closest=2,
+    )
+    assert closest_neighbors.distance.data.shape == (1, 2)
+
+    # check case with only one station in `ds_points`
+    closest_neighbors = plg.spatial.get_closest_points_to_point(
+        ds_points=ds_gauge,
+        ds_points_neighbors=ds_gauge.sel(id="g2"),
+        max_distance=2,
+        n_closest=2,
+    )
+    expected_neighbor_ids = np.array(
+        [["g2", None], ["g2", None], ["g2", None]], dtype=object
+    )
+    assert closest_neighbors.neighbor_id.data[0, 0] == expected_neighbor_ids[0, 0]
+    assert closest_neighbors.neighbor_id.data[0, 1] == expected_neighbor_ids[0, 1]
+
+
 def test_calc_point_to_point_distances():
     distance_matrix = plg.spatial.calc_point_to_point_distances(
         ds_points_a=ds_gauge, ds_points_b=ds_gauge.sel(id=["g2", "g3"])
@@ -437,3 +531,42 @@ def test_calc_point_to_point_distances():
     assert distance_matrix.data == pytest.approx(expected, abs=1e-6)
     assert list(distance_matrix.id.data) == ["g1", "g2", "g3"]
     assert list(distance_matrix.id_neighbor.data) == ["g2", "g3"]
+
+
+def test_get_closest_points_to_line():
+    # Test that the correct distance is calculated and cml-gauge pairs identified
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls,
+        ds_gauges=ds_gauge.sel(id=["g2", "g3"]),
+        max_distance=2,
+        n_closest=1,
+    )
+
+    expected_distances = np.array([[0], [0], [np.sqrt(2) / 2]]).reshape(-1, 1)
+
+    assert closest_gauges.distance.data == pytest.approx(expected_distances, abs=1e-6)
+    assert list(closest_gauges.cml_id.data) == ["cml1", "cml2", "cml3"]
+    assert list(closest_gauges.neighbor_id.data) == ["g3", "g2", "g3"]  # g3 is close
+
+    # Test that getting the 2 nearest gauges for cml 3 sets nan when the
+    # maximum distance is too short
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls,
+        ds_gauges=ds_gauge.sel(id=["g2", "g3"]),
+        max_distance=1,
+        n_closest=2,
+    )
+
+    expected = np.array([[False, False], [False, False], [False, True]])
+
+    assert (np.isinf(closest_gauges.distance.data) == expected).all()
+
+    # Test that when selecting only 1 CML or gauge the dimension is restored
+    # and the function runs as normal
+    closest_gauges = plg.spatial.get_closest_points_to_line(
+        ds_cmls=ds_cmls.isel(cml_id=0),
+        ds_gauges=ds_gauge.sel(id="g2"),
+        max_distance=1,
+        n_closest=2,
+    )
+    assert closest_gauges.cml_id.size == 1

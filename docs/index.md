@@ -19,6 +19,7 @@ API <api/poligrain>
 
 notebooks/Plotting.ipynb
 notebooks/Calculate_distances.ipynb
+notebooks/Grid_intersection.ipynb
 ```
 
 ```{toctree}
