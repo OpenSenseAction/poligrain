@@ -11,6 +11,12 @@ import poligrain as plg
 
 def test_GridAtPoint():
     da_grid_data, _, _, _ = get_grid_intersect_ts_test_data(return_xarray=True)
+    da_grid_data[0, 3, 1] = np.nan
+    da_grid_data[
+        8:,
+        3,
+        1,
+    ] = 0
     da_points = xr.DataArray(
         data=[
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -19,13 +25,13 @@ def test_GridAtPoint():
         dims=["id", "time"],
         coords={
             "lon": ("id", [0, 1]),
-            "lat": ("id", [2, 0]),
+            "lat": ("id", [2, 3]),
         },
     )
     expected_time_series = np.array(
         [
             [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
-            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 0.0, 0.0],
         ],
     )
 
@@ -51,6 +57,50 @@ def test_GridAtPoint():
     np.testing.assert_almost_equal(
         da_result_time_series.data,
         expected_time_series.transpose(),
+    )
+
+    # testing for nnear=9 and 'best'
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=9,
+        stat="best",
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+    expected_time_series = np.array(
+        [
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        ],
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+    # testing for another stat functions
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=2,
+        stat="mean",
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+    expected_time_series = np.array(
+        [
+            [0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 4.0, 4.5],
+        ],
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
     )
 
 
