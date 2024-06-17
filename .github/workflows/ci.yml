@@ -71,4 +71,4 @@ jobs:
         if: runner.os != 'Windows'
         run: >-
           python -m pytest --nbmake docs/notebooks/*.ipynb -W
-          ignore::ResourceWarning:jsonschema
+          ignore::ResourceWarning
