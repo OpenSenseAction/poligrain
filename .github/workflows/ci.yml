@@ -69,6 +69,6 @@ jobs:
 
       - name: Test notebooks on Linux and MacOS
         if: runner.os != 'Windows'
-        run:
+        run: >-
           python -m pytest --nbmake docs/notebooks/*.ipynb -W
-          ignore::ResourceWarning
+          ignore::ResourceWarning:jsonschema
