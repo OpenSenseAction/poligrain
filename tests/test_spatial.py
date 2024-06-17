@@ -13,6 +13,32 @@ def test_GridAtPoint():
     pass
 
 
+def test_GridAtLines():
+    (
+        da_grid_data,
+        da_expected_intersect_weights,
+        da_expected_time_series,
+        ds_cmls,
+    ) = get_grid_intersect_ts_test_data(return_xarray=True)
+
+    get_grid_at_lines = plg.spatial.GridAtLines(
+        da_gridded_data=da_grid_data,
+        ds_line_data=ds_cmls,
+        grid_point_location="center",
+    )
+    np.testing.assert_almost_equal(
+        get_grid_at_lines.intersect_weights.data.todense(),
+        da_expected_intersect_weights.data,
+    )
+
+    radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data)
+    np.testing.assert_almost_equal(
+        radar_along_cml.data,
+        da_expected_time_series.data,
+    )
+    np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
+
+
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
