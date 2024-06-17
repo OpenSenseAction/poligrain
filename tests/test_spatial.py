@@ -130,6 +130,21 @@ def test_GridAtLines():
     np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
 
 
+# Copy-paste test from wradlib for the associated copied wradlib function
+def test__get_statfunc():
+    plg.spatial._get_statfunc("median")
+    plg.spatial._get_statfunc("best")
+    with pytest.raises(NameError):
+        plg.spatial._get_statfunc("wradlib")
+
+
+# Copy-paste test from wradlib for the associated copied wradlib function
+def test_best():
+    x = 7.5
+    y = np.array([0.0, 1.0, 0.0, 1.0, 0.0, 7.7, 8.0, 8.0, 8.0, 8.0])
+    assert plg.spatial.best(x, y) == 7.7
+
+
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
