@@ -259,6 +259,7 @@ def get_grid_intersect_ts_test_data():
     grid_data = np.tile(
         np.expand_dims(np.arange(10, dtype="float"), axis=[1, 2]), (1, 4, 4)
     )
+    grid_data[:, :, 2:] = 0
     grid_data[0, 0, 1] = np.nan
     # fmt: off
     intersect_weights = np.array(
