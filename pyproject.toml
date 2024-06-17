@@ -80,7 +80,9 @@ minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
-  "error", "ignore::DeprecationWarning", "ignore::ResourceWarning"
+  "error",
+  "ignore::DeprecationWarning",
+  "ignore::ResourceWarning", # added during PR41 when CI suddenly showed these warnings
 ]
 log_cli_level = "INFO"
 testpaths = [
