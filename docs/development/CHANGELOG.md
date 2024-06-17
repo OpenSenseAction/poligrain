@@ -9,6 +9,9 @@
 - [PR 54](https://github.com/OpenSenseAction/poligrain/pull/54) Add example code
   and notebook to showcase the grid intersection between radar data and CMLs (by
   [@maxmargraf](https://github.com/maxmargraf))
+- [PR 41](https://github.com/OpenSenseAction/poligrain/pull/41) Add simple API
+  to get GridAtLines and GridAtPoints (by
+  [@cchwala](https://github.com/cchwala))
 
 ### Bug fixes
 

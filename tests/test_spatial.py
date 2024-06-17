@@ -9,6 +9,157 @@ import xarray as xr
 import poligrain as plg
 
 
+def test_GridAtPoint():
+    da_grid_data, _, _, _ = get_grid_intersect_ts_test_data(return_xarray=True)
+    da_grid_data[0, 3, 1] = np.nan
+    da_grid_data[
+        8:,
+        3,
+        1,
+    ] = 0
+    da_points = xr.DataArray(
+        data=[
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        ],
+        dims=["id", "time"],
+        coords={
+            "lon": ("id", [0, 1]),
+            "lat": ("id", [2, 3]),
+        },
+    )
+    expected_time_series = np.array(
+        [
+            [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 0.0, 0.0],
+        ],
+    )
+
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=1,
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+    # same as above but with changed order of 'time' and 'id'
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data, da_point_data=da_points.transpose("time", "id")
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series.transpose(),
+    )
+
+    # testing for nnear=9 and 'best'
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=9,
+        stat="best",
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+    expected_time_series = np.array(
+        [
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        ],
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+    # testing for another stat functions
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=2,
+        stat="mean",
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
+    expected_time_series = np.array(
+        [
+            [0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            [np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 4.0, 4.5],
+        ],
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+
+def test_GridAtLines():
+    (
+        da_grid_data,
+        da_expected_intersect_weights,
+        da_expected_time_series,
+        ds_cmls,
+    ) = get_grid_intersect_ts_test_data(return_xarray=True)
+
+    get_grid_at_lines = plg.spatial.GridAtLines(
+        da_gridded_data=da_grid_data,
+        ds_line_data=ds_cmls,
+        grid_point_location="center",
+    )
+    np.testing.assert_almost_equal(
+        get_grid_at_lines.intersect_weights.data.todense(),
+        da_expected_intersect_weights.data,
+    )
+
+    radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data)
+    np.testing.assert_almost_equal(
+        radar_along_cml.data,
+        da_expected_time_series.data,
+    )
+    np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
+
+
+# Copy-paste test from wradlib for the associated copied wradlib function
+def test__get_statfunc():
+    plg.spatial._get_statfunc("median")
+    plg.spatial._get_statfunc("best")
+    with pytest.raises(NameError):
+        plg.spatial._get_statfunc("wradlib")
+
+
+# Copy-paste test from wradlib for the associated copied wradlib function
+def test_best():
+    x = 7.5
+    y = np.array([0.0, 1.0, 0.0, 1.0, 0.0, 7.7, 8.0, 8.0, 8.0, 8.0])
+    assert plg.spatial.best(x, y) == 7.7
+
+
+def test_best_raise_conditions():
+    with pytest.raises(ValueError, match="must be a 1-d array"):
+        # only 1D allowed for x
+        plg.spatial.best(np.ones((2, 2)), 1)
+    with pytest.raises(ValueError, match="must be 1-d or 2-d array"):
+        # only 1D or 2D allowed for y
+        plg.spatial.best(1, np.ones((2, 2, 2)))
+    with pytest.raises(ValueError, match="must be equal"):
+        # length of x and y must be the same
+        plg.spatial.best(np.arange(4), np.arange(2))
+    with pytest.raises(ValueError, match="must be 1-d or 2-d array"):
+        # at least one of x or y must be np.array
+        plg.spatial.best(1, 3)
+
+
 class TestSparseIntersectWeights(unittest.TestCase):
     def test_creation_of_xarray_dataarray(self):
         x_grid, y_grid = np.meshgrid(np.arange(10), np.arange(12))
@@ -180,7 +331,7 @@ class TestIntersectWeights(unittest.TestCase):
         x1, y1 = 0.5, 0
         x2, y2 = 0.5, 9
         with pytest.raises(
-            ValueError, match="`grid_point_location` = upper_middle not implemented"
+            ValueError, match="`grid_point_location` = 'upper_middle' not implemented"
         ):
             plg.spatial.calc_intersect_weights(
                 x1_line=x1,
@@ -251,10 +402,11 @@ class TestCalcGridCorners(unittest.TestCase):
             plg.spatial._calc_grid_corners_for_lower_left_location(grid=grid)
 
 
-def get_grid_intersect_ts_test_data():
+def get_grid_intersect_ts_test_data(return_xarray=False):
     grid_data = np.tile(
         np.expand_dims(np.arange(10, dtype="float"), axis=[1, 2]), (1, 4, 4)
     )
+    grid_data[:, :, 2:] = 0
     grid_data[0, 0, 1] = np.nan
     # fmt: off
     intersect_weights = np.array(
@@ -263,7 +415,7 @@ def get_grid_intersect_ts_test_data():
              [0.25, 0, 0, 0],
              [0.25, 0, 0, 0],
              [0.25, 0, 0, 0]],
-            [[0, 0.25, 0.25, 0],
+            [[0, 0.5, 0.5, 0],
              [0, 0, 0, 0],
              [0, 0, 0, 0],
              [0, 0, 0, 0]],
@@ -284,7 +436,52 @@ def get_grid_intersect_ts_test_data():
             [9.0, 4.5],
         ]
     )
-    return grid_data, intersect_weights, expected
+    if return_xarray is False:
+        # Note that this is the return statement that was in this function
+        # from the beginning. The stuff below was retrofitted later.
+        return grid_data, intersect_weights, expected
+
+    # Below is the retrofitted stuff to create xarray objects from the
+    # test data np.arrays.
+    # Note that the xarray objects we build here do not contain all coords
+    # and variables that are expected based on the OPENSENSE data format
+    # conventions. To keep it short, we just add what is required for the
+    # tests run here.
+    # Note also that here we also return a CML dataset that fits the
+    # intersections weights.
+
+    x, y = np.arange(4), np.arange(4)
+    lon, lat = np.meshgrid(x, y)
+    grid_data = xr.DataArray(
+        data=grid_data,
+        dims=("time", "y", "x"),
+        coords={
+            "time": np.arange(10),
+            "x": x,
+            "y": y,
+            "lon": (("y", "x"), lon),
+            "lat": (("y", "x"), lat),
+        },
+    )
+
+    # these are the CML paths that fit the intersection weights
+    ds_cmls = xr.Dataset(
+        coords={
+            "site_0_lon": ("cml_id", [0, 0.5]),
+            "site_0_lat": ("cml_id", [-0.5, 0]),
+            "site_1_lon": ("cml_id", [0, 2.5]),
+            "site_1_lat": ("cml_id", [3.5, 0]),
+        },
+    )
+
+    intersect_weights = xr.DataArray(intersect_weights, dims=["cml_id", "y", "x"])
+
+    expected = xr.DataArray(
+        expected,
+        dims=["time", "cml_id"],
+        coords={"cml_id": ds_cmls.cml_id, "time": grid_data.time},
+    )
+    return grid_data, intersect_weights, expected, ds_cmls
 
 
 class TestGetGridTimeseries(unittest.TestCase):
