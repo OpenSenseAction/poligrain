@@ -21,6 +21,7 @@ notebooks/Plotting.ipynb
 notebooks/Calculate_distances.ipynb
 notebooks/Get_grid_at_lines_and_points.ipynb
 notebooks/Grid_intersection.ipynb
+notebooks/OS_csv_to_nc_cookbook.ipynb
 ```
 
 ```{toctree}
