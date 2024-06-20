@@ -162,5 +162,5 @@ Thumbs.db
 # Poetry lock file
 poetry.lock
 
-# Local NetCDF files
-data_PWS_netCDF_AMS_float.nc
+# Data files that might be downloaded by example notebooks
+docs/notebooks/data_PWS_netCDF_AMS_float.nc

@@ -12,6 +12,9 @@
 - [PR 55](https://github.com/OpenSenseAction/poligrain/pull/55) Add recipe for
   converting CSV data to xarray.Dataset (by
   [@JochenSeidel](https://github.com/jochenseidel))
+- [PR 41](https://github.com/OpenSenseAction/poligrain/pull/41) Add simple API
+  to get GridAtLines and GridAtPoints (by
+  [@cchwala](https://github.com/cchwala))
 
 ### Bug fixes
 
