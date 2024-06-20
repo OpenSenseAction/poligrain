@@ -9,6 +9,9 @@
 - [PR 54](https://github.com/OpenSenseAction/poligrain/pull/54) Add example code
   and notebook to showcase the grid intersection between radar data and CMLs (by
   [@maxmargraf](https://github.com/maxmargraf))
+- [PR 55](https://github.com/OpenSenseAction/poligrain/pull/55) Add recipe for
+  converting CSV data to xarray.Dataset (by
+  [@JochenSeidel](https://github.com/jochenseidel))
 
 ### Bug fixes
 
