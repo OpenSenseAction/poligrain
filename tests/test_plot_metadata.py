@@ -91,7 +91,7 @@ def test_plot_distribution_default():
     # Check if the return types are correct
     assert isinstance(hist, np.ndarray)
     assert isinstance(bins, np.ndarray)
-    assert isinstance(patches, list)
+    assert isinstance(patches, BarContainer)
     assert all(isinstance(patch, PathCollection) for patch in patches)
 
     # Check if the labels are set correctly
@@ -111,7 +111,7 @@ def test_plot_distribution_percentage():
     # Check if the return types are correct
     assert isinstance(hist, np.ndarray)
     assert isinstance(bins, np.ndarray)
-    assert isinstance(patches, list)
+    assert isinstance(patches, BarContainer)
     assert all(isinstance(patch, PathCollection) for patch in patches)
 
 
@@ -120,13 +120,13 @@ def test_plot_distribution_kwargs():
     fig, ax = plt.subplots()
 
     # Call the function with additional kwargs
-    kwargs = {"rwidth": 0.1}
+    kwargs = {"alpha": 0.5}
     hist, bins, patches = plg.plot_metadata.plot_distribution(
         ds_cmls.length, ds_cmls.frequency, variable="length", ax=ax, **kwargs
     )
 
     # Check if kwargs were applied correctly
-    assert patches[0].get_rwidth() == 0.1
+    assert patches[0].get_alpha() == 0.5
 
 
 def test_plot_polarization_default():
@@ -177,3 +177,5 @@ def test_plot_polarization_count():
     assert bars[0].get_height() == count_hh
     assert bars[1].get_height() == count_vv
     assert bars[2].get_height() == count_hv
+
+    plt.close("all")
