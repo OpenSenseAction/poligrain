@@ -55,7 +55,9 @@ def test_plot_len_vs_freq_hexbin_default():
     fig, ax = plt.subplots()
 
     # Call the function
-    hexbin = plg.plot_len_vs_freq_hexbin(ds_cmls.length, ds_cmls.frequency, ax=ax)
+    hexbin = plg.plot_metadata.plot_len_vs_freq_hexbin(
+        ds_cmls.length, ds_cmls.frequency, ax=ax
+    )
 
     # Check if the return type is correct
     assert isinstance(hexbin, PolyCollection)
@@ -69,7 +71,9 @@ def test_plot_len_vs_freq_hexbin_no_ax():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
 
     # Call the function without an ax
-    hexbin = plg.plot_len_vs_freq_hexbin(ds_cmls.length, ds_cmls.frequency)
+    hexbin = plg.plot_metadata.plot_len_vs_freq_hexbin(
+        ds_cmls.length, ds_cmls.frequency
+    )
 
     # Check if the return type is correct
     assert isinstance(hexbin, PolyCollection)
@@ -80,7 +84,7 @@ def test_plot_distribution_default():
     fig, ax = plt.subplots()
 
     # Call the function to plot length distribution
-    hist, bins, patches = plg.plot_distribution(
+    hist, bins, patches = plg.plot_metadata.plot_distribution(
         ds_cmls.length, ds_cmls.frequency, variable="length", ax=ax
     )
 
@@ -100,7 +104,7 @@ def test_plot_distribution_percentage():
     fig, ax = plt.subplots()
 
     # Call the function to plot frequency distribution with percentage
-    hist, bins, patches = plg.plot_distribution(
+    hist, bins, patches = plg.plot_metadata.plot_distribution(
         ds_cmls.length, ds_cmls.frequency, variable="frequency", percentage=True, ax=ax
     )
 
@@ -117,7 +121,7 @@ def test_plot_distribution_kwargs():
 
     # Call the function with additional kwargs
     kwargs = {"rwidth": 0.1}
-    hist, bins, patches = plg.plot_distribution(
+    hist, bins, patches = plg.plot_metadata.plot_distribution(
         ds_cmls.length, ds_cmls.frequency, variable="length", ax=ax, **kwargs
     )
 
@@ -130,7 +134,7 @@ def test_plot_polarization_default():
     fig, ax = plt.subplots()
 
     # Call the function with default parameters
-    bars = plg.plot_polarization(ds_cmls.polarization, ax=ax)
+    bars = plg.plot_metadata.plot_polarization(ds_cmls.polarization, ax=ax)
 
     # Check if the return type is correct
     assert isinstance(bars, BarContainer)
@@ -167,7 +171,7 @@ def test_plot_polarization_count():
             count_hv += 1
 
     # Call the function with example data
-    bars = plg.plot_polarization(ds_cmls.polarization, ax=ax)
+    bars = plg.plot_metadata.plot_polarization(ds_cmls.polarization, ax=ax)
 
     # Check if HH (horizontal), VV (vertical), and HV (mixed) counts are correct
     assert bars[0].get_height() == count_hh
