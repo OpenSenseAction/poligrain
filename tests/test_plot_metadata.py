@@ -3,7 +3,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from matplotlib.collections import PathCollection, PolyCollection
+from matplotlib.collections import PolyCollection
 from matplotlib.container import BarContainer
 
 import poligrain as plg
@@ -66,6 +66,8 @@ def test_plot_len_vs_freq_hexbin_default():
     assert ax.get_xlabel() == "Length (km)"
     assert ax.get_ylabel() == "Frequency (GHz)"
 
+    plt.close("all")
+
 
 def test_plot_len_vs_freq_hexbin_no_ax():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
@@ -92,11 +94,14 @@ def test_plot_distribution_default():
     assert isinstance(hist, np.ndarray)
     assert isinstance(bins, np.ndarray)
     assert isinstance(patches, BarContainer)
-    assert all(isinstance(patch, PathCollection) for patch in patches)
+    for patch in patches:
+        assert isinstance(patch, plt.Rectangle)
 
     # Check if the labels are set correctly
     assert ax.get_xlabel() == "Length (km)"
     assert ax.get_ylabel() == "Count (nr. of sublinks)"
+
+    plt.close("all")
 
 
 def test_plot_distribution_percentage():
@@ -112,7 +117,10 @@ def test_plot_distribution_percentage():
     assert isinstance(hist, np.ndarray)
     assert isinstance(bins, np.ndarray)
     assert isinstance(patches, BarContainer)
-    assert all(isinstance(patch, PathCollection) for patch in patches)
+    for patch in patches:
+        assert isinstance(patch, plt.Rectangle)
+
+    plt.close("all")
 
 
 def test_plot_distribution_kwargs():
@@ -128,6 +136,8 @@ def test_plot_distribution_kwargs():
     # Check if kwargs were applied correctly
     assert patches[0].get_alpha() == 0.5
 
+    plt.close("all")
+
 
 def test_plot_polarization_default():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
@@ -142,6 +152,8 @@ def test_plot_polarization_default():
     # Check if the labels are set correctly
     assert ax.get_xlabel() == "Polarization"
     assert ax.get_ylabel() == "Count (nr. of CMLs)"
+
+    plt.close("all")
 
 
 def test_plot_polarization_count():
