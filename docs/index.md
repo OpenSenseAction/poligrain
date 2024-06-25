@@ -18,6 +18,7 @@ API <api/poligrain>
 :hidden:
 
 notebooks/Plotting.ipynb
+notebooks/Visualize_metadata.ipynb
 notebooks/Calculate_distances.ipynb
 notebooks/Get_grid_at_lines_and_points.ipynb
 notebooks/Grid_intersection.ipynb
