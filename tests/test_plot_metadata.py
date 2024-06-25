@@ -157,14 +157,13 @@ def test_plot_polarization_count():
         sublink_pol_lower = [pol.lower() for pol in sublink_pol]
 
         # Check for strings that are allowed by the OpenSense data format
-        if all(pol == "h" or pol == "horizontal" for pol in sublink_pol_lower):  # noqa: PLR1714
+        if all(pol in ("h", "horizontal") for pol in sublink_pol_lower):
             count_hh += 1
-        elif all(pol == "v" or pol == "vertical" for pol in sublink_pol_lower):  # noqa: PLR1714
+        elif all(pol in ("v", "vertical") for pol in sublink_pol_lower):
             count_vv += 1
-        elif any(
-            pol == "h" or pol == "horizontal"  # noqa: PLR1714
-            for pol in sublink_pol_lower
-        ) and any(pol == "v" or pol == "vertical" for pol in sublink_pol_lower):  # noqa: PLR1714
+        elif any(pol in ("h", "horizontal") for pol in sublink_pol_lower) and any(
+            pol in ("v", "vertical") for pol in sublink_pol_lower
+        ):
             count_hv += 1
 
     # Call the function with example data
