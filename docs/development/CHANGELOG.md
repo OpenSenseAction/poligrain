@@ -12,9 +12,9 @@
 
 ## v0.1.0
 
-With all the new features from the last versions and because we seem to be 
-on the right track regarding structure of functions and modules, we now 
-switch to v0.1.0.
+With all the new features from the last versions and because we seem to be on
+the right track regarding structure of functions and modules, we now switch to
+v0.1.0.
 
 ### New features
 
