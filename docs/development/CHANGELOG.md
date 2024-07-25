@@ -16,8 +16,8 @@ This is just a quick update to make a version available with less strict
 dependencies, which were relaxed in
 [PR 66](https://github.com/OpenSenseAction/poligrain/pull/66).
 
-Note that support for Python 3.9 was dropped and support version newer than 3.11
-was added.
+Note that support for Python 3.9 was dropped and support for versions newer than
+3.11 was added.
 
 Testing is now done for 3.10, 3.11 and 3.12.
 
