@@ -35,11 +35,13 @@ scipy = "^1.12.0"
 sparse = "*"
 shapely = "*"
 
+pytest = { version = ">= 6", optional = true }
+pytest-cov = { version = ">= 3", optional = true }
+nbmake = { version = ">=1.4.6", optional = true }
+
 [tool.poetry.group.dev.dependencies]
-pytest = ">= 6"
-pytest-cov = ">= 3"
+
 jupyterlab = "^4.0.10"
-nbmake = ">=1.4.6"
 furo = { version = ">=2023.08.17", optional = true }
 myst_parser = { version = ">=0.13", optional = true }
 sphinx = { version = ">=7.0", optional = true }
