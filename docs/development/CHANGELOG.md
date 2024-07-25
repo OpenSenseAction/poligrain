@@ -10,6 +10,17 @@
 
 ### Breaking changes
 
+## v0.1.1
+
+This is just a quick update to make a version available with less strict
+dependencies, which were relaxed in
+[PR 66](https://github.com/OpenSenseAction/poligrain/pull/66).
+
+Note that support for Python 3.9 was dropped and support version newer than 3.11
+was added.
+
+Testing is now done for 3.10, 3.11 and 3.12.
+
 ## v0.1.0
 
 With all the new features from the last versions and because we seem to be on
