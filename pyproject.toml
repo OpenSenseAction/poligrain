@@ -48,11 +48,12 @@ nbsphinx = { version = "*", optional = true }
 pypandoc-binary = { version = "*", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-# only require for dev work on local machine
+# only required for dev work on local machine
 jupyterlab = "*"
 ipython = { version = "*", optional = true }
 
 [tool.poetry.extras]
+# can be installed via pip, which is done during CI and readthedocs build
 test = ["pytest", "pytest-cov", "nbmake"]
 dev = ["pytest", "pytest-cov", "nbmake"]
 docs = [
