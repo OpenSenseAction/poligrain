@@ -28,7 +28,7 @@ classifiers = [
 python = ">=3.9"
 # main package dependencies
 netcdf4 = "^1.6.5"
-xarray = "^2023.12.0"
+xarray = ">=2023.12.0"
 matplotlib = "^3.8.2"
 pyproj = "^3.6.1"
 scipy = "^1.12.0"
@@ -49,7 +49,7 @@ pypandoc-binary = { version = "*", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 # only require for dev work on local machine
-jupyterlab = "^4.0.10"
+jupyterlab = "*"
 ipython = { version = "*", optional = true }
 
 [tool.poetry.extras]
