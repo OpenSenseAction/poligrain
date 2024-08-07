@@ -25,34 +25,35 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9, <3.12"
-
+python = ">=3.10"
+# main package dependencies
+netcdf4 = "^1.6.5"
+xarray = ">=2023.12.0"
+matplotlib = "^3.8.2"
+pyproj = "^3.6.1"
+scipy = "^1.12.0"
+sparse = "*"
+shapely = "*"
+# for running tests
+pytest = { version = ">= 6", optional = true }
+pytest-cov = { version = ">= 3", optional = true }
+nbmake = { version = ">=1.4.6", optional = true }
+# for building docs
 furo = { version = ">=2023.08.17", optional = true }
 myst_parser = { version = ">=0.13", optional = true }
-pytest = { version = ">=6", optional = true }
-pytest-cov = { version = ">=3", optional = true }
 sphinx = { version = ">=7.0", optional = true }
 sphinx_copybutton = { version = ">=0.3.0", optional = true }
 sphinx-autodoc-typehints = { version = "*", optional = true }
 nbsphinx = { version = "*", optional = true }
 pypandoc-binary = { version = "*", optional = true }
-ipython = { version = "*", optional = true }
-netcdf4 = "^1.6.5"
-xarray = "^2023.12.0"
-matplotlib = "^3.8.2"
-nbmake = "^1.4.6"
-pyproj = "^3.6.1"
-scipy = "^1.12.0"
-sparse = "*"
-shapely = "*"
 
-[tool.poetry.dev-dependencies]
-pytest = ">= 6"
-pytest-cov = ">= 3"
-jupyterlab = "^4.0.10"
-nbmake = "^1.4.6"
+[tool.poetry.group.dev.dependencies]
+# only required for dev work on local machine
+jupyterlab = "*"
+ipython = { version = "*", optional = true }
 
 [tool.poetry.extras]
+# can be installed via pip, which is done during CI and readthedocs build
 test = ["pytest", "pytest-cov", "nbmake"]
 dev = ["pytest", "pytest-cov", "nbmake"]
 docs = [
@@ -64,6 +65,7 @@ docs = [
   "nbsphinx",
   "pypandoc-binary",
   "ipython",
+  "nbmake",
 ]
 
 [tool.poetry-dynamic-versioning]

@@ -13,6 +13,34 @@
 
 ### Breaking changes
 
+## v0.1.1
+
+This is just a quick update to make a version available with less strict
+dependencies, which were relaxed in
+[PR 66](https://github.com/OpenSenseAction/poligrain/pull/66).
+
+Note that support for Python 3.9 was dropped and support for versions newer than
+3.11 was added.
+
+Testing is now done for 3.10, 3.11 and 3.12.
+
+## v0.1.0
+
+With all the new features from the last versions and because we seem to be on
+the right track regarding structure of functions and modules, we now switch to
+v0.1.0.
+
+### New features
+
+- [PR 40](https://github.com/OpenSenseAction/poligrain/pull/40) Add functions
+  for plotting CML metadata (by [@bwalraven](https://github.com/bwalraven))
+
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
 ## v0.0.5
 
 ### New features
