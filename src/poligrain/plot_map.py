@@ -214,3 +214,44 @@ def plot_lines(
         vmax=vmax,
         cmap=cmap,
     )
+
+
+def calc_sml_line_on_ground(
+    x: npt.ArrayLike,
+    y: npt.ArrayLike,
+    elevation_angel: npt.ArrayLike,
+    azimuth_angel: npt.ArrayLike,
+    melting_layer_height: float,
+):
+    """Calculate the projection of one or many SML on the ground for plotting.
+
+    Parameters
+    ----------
+    x : npt.ArrayLike | float
+        x coordinate of the location of the SML antenna in projected coordinates
+        with the unit meters.
+    y : npt.ArrayLike | float
+        y coordinate of the location of the SML antenna in projected coordinates
+        with the unit meters.
+    elevation_angel: npt.ArrayLike | float
+        Antenna angel in degrees.
+    azimuth_angel: npt.ArrayLike | float
+        Azimuth angel in degrees.
+    melting_layer_height: float
+        Height of melting layer above sensor in meter.
+
+    Returns
+    -------
+    Tuple of the antenna coordinates and the coordinates of the SML beam
+    projected to the ground based on the melting layer height.
+
+    """
+    length_on_ground = (
+        melting_layer_height
+        * np.sin(np.radians(90))
+        / np.sin(np.radians(elevation_angel))
+    )
+    endy = y + length_on_ground * np.cos(np.radians(azimuth_angel))
+    endx = x + length_on_ground * np.sin(np.radians(azimuth_angel))
+
+    return (x, y, endx, endy)
