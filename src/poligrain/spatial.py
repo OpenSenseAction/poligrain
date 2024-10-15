@@ -84,6 +84,7 @@ def project_point_coordinates(
     transformer = pyproj.Transformer.from_crs(
         crs_to=target_projection, crs_from=source_projection, always_xy=True
     )
+    # the line below should raise a deprecation waring
     x_projected, y_projected = transformer.transform(x, y)  # pylint: disable=unpacking-non-sequence
 
     x_projected = xr.DataArray(data=x_projected, coords=x.coords, name="x")
