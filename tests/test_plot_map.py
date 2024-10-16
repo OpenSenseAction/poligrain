@@ -158,3 +158,17 @@ def test_plot_lines_with_dataarray_raise_wrong_shape():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     with pytest.raises(ValueError, match="has to be 1D"):
         plg.plot_map.plot_lines(ds_cmls.rsl.isel(sublink_id=0))
+
+
+def test_calc_sml_line_on_ground():
+    x0, y0, x1, y1 = plg.plot_map.calc_sml_line_on_ground(
+        x=7.576159e05,
+        y=6.454985e06,
+        azimuth_angel=159.862,
+        elevation_angel=36.950,
+        melting_layer_height=4000,
+    )
+
+    np.testing.assert_almost_equal(
+        (x0, y0, x1, y1), (757615.9, 6454985.0, 759906.8480931921, 6448737.532106993)
+    )
