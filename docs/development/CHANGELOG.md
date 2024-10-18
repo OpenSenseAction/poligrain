@@ -6,7 +6,13 @@
 
 ### Bug fixes
 
+- [PR74](https://github.com/OpenSenseAction/poligrain/pull/74) fix xarray
+  scatter plot CI error in notebook (by [@cchwala](https://github.com/cchwala))
+
 ### Maintenance
+
+- [PR74](https://github.com/OpenSenseAction/poligrain/pull/74) remove version
+  capping (by [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 
