@@ -214,3 +214,56 @@ def plot_lines(
         vmax=vmax,
         cmap=cmap,
     )
+
+
+def plot_plg(
+    da_grid=None,
+    da_cmls=None,
+    da_gauges=None,
+    vmin=None,
+    vmax=None,
+    cmap="turbo",
+    ax=None,
+    use_lon_lat=False,
+):
+    """Plot point, line and grid data.
+
+    Parameters
+    ----------
+    da_grid : _type_, optional
+        _description_, by default None
+    da_cmls : _type_, optional
+        _description_, by default None
+    da_gauges : _type_, optional
+        _description_, by default None
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if use_lon_lat:
+        grid_x_name = "lon"
+        grid_y_name = "lat"
+        point_x_name = "lon"
+        point_y_name = "lat"
+    else:
+        grid_x_name = "xs"
+        grid_y_name = "ys"
+        point_x_name = "x"
+        point_y_name = "y"
+
+    if da_grid is not None:
+        da_grid.plot.pcolormesh(
+            x=grid_x_name, y=grid_y_name, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax
+        )
+    if da_cmls is not None:
+        plot_lines(cmls=da_cmls, vmin=vmin, vmax=vmax, ax=ax)
+    if da_gauges is not None:
+        plt.scatter(
+            x=da_gauges[point_x_name],
+            y=da_gauges[point_y_name],
+            c=da_gauges.data,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+            ax=ax,
+        )
