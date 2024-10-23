@@ -5,9 +5,8 @@ from pathlib import Path
 
 import xarray as xr
 
-_default_cache_dir_name = "opensense_example_data"
-base_url = "https://github.com/cchwala/opensense_example_data"
-version = "main"
+BASE_URL = "https://github.com/cchwala/opensense_example_data"
+VERSION = "main"
 
 
 def download_data_file(url, local_path=".", local_file_name=None, print_output=False):
@@ -32,7 +31,7 @@ def download_data_file(url, local_path=".", local_file_name=None, print_output=F
     if not Path(local_path).exists():
         if print_output:
             print(f"Creating path {local_path}")  # noqa: T201
-        Path.makedirs(local_path)
+        Path(local_path).mkdir(parents=True)
 
     if local_file_name is None:
         local_file_name = url.split("/")[-1]
@@ -54,7 +53,7 @@ def download_data_file(url, local_path=".", local_file_name=None, print_output=F
     return request_return_meassage  # noqa: RET504
 
 
-def load_openmrg_5min_2h():
+def load_openmrg_5min_2h(data_dir="."):
     """Load 2.5 hours of OpenMRG data with a 5-min resolution.
 
     Returns
@@ -62,23 +61,24 @@ def load_openmrg_5min_2h():
     ds_rad, ds_cmls, ds_gauges_municp, ds_gauge_smhi
     """
     fn = "openmrg_cml_5min_2h.nc"
-    url = f"{base_url}/raw/{version}/OpenMRG/{fn}"
-    download_data_file(url=url, local_file_name=fn)
-    ds_cmls = xr.open_dataset(fn)
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
+    data_path = Path(data_dir)
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_cmls = xr.open_dataset(data_path / fn)
 
     fn = "openmrg_rad_5min_2h.nc"
-    url = f"{base_url}/raw/{version}/OpenMRG/{fn}"
-    download_data_file(url=url, local_file_name=fn)
-    ds_rad = xr.open_dataset(fn)
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_rad = xr.open_dataset(data_path / fn)
 
     fn = "openmrg_municp_gauge_5min_2h.nc"
-    url = f"{base_url}/raw/{version}/OpenMRG/{fn}"
-    download_data_file(url=url, local_file_name=fn)
-    ds_gauges_municp = xr.open_dataset(fn)
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_gauges_municp = xr.open_dataset(data_path / fn)
 
     fn = "openmrg_smhi_gauge_5min_2h.nc"
-    url = f"{base_url}/raw/{version}/OpenMRG/{fn}"
-    download_data_file(url=url, local_file_name=fn)
-    ds_gauge_smhi = xr.open_dataset(fn)
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_gauge_smhi = xr.open_dataset(data_path / fn)
 
     return ds_rad, ds_cmls, ds_gauges_municp, ds_gauge_smhi
