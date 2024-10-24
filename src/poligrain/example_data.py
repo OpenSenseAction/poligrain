@@ -1,4 +1,12 @@
-"""Download, cache and load example data."""
+"""Download, cache and load example data.
+
+The functions here work in conjunction with the example data repository
+at https://github.com/cchwala/opensense_example_data.
+
+For each new dataset, it must first be added to this data repo and then
+the functions here need to be added.
+
+"""
 
 import urllib
 from pathlib import Path
@@ -14,19 +22,21 @@ def download_data_file(url, local_path=".", local_file_name=None, print_output=F
 
     Parameters
     ----------
-    url : _type_
-        _description_
+    url : str
+        The URL directly pointing to the file to be downloaded.
     local_path : str, optional
-        _description_, by default "."
-    local_file_name : _type_, optional
-        _description_, by default None
+        The local directory where the fill shall be stored, by default "."
+    local_file_name : str or None, optional
+        If provided, this is the name of the file locally, by default the
+        file name form the URL, i.e. the part after the last `/` will be
+        used as file name.
     print_output : bool, optional
-        _description_, by default False
+        Set to true to get print info on what the function is doing, by default False
 
     Returns
     -------
-    _type_
-        _description_
+    None (if file already exists), or the return message of `urllib.request.urlretrieve`
+
     """
     if not Path(local_path).exists():
         if print_output:
@@ -59,6 +69,7 @@ def load_openmrg_5min_2h(data_dir="."):
     Returns
     -------
     ds_rad, ds_cmls, ds_gauges_municp, ds_gauge_smhi
+
     """
     fn = "openmrg_cml_5min_2h.nc"
     url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
