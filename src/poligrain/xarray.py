@@ -24,7 +24,7 @@ class PoligrainDatasetAccessor:
         pad_color: str = "k",
         line_style: str = "-",
         cap_style: str = "round",
-        use_lon_lat: bool = False,
+        use_lon_lat: bool = True,
         ax: (matplotlib.axes.Axes | None) = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.
@@ -63,7 +63,7 @@ class PoligrainDataArrayAccessor:
         pad_color: str = "k",
         line_style: str = "-",
         cap_style: str = "round",
-        use_lon_lat: bool = False,
+        use_lon_lat: bool = True,
         ax: (matplotlib.axes.Axes | None) = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.

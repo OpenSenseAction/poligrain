@@ -130,7 +130,7 @@ def plot_lines(
     cmls: (xr.Dataset | xr.DataArray),
     vmin: (float | None) = None,
     vmax: (float | None) = None,
-    use_lon_lat=False,
+    use_lon_lat=True,
     cmap: (str | Colormap) = "turbo",
     line_color: str = "C0",
     line_width: float = 1,
@@ -236,11 +236,12 @@ def plot_plg(
     vmax=None,
     cmap="turbo",
     ax=None,
-    use_lon_lat=False,
+    use_lon_lat=True,
     edge_color="k",
     edge_width=0.5,
     marker_size=20,
-    **kwargs,
+    kwargs_cmls_plot=None,
+    kwargs_gauges_plot=None,
 ):
     """Plot point, line and grid data.
 
@@ -253,8 +254,10 @@ def plot_plg(
     da_gauges : _type_, optional
         _description_, by default None
     """
-    kwargs_cmls_plot = kwargs.pop("kwargs_cmls_plot", {})
-    kwargs_gauges_plot = kwargs.pop("kwargs_gauges_plot", {})
+    if kwargs_cmls_plot is None:
+        kwargs_cmls_plot = {}
+    if kwargs_gauges_plot is None:
+        kwargs_gauges_plot = {}
 
     if ax is None:
         _, ax = plt.subplots()
