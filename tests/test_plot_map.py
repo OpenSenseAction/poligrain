@@ -167,7 +167,7 @@ def test_plot_plg():
         ds_cmls,
         ds_gauges_municp,
         ds_gauge_smhi,
-    ) = plg.example_data.load_openmrg_5min_2h(data_dir="example_data")
+    ) = plg.example_data.load_openmrg_5min_2h(data_dir="tests/example_data")
 
     # we still need to rename variables here, until we update the example dataset...
     ds_rad = ds_rad.rename({"longitudes": "lon", "latitudes": "lat"})
