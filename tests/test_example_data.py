@@ -47,3 +47,6 @@ def test_download_data_file():
             url=url,
         )
         assert return_code is None
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_gauges.close()
