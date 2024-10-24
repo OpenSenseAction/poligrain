@@ -164,3 +164,4 @@ poetry.lock
 
 # Data files that might be downloaded by example notebooks
 docs/notebooks/data_PWS_netCDF_AMS_float.nc
+docs/notebooks/example_data/
