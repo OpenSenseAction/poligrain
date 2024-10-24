@@ -158,3 +158,81 @@ def test_plot_lines_with_dataarray_raise_wrong_shape():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     with pytest.raises(ValueError, match="has to be 1D"):
         plg.plot_map.plot_lines(ds_cmls.rsl.isel(sublink_id=0))
+
+
+def test_plot_plg():
+    # load data
+    (
+        ds_rad,
+        ds_cmls,
+        ds_gauges_municp,
+        ds_gauge_smhi,
+    ) = plg.example_data.load_openmrg_5min_2h(data_dir="example_data")
+
+    # we still need to rename variables here, until we update the example dataset...
+    ds_rad = ds_rad.rename({"longitudes": "lon", "latitudes": "lat"})
+    ds_rad = ds_rad.set_coords(["lon", "lat"])
+
+    # project coordinates to be able to plot with x-y data
+    ref_str = "EPSG:32632"
+    (
+        ds_gauges_municp.coords["x"],
+        ds_gauges_municp.coords["y"],
+    ) = plg.spatial.project_point_coordinates(
+        ds_gauges_municp.lon, ds_gauges_municp.lat, ref_str
+    )
+
+    (
+        ds_cmls.coords["site_0_x"],
+        ds_cmls.coords["site_0_y"],
+    ) = plg.spatial.project_point_coordinates(
+        ds_cmls.site_0_lon, ds_cmls.site_0_lat, ref_str
+    )
+    (
+        ds_cmls.coords["site_1_x"],
+        ds_cmls.coords["site_1_y"],
+    ) = plg.spatial.project_point_coordinates(
+        ds_cmls.site_1_lon, ds_cmls.site_1_lat, ref_str
+    )
+
+    ds_rad.coords["xs"], ds_rad.coords["ys"] = plg.spatial.project_point_coordinates(
+        ds_rad.lon, ds_rad.lat, ref_str
+    )
+
+    # plot with x-y (use_lon_lat=False)
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_gauges=ds_gauges_municp.rainfall_amount.sum(dim="time"),
+        use_lon_lat=False,
+        da_cmls=ds_cmls.R.sum(dim="time"),
+        vmin=0,
+        vmax=5,
+        cmap="Grays",
+        kwargs_cmls_plot={
+            "edge_color": "b",
+            "edge_width": 1,
+            "vmax": 10,
+            "cmap": "magma_r",
+        },
+        kwargs_gauges_plot={
+            "marker": "*",
+            "s": 100,
+            "cmap": "Greens",
+            "vmin": 4,
+            "vmax": 6,
+        },
+    )
+
+    # Plot with lon-lat
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls.R.sum(dim="time"),
+        use_lon_lat=True,
+    )
+
+    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+        plg.plot_map.plot_plg(
+            da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+            da_cmls=ds_cmls.R.sum(dim="time"),
+            foo=1,
+        )
