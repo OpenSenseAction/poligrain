@@ -126,6 +126,7 @@ def test_plot_lines_dataset():
             lines.get_paths()[19].vertices,
             np.array([[11.93019, 57.68762], [11.93377, 57.67562]]),
         )
+    ds_cmls.close()
 
 
 def test_plot_lines_with_dataarray_colored_lines():
@@ -152,12 +153,14 @@ def test_plot_lines_with_dataarray_colored_lines():
         )
         numpy.testing.assert_almost_equal(result, expected)
         ax.cla()
+    ds_cmls.close()
 
 
 def test_plot_lines_with_dataarray_raise_wrong_shape():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     with pytest.raises(ValueError, match="has to be 1D"):
         plg.plot_map.plot_lines(ds_cmls.rsl.isel(sublink_id=0))
+    ds_cmls.close()
 
 
 def test_plot_plg():

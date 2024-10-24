@@ -12,11 +12,13 @@ import poligrain as plg
 def test_units_frequency():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     assert ds_cmls.frequency.units.lower() == "MHz".lower()
+    ds_cmls.close()
 
 
 def test_units_length():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     assert ds_cmls.length.units.lower() == "m".lower()
+    ds_cmls.close()
 
 
 def test_shape_length_frequency_arrays():
@@ -25,6 +27,7 @@ def test_shape_length_frequency_arrays():
         ds_cmls.length.broadcast_like(ds_cmls.frequency).shape
         == ds_cmls.frequency.shape
     )
+    ds_cmls.close()
 
 
 def test_length_values_of_sublinks():
@@ -34,6 +37,7 @@ def test_length_values_of_sublinks():
         length.isel(sublink_id=0).to_numpy().all()
         == length.isel(sublink_id=1).to_numpy().all()
     )
+    ds_cmls.close()
 
 
 def test_plot_len_vs_freq():
@@ -48,6 +52,7 @@ def test_plot_len_vs_freq():
     fig, ax = plt.subplots(figsize=(5, 4))
     _ = plg.plot_metadata.plot_len_vs_freq(ds_cmls.length, ds_cmls.frequency, ax=ax)
     assert fig.get_figwidth() == 5
+    ds_cmls.close()
 
 
 def test_plot_len_vs_freq_hexbin_default():
@@ -67,6 +72,7 @@ def test_plot_len_vs_freq_hexbin_default():
     assert ax.get_ylabel() == "Frequency (GHz)"
 
     plt.close("all")
+    ds_cmls.close()
 
 
 def test_plot_len_vs_freq_hexbin_no_ax():
@@ -79,6 +85,7 @@ def test_plot_len_vs_freq_hexbin_no_ax():
 
     # Check if the return type is correct
     assert isinstance(hexbin, PolyCollection)
+    ds_cmls.close()
 
 
 def test_plot_distribution_default():
@@ -102,6 +109,7 @@ def test_plot_distribution_default():
     assert ax.get_ylabel() == "Count (nr. of sublinks)"
 
     plt.close("all")
+    ds_cmls.close()
 
 
 def test_plot_distribution_percentage():
@@ -121,6 +129,7 @@ def test_plot_distribution_percentage():
         assert isinstance(patch, plt.Rectangle)
 
     plt.close("all")
+    ds_cmls.close()
 
 
 def test_plot_distribution_kwargs():
@@ -137,6 +146,7 @@ def test_plot_distribution_kwargs():
     assert patches[0].get_alpha() == 0.5
 
     plt.close("all")
+    ds_cmls.close()
 
 
 def test_plot_polarization_default():
@@ -154,6 +164,7 @@ def test_plot_polarization_default():
     assert ax.get_ylabel() == "Count (nr. of CMLs)"
 
     plt.close("all")
+    ds_cmls.close()
 
 
 def test_plot_polarization_count():
@@ -191,3 +202,4 @@ def test_plot_polarization_count():
     assert bars[2].get_height() == count_hv
 
     plt.close("all")
+    ds_cmls.close()
