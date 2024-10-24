@@ -240,8 +240,8 @@ def plot_plg(
     edge_color="k",
     edge_width=0.5,
     marker_size=20,
-    kwargs_cmls_plot={},  # noqa: B006
-    kwargs_gauges_plot={},  # noqa: B006
+    kwargs_cmls_plot={},  # noqa: B006 # pylint: disable=W0102
+    kwargs_gauges_plot={},  # noqa: B006 # pylint: disable=W0102
 ):
     """Plot point, line and grid data.
 
