@@ -93,3 +93,9 @@ def test_load_openmrg_5min_2h():
             ds_gauge_smhi.rainfall_amount.isel(station_id=0).data[11:14],
             np.array([0.63333333, 0.63333333, 0.53333333]),
         )
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_rad.close()
+        ds_cmls()
+        ds_gauges_municp()
+        ds_gauge_smhi()
