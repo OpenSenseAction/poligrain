@@ -240,8 +240,7 @@ def plot_plg(
     edge_color="k",
     edge_width=0.5,
     marker_size=20,
-    kwargs_cmls_plot={},  # noqa: B006 # pylint: disable=W0102
-    kwargs_gauges_plot={},  # noqa: B006 # pylint: disable=W0102
+    **kwargs,
 ):
     """Plot point, line and grid data.
 
@@ -254,6 +253,9 @@ def plot_plg(
     da_gauges : _type_, optional
         _description_, by default None
     """
+    kwargs_cmls_plot = kwargs.pop("kwargs_cmls_plot", {})
+    kwargs_gauges_plot = kwargs.pop("kwargs_gauges_plot", {})
+
     if ax is None:
         _, ax = plt.subplots()
 
