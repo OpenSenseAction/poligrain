@@ -258,12 +258,11 @@ def plot_plg(
     if da_cmls is not None:
         plot_lines(cmls=da_cmls, vmin=vmin, vmax=vmax, ax=ax)
     if da_gauges is not None:
-        plt.scatter(
+        ax.scatter(
             x=da_gauges[point_x_name],
             y=da_gauges[point_y_name],
             c=da_gauges.data,
             vmin=vmin,
             vmax=vmax,
             cmap=cmap,
-            ax=ax,
         )
