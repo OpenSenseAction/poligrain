@@ -96,6 +96,6 @@ def test_load_openmrg_5min_2h():
 
         # close file, because otherwise CI on Windows fails when trying to delete dir
         ds_rad.close()
-        ds_cmls()
-        ds_gauges_municp()
-        ds_gauge_smhi()
+        ds_cmls.close()
+        ds_gauges_municp.close()
+        ds_gauge_smhi.close()
