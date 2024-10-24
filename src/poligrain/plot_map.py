@@ -133,7 +133,7 @@ def plot_lines(
     cmap: (str | Colormap) = "turbo",
     line_color: str = "C0",
     line_width: float = 1,
-    pad_width: float = 0,
+    pad_width: float = 0.5,
     pad_color: str = "k",
     line_style: str = "-",
     cap_style: str = "round",
@@ -265,4 +265,8 @@ def plot_plg(
             vmin=vmin,
             vmax=vmax,
             cmap=cmap,
+            s=20,
+            edgecolors="k",
+            linewidths=0.5,
+            zorder=10,
         )
