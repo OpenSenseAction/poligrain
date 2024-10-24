@@ -4,6 +4,11 @@
 
 ### New features
 
+- [PR76](https://github.com/OpenSenseAction/poligrain/pull/76) add function to
+  download small example datasets from newly created data repo at
+  https://github.com/cchwala/opensense_example_data/tree/main (by
+  [@cchwala](https://github.com/cchwala))
+
 ### Bug fixes
 
 - [PR74](https://github.com/OpenSenseAction/poligrain/pull/74) fix xarray
