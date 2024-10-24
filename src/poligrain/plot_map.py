@@ -238,7 +238,7 @@ def plot_plg(
         _description_, by default None
     """
     if ax is None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
     if use_lon_lat:
         grid_x_name = "lon"
