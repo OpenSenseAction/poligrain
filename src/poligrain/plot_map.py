@@ -130,6 +130,7 @@ def plot_lines(
     cmls: (xr.Dataset | xr.DataArray),
     vmin: (float | None) = None,
     vmax: (float | None) = None,
+    use_lon_lat=False,
     cmap: (str | Colormap) = "turbo",
     line_color: str = "C0",
     line_width: float = 1,
@@ -198,11 +199,22 @@ def plot_lines(
     except AttributeError:
         color_data = line_color
 
+    if use_lon_lat:
+        x0_name = "site_0_lon"
+        x1_name = "site_1_lon"
+        y0_name = "site_0_lat"
+        y1_name = "site_1_lat"
+    else:
+        x0_name = "site_0_x"
+        x1_name = "site_1_x"
+        y0_name = "site_0_y"
+        y1_name = "site_1_y"
+
     return scatter_lines(
-        x0=cmls.site_0_lon.values,
-        y0=cmls.site_0_lat.values,
-        x1=cmls.site_1_lon.values,
-        y1=cmls.site_1_lat.values,
+        x0=cmls[x0_name].values,
+        y0=cmls[y0_name].values,
+        x1=cmls[x1_name].values,
+        y1=cmls[y1_name].values,
         s=line_width,
         c=color_data,
         pad_width=pad_width,
@@ -225,6 +237,11 @@ def plot_plg(
     cmap="turbo",
     ax=None,
     use_lon_lat=False,
+    edge_color="k",
+    edge_width=0.5,
+    marker_size=20,
+    kwargs_cmls_plot={},  # noqa: B006
+    kwargs_gauges_plot={},  # noqa: B006
 ):
     """Plot point, line and grid data.
 
@@ -256,17 +273,29 @@ def plot_plg(
             x=grid_x_name, y=grid_y_name, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax
         )
     if da_cmls is not None:
-        plot_lines(cmls=da_cmls, vmin=vmin, vmax=vmax, ax=ax)
+        plot_lines(
+            cmls=da_cmls,
+            vmin=kwargs_cmls_plot.pop("vmin", vmin),
+            vmax=kwargs_cmls_plot.pop("vmax", vmax),
+            cmap=kwargs_cmls_plot.pop("cmap", cmap),
+            use_lon_lat=use_lon_lat,
+            ax=ax,
+            line_width=kwargs_cmls_plot.pop("line_width", marker_size / 10),
+            pad_color=kwargs_cmls_plot.pop("edge_color", edge_color),
+            pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
+            **kwargs_cmls_plot,
+        )
     if da_gauges is not None:
         ax.scatter(
             x=da_gauges[point_x_name],
             y=da_gauges[point_y_name],
             c=da_gauges.data,
-            vmin=vmin,
-            vmax=vmax,
-            cmap=cmap,
-            s=20,
-            edgecolors="k",
-            linewidths=0.5,
-            zorder=10,
+            vmin=kwargs_gauges_plot.pop("vmin", vmin),
+            vmax=kwargs_gauges_plot.pop("vmax", vmax),
+            cmap=kwargs_gauges_plot.pop("cmap", cmap),
+            s=kwargs_gauges_plot.pop("s", marker_size),
+            edgecolors=kwargs_gauges_plot.pop("edge_color", edge_color),
+            linewidths=kwargs_gauges_plot.pop("line_width", edge_width),
+            zorder=2,
+            **kwargs_gauges_plot,
         )
