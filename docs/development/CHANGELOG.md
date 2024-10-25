@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR75](https://github.com/OpenSenseAction/poligrain/pull/75) Add function to
+  easily plot grid, line and point data (by
+  [@cchwala](https://github.com/cchwala))
 - [PR76](https://github.com/OpenSenseAction/poligrain/pull/76) add function to
   download small example datasets from newly created data repo at
   https://github.com/cchwala/opensense_example_data/tree/main (by
