@@ -51,6 +51,7 @@ llvmlite = ">=0.42.0"
 [tool.poetry.group.dev.dependencies]
 # only required for dev work on local machine
 jupyterlab = "*"
+ipympl = ">=0.9.4"
 ipython = { version = "*", optional = true }
 
 [tool.poetry.extras]
