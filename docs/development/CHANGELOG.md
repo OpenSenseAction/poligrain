@@ -4,6 +4,16 @@
 
 ### New features
 
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.2.0
+
+### New features
+
 - [PR75](https://github.com/OpenSenseAction/poligrain/pull/75) Add function to
   easily plot grid, line and point data (by
   [@cchwala](https://github.com/cchwala))
