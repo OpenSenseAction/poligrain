@@ -245,14 +245,53 @@ def plot_plg(
 ):
     """Plot point, line and grid data.
 
+    The data to be plotted has to be provided as xr.DataArray conforming
+    to our naming conventions. Data has to be for one selected time step.
+
+    Data of the three different sources can be passed all at once, but one
+    can also pass only one or two of them. `vmin`, `vmax` and `cmap` will be
+    the same for all three data sources, but can be adjusted separately via
+    `kwargs_cmls_plot` and `kwargs_gauges_plot`.
+
     Parameters
     ----------
-    da_grid : _type_, optional
-        _description_, by default None
-    da_cmls : _type_, optional
-        _description_, by default None
-    da_gauges : _type_, optional
-        _description_, by default None
+    da_grid : xr.DataArray, optional
+        2D gridded data (only one time step), typically from weather radar
+    da_cmls : xr.DataArray, optional
+        CML data (for one specific time step)
+    da_gauges : xr.DataArray, optional
+        Gauge data (for on specific time step)
+    vmin : float, optional
+        vmin for all three data sources, by default None. If set to None
+        it will be derived individually for each data source when plotting.
+    vmax : float, optional
+        vmax for all three data sources, by default None. If set to None
+        it will be derived individually for each data source when plotting.
+    cmap : str, optional
+        cmap for all three data sources, by default "turbo"
+    ax : _type_, optional
+        Axes object from matplotlib, by default None which will create a new
+        figure and return the Axes object.
+    use_lon_lat : bool, optional
+        If set to True use lon-lat coordinates for plotting. If set to False
+        use x-y coordinates (meant to be projected coordinates). By default True.
+        Note that our data conventions enforce that lon-lat coordinates are provided,
+        but projected coordinates might need to be generated first before plotting.
+        This plotting function does not project data on the fly.
+    edge_color : str, optional
+        Edge color of points and lines, by default "k"
+    edge_width : float, optional
+        Width of edge line of points and lines, by default 0.5
+    marker_size : int, optional
+        Size of points and lines, by default 20. Note that the value is directly
+        passed to plt.scatter for plotting points but for the width of the lines
+        it is divided by 10 so that visually the have more or less the same size.
+    kwargs_cmls_plot : dict or None, optional
+        kwargs to be passed to the CML plotting function, by default None. See
+        `plot_lines` for supported kwargs.
+    kwargs_gauges_plot : dict or None, optional
+        kwargs to be passed to plt.scatter, by default None.
+
     """
     if kwargs_cmls_plot is None:
         kwargs_cmls_plot = {}
@@ -304,3 +343,4 @@ def plot_plg(
             zorder=2,
             **kwargs_gauges_plot,
         )
+    return ax
