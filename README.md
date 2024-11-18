@@ -6,6 +6,7 @@
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14177746.svg)](https://doi.org/10.5281/zenodo.14177746)
 
 <!-- SPHINX-START -->
 
