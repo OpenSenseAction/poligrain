@@ -10,6 +10,10 @@
 
 ### Breaking changes
 
+## v0.2.2
+
+Add back support for Python 3.9.
+
 ## v0.2.1
 
 This is just a quick release to start tracking via zenodo to get a DOI.
