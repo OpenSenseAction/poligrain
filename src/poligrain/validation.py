@@ -107,7 +107,9 @@ def calculate_rainfall_metrics(
     """Calculate verification metrics for rainfall estimation.
 
     This function calculates verification metrics based on reference and estimated
-    rainfall rates, equal to or above a given threshold. NaNs are excluded.
+    rainfall rates, equal to or above a given threshold. NaNs are excluded. 
+    The threshold is applied to all calculations so the metrics can essentially match 
+    the data plotted in the scatter plots (validation.plot_hexbin). 
     Metrics include:
     - Pearson correlation coefficient (r)
     - Coefficient of variation (CV)
@@ -123,7 +125,7 @@ def calculate_rainfall_metrics(
         Estimated rainfall.
     ref_thr : float, optional
         All values >= threshold in reference are taken
-        into account. By default 0.0, i.e. no threshold.
+        into account. By default 0.0, i.e. no threshold. 
     est_thr : float, optional
         All values >= threshold in estimates are taken
         into account. By default 0.0., i.e. no threshold.
@@ -153,9 +155,7 @@ def calculate_rainfall_metrics(
     reference = reference[thresh_idx]
     estimate = estimate[thresh_idx]
 
-
     assert reference.shape == estimate.shape
-
 
     # metrics: r, CV, RMSE, MAE, PBIAS
     pearson_correlation = np.corrcoef(reference, estimate)
@@ -163,13 +163,6 @@ def calculate_rainfall_metrics(
     root_mean_square_error = np.sqrt(np.mean((estimate - reference) ** 2))
     mean_absolute_error = np.mean(np.abs(estimate - reference))
     percent_bias = (np.mean(estimate - reference) / np.mean(reference)) * 100  # %
-
-    # fix potential division by zero by replacing 'inf' with 0
-    if np.isinf(coefficient_of_variation):
-        coefficient_of_variation = 0.0
-    if np.isinf(percent_bias):
-        percent_bias = 0.0
-
 
     # general rainfall statistics
     R_mean_reference = reference.mean()
@@ -187,25 +180,12 @@ def calculate_rainfall_metrics(
     N_dry = reference_dry.sum()
     false_wet_ratio = N_false_wet / float(N_dry)
 
-    # if N_dry is zero, returning false_wet_ratio=0 is preferred over 'inf' or 'nan'
-    if np.isinf(false_wet_ratio) or np.isnan(false_wet_ratio):
-        false_wet_ratio = 0.0
-
     N_missed_wet = (reference_wet & estimate_dry).sum()
     N_wet = reference_wet.sum()
     missed_wet_ratio = N_missed_wet / float(N_wet)
 
-    # if N_wet is zero, returning missed_wet_ratio=0 is preferred over 'inf' or 'nan'
-    if np.isinf(missed_wet_ratio) or np.isnan(missed_wet_ratio):
-        missed_wet_ratio = 0.0
-
     false_wet_r_mean = estimate[reference_dry & estimate_wet].mean()
     missed_wet_r_mean = reference[reference_wet & estimate_dry].mean()
-
-    # to avoid nans in the output if no false wet or dry values are present;
-    # returns 0 instead
-    false_wet_r_mean = np.nan_to_num(false_wet_r_mean)
-    missed_wet_r_mean = np.nan_to_num(missed_wet_r_mean)
 
     return {
         "reference_rainfall_threshold": ref_thr,
@@ -223,37 +203,32 @@ def calculate_rainfall_metrics(
         "missed_wet_ratio": missed_wet_ratio,
         "false_wet_rainfall_rate": false_wet_r_mean,
         "missed_wet_rainfall_rate": missed_wet_r_mean,
-        "N_all": int(N_all),
-        "N_nan": int(N_nan),
+        "N_all": N_all,
+        "N_nan": N_nan,
+        "N_nan_reference": N_nan_ref,
+        "N_nan_estimate": N_nan_est,
     }
 
 
 def calculate_wet_dry_metrics(
     reference: npt.ArrayLike,
     estimate: npt.ArrayLike,
-    ref_thr: float = 0.0,
-    est_thr: float = 0.0,
 ) -> dict[str, float]:
     """Calculate verification metrics for wet-dry classification.
 
     This function calculates verification metrics based on binary classification of wet
-    and dry intervals in the reference and estimated data. Any value > 0 is considered
-    'wet'. NaNs are excluded from the calculation in the function.
+    and dry intervals in the reference and estimated data. If the input array is not 
+    boolean, a threshold is set at 0 and any value > 0 is considered 'wet'. NaNs are 
+    excluded from the calculation in the function.
     Metrics include:
     - Matthews correlation coefficient (MCC)
 
     Parameters
     ----------
     reference : npt.ArrayLike
-        Rainfall reference.
+        Boolean array of reference rainfall with 'wet' being True. 
     estimate : npt.ArrayLike
-        Estimated rainfall.
-    ref_thr : float, optional
-        All values >= threshold in reference are taken
-        into account. By default 0.0, i.e. no threshold.
-    est_thr : float, optional
-        All values >= threshold in estimates are taken
-        into account. By default 0.0., i.e. no threshold.
+        Boolean array of estimated rainfall with 'wet' being True. 
 
     Returns
     -------
@@ -274,21 +249,14 @@ def calculate_wet_dry_metrics(
     reference = reference[~nan_idx]
     estimate = estimate[~nan_idx]
 
-    # select pairs in reference or estimate strictly less than the threshold
-    thresh_idx = (reference >= ref_thr) | (estimate >= est_thr)
-    reference = reference[thresh_idx]
-    estimate = estimate[thresh_idx]
-
-    assert reference.shape == estimate.shape
-
     # calculate the MCC
-    N_tp = np.sum((reference is True) & (estimate is True))
-    N_tn = np.sum((reference is False) & (estimate is False))
-    N_fp = np.sum((reference is False) & (estimate is True))
-    N_fn = np.sum((reference is True) & (estimate is False))
+    N_tp = ((reference == True) & (estimate == True)).sum()
+    N_tn = np.sum((reference == False) & (estimate == False))
+    N_fp = np.sum((reference == False) & (estimate == True))
+    N_fn = np.sum((reference == True) & (estimate == False))
 
-    N_wet_ref = np.sum(reference is True)
-    N_dry_ref = np.sum(reference is False)
+    N_wet_ref = np.sum(reference == True)
+    N_dry_ref = np.sum(reference == False)
 
     true_wet_ratio = N_tp / N_wet_ref
     true_dry_ratio = N_tn / N_dry_ref
@@ -302,8 +270,8 @@ def calculate_wet_dry_metrics(
 
     matthews_correlation_coefficient = ((N_tp * N_tn) - (N_fp * N_fn)) / (a * b * c * d)
 
-    # if estimated has zero/false values only 'inf' would be returned, but 0 is more
-    # favorable
+    # if estimated has zero/false values only 'inf' would be returned, but 0 is
+    # preferred
     if np.isinf(matthews_correlation_coefficient):
         matthews_correlation_coefficient = 0
     if np.nansum(estimate) == 0:
@@ -321,6 +289,10 @@ def calculate_wet_dry_metrics(
         "N_true_dry": N_tn,
         "N_false_wet": N_fp,
         "N_missed_wet": N_fn,
+        "N_all": N_all,
+        "N_nan": N_nan,
+        "N_nan_reference": N_nan_ref,
+        "N_nan_estimate": N_nan_est        
     }
 
 
