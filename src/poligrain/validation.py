@@ -13,8 +13,8 @@ from matplotlib.colors import Colormap
 def plot_hexbin(
     reference: npt.ArrayLike,
     estimate: npt.ArrayLike,
-    ref_thr: float = 0.0,
-    est_thr: float = 0.0,
+    ref_thresh: float = 0.0,
+    est_thresh: float = 0.0,
     gridsize: (int | tuple[int, int]) = 45,
     cmap: (str | Colormap) = "viridis",
     colorbar: bool = True,
@@ -36,10 +36,10 @@ def plot_hexbin(
         The reference values to be plotted on the x-axis.
     estimate : npt.ArrayLike
         The estimated values to be plotted on the y-axis.
-    ref_thr : float, optional
+    ref_thresh : float, optional
         All values >= threshold in reference are taken
         into account. By default 0.0, i.e. no threshold.
-    est_thr : float, optional
+    est_thresh : float, optional
         All values >= threshold in estimate are taken
         into account. By default 0.0., i.e. no threshold.
     grid_size : int, optional
@@ -64,7 +64,7 @@ def plot_hexbin(
         _, ax = plt.subplots()
 
     # filter out values strictly less than the threshold
-    thresh_idx = (reference >= ref_thr) | (estimate >= est_thr)
+    thresh_idx = (reference >= ref_thresh) | (estimate >= est_thresh)
 
     # set maximum plot extent to the nearest 10
     max_extent = np.ceil(np.nanmax([reference, estimate]) / 10) * 10
@@ -101,15 +101,16 @@ def plot_hexbin(
 def calculate_rainfall_metrics(
     reference: npt.ArrayLike,
     estimate: npt.ArrayLike,
-    ref_thr: float = 0.0,
-    est_thr: float = 0.0,
+    ref_thresh: float = 0.0,
+    est_thresh: float = 0.0,
 ) -> dict[str, float]:
     """Calculate verification metrics for rainfall estimation.
 
     This function calculates verification metrics based on reference and estimated
-    rainfall rates, equal to or above a given threshold. NaNs are excluded. 
-    The threshold is applied to all calculations so the metrics can essentially match 
-    the data plotted in the scatter plots (validation.plot_hexbin). 
+    rainfall rates, equal to or above a given threshold. NaNs are excluded.
+    The threshold is applied to all metric calculations so the metrics essentially match
+    the data plotted in the scatter plots (validation.plot_hexbin). Note thate the units 
+    of 'R_sum...' and 'R_mean...' depend on the units of the input arrays.
     Metrics include:
     - Pearson correlation coefficient (r)
     - Coefficient of variation (CV)
@@ -123,10 +124,10 @@ def calculate_rainfall_metrics(
         Rainfall reference.
     estimate : npt.ArrayLike
         Estimated rainfall.
-    ref_thr : float, optional
+    ref_thresh : float, optional
         All values >= threshold in reference are taken
-        into account. By default 0.0, i.e. no threshold. 
-    est_thr : float, optional
+        into account. By default 0.0, i.e. no threshold.
+    est_thresh : float, optional
         All values >= threshold in estimates are taken
         into account. By default 0.0., i.e. no threshold.
 
@@ -135,7 +136,6 @@ def calculate_rainfall_metrics(
     dict[str, float]
         A dictionary containing key value pairs of the verification metrics.
     """
-    
     assert reference.shape == estimate.shape
 
     # select all value pairs if one or both are NaN to calculate metrics
@@ -150,30 +150,30 @@ def calculate_rainfall_metrics(
     reference = reference[~nan_idx]
     estimate = estimate[~nan_idx]
 
-    # select pairs in reference or estimate strictly less than the threshold
-    thresh_idx = (reference >= ref_thr) | (estimate >= est_thr)
-    reference = reference[thresh_idx]
-    estimate = estimate[thresh_idx]
+    # apply threshold and filter out values strictly less than the threshold
+    thresh_idx = (reference >= ref_thresh) | (estimate >= est_thresh)
+    reference_ge_thresh = reference[thresh_idx]
+    estimate_ge_thresh = estimate[thresh_idx]
 
     assert reference.shape == estimate.shape
 
-    # metrics: r, CV, RMSE, MAE, PBIAS
-    pearson_correlation = np.corrcoef(reference, estimate)
-    coefficient_of_variation = np.std(estimate - reference) / np.mean(reference)
-    root_mean_square_error = np.sqrt(np.mean((estimate - reference) ** 2))
-    mean_absolute_error = np.mean(np.abs(estimate - reference))
-    percent_bias = (np.mean(estimate - reference) / np.mean(reference)) * 100  # %
+    # calculate metrics: r, CV, RMSE, MAE, PBIAS
+    pearson_correlation = np.corrcoef(reference_ge_thresh, estimate_ge_thresh)
+    coefficient_of_variation = np.std(estimate_ge_thresh - reference_ge_thresh) / np.mean(reference_ge_thresh)
+    root_mean_square_error = np.sqrt(np.mean((estimate_ge_thresh - reference_ge_thresh) ** 2))
+    mean_absolute_error = np.mean(np.abs(estimate_ge_thresh - reference_ge_thresh))
+    percent_bias = (np.mean(estimate_ge_thresh - reference_ge_thresh) / np.mean(reference_ge_thresh)) * 100  # %
 
-    # general rainfall statistics
-    R_mean_reference = reference.mean()
-    R_mean_estimate = estimate.mean()
-    # R_sum_reference = reference.sum()
-    # R_sum_estimate = estimate.sum()
+    # calculate mean rainfall
+    R_mean_reference = reference_ge_thresh.mean()
+    R_mean_estimate = estimate_ge_thresh.mean()
+    R_sum_reference = reference_ge_thresh.sum()
+    R_sum_estimate = estimate_ge_thresh.sum()
 
-    # wet-dry statistics based on threshold
-    reference_wet = reference >= ref_thr
+    # calculate wet-dry statistics based on threshold
+    reference_wet = reference > ref_thresh
     reference_dry = np.logical_not(reference_wet)
-    estimate_wet = estimate >= est_thr
+    estimate_wet = estimate > est_thresh
     estimate_dry = np.logical_not(estimate_wet)
 
     N_false_wet = (reference_dry & estimate_wet).sum()
@@ -188,17 +188,17 @@ def calculate_rainfall_metrics(
     missed_wet_r_mean = reference[reference_wet & estimate_dry].mean()
 
     return {
-        "reference_rainfall_threshold": ref_thr,
-        "estimates_rainfall_threshold": est_thr,
+        "reference_rainfall_threshold": ref_thresh,
+        "estimates_rainfall_threshold": est_thresh,
         "pearson_correlation_coefficient": pearson_correlation[0, 1],
         "coefficient_of_variation": coefficient_of_variation,
         "root_mean_square_error": root_mean_square_error,
         "mean_absolute_error": mean_absolute_error,
         "percent_bias": percent_bias,
-        "mean_rainfall_rate_ref": R_mean_reference,
-        "mean_rainfall_rate_est": R_mean_estimate,
-        # "rainfall_sum_reference": R_sum_reference,
-        # "rainfall_sum_estimate": R_sum_estimate,
+        "reference_mean_rainfall": R_mean_reference,
+        "estimated_mean_rainfall": R_mean_estimate,
+        "reference_rainfall_sum": R_sum_reference,
+        "estimated_rainfall_sum": R_sum_estimate,
         "false_wet_ratio": false_wet_ratio,
         "missed_wet_ratio": missed_wet_ratio,
         "false_wet_rainfall_rate": false_wet_r_mean,
@@ -217,18 +217,18 @@ def calculate_wet_dry_metrics(
     """Calculate verification metrics for wet-dry classification.
 
     This function calculates verification metrics based on binary classification of wet
-    and dry intervals in the reference and estimated data. If the input array is not 
-    boolean, a threshold is set at 0 and any value > 0 is considered 'wet'. NaNs are 
-    excluded from the calculation in the function.
+    and dry intervals in the reference and estimated data. If the input array is not
+    boolean but contains rainfall values, a threshold of 0 is set, and any value > 0 
+    is considered 'wet'. NaNs are excluded from the calculation in the function.
     Metrics include:
     - Matthews correlation coefficient (MCC)
 
     Parameters
     ----------
     reference : npt.ArrayLike
-        Boolean array of reference rainfall with 'wet' being True. 
+        Boolean array of reference rainfall with 'wet' being True.
     estimate : npt.ArrayLike
-        Boolean array of estimated rainfall with 'wet' being True. 
+        Boolean array of estimated rainfall with 'wet' being True.
 
     Returns
     -------
@@ -248,6 +248,10 @@ def calculate_wet_dry_metrics(
     # exclude NaNs
     reference = reference[~nan_idx]
     estimate = estimate[~nan_idx]
+
+    # force bool type
+    reference = reference > 0
+    estimate = estimate > 0
 
     # calculate the MCC
     N_tp = ((reference == True) & (estimate == True)).sum()
@@ -292,16 +296,14 @@ def calculate_wet_dry_metrics(
         "N_all": N_all,
         "N_nan": N_nan,
         "N_nan_reference": N_nan_ref,
-        "N_nan_estimate": N_nan_est        
+        "N_nan_estimate": N_nan_est,
     }
 
 
-def print_metrics_table(
-    metrics: dict[str, float]
-) -> None:
+def print_metrics_table(metrics: dict[str, float]) -> None:
     """
     Print pretty table with the verification metrics.
-    
+
     Parameters
     ----------
     metrics : dict[str, float]
@@ -336,7 +338,7 @@ def print_metrics_table(
 
     # Add metrics to the table
     for k, val in metrics.items():
-        metric_name = k.replace('_', ' ')
+        metric_name = k.replace("_", " ")
         metric_name = metric_name.capitalize()
 
         row = (
@@ -345,19 +347,18 @@ def print_metrics_table(
         )
         table_lines.append(row)
         table_lines.append(separator)
-    
+
     return print("\n".join(table_lines))
 
 
-
 def plot_confusion_matrix_distributions(
-        reference: npt.ArrayLike,
-        predicted: npt.ArrayLike,
-        ref_thr: float = 0.0,
-        pred_thr: float = 0.0,
-        N_bins: int = 101,
-        bin_type: str = "linear",
-        ax: (matplotlib.axes.Axes | None) = None
+    reference: npt.ArrayLike,
+    predicted: npt.ArrayLike,
+    ref_thresh: float = 0.0,
+    pred_thr: float = 0.0,
+    N_bins: int = 101,
+    bin_type: str = "linear",
+    ax: (matplotlib.axes.Axes | None) = None,
 ) -> dict[str, list]:
     """Plot the distributions of the confusion matrix.
 
@@ -371,7 +372,7 @@ def plot_confusion_matrix_distributions(
         Rainfall reference.
     predicted : npt.ArrayLike
         Predicted rainfall.
-    ref_thr : float, optional
+    ref_thresh : float, optional
         All values >= threshold in reference are taken
         into account. By default 0.0, i.e. no threshold.
     pred_thr : float, optional
@@ -381,7 +382,7 @@ def plot_confusion_matrix_distributions(
         Number of bins to use in the histograms. By default 101.
     bin_type : str, optional
         Type of binning to use. Either "linear" or "log". By default "linear".
-ax : matplotlib.axes.Axes  |  None, optional
+    ax : matplotlib.axes.Axes  |  None, optional
     An `Axes` object on which to plot. If not supplied, a new figure with an
     `Axes` will be created. By default None.
 
@@ -389,48 +390,26 @@ ax : matplotlib.axes.Axes  |  None, optional
     -------
     PolyCollection
     """
-
     if bin_type == "linear":
         bins = np.linspace(0, 100, N_bins)
-        x_values = np.linspace(0, 100, N_bins-1)
+        x_values = np.linspace(0, 100, N_bins - 1)
     elif bin_type == "log":
         bins = np.logspace(
-        -2,
-        2,
-        num=N_bins,
-        endpoint=True,
-        base=10,
-        dtype=None,
-        axis=0
-    )
+            -2, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
+        )
     x_values = np.logspace(
-        -2,
-        2,
-        num=N_bins-1,
-        endpoint=True,
-        base=10,
-        dtype=None,
-        axis=0
+        -2, 2, num=N_bins - 1, endpoint=True, base=10, dtype=None, axis=0
     )
 
     # initiate the histograms
-    tp_mask = np.logical_and(predicted >= pred_thr, reference >= ref_thr)
-    tp, _ = np.histogram(
-        predicted[tp_mask],
-        bins=N_bins
-    )
+    tp_mask = np.logical_and(predicted >= pred_thr, reference >= ref_thresh)
+    tp, _ = np.histogram(predicted[tp_mask], bins=N_bins)
 
-    fp_mask = np.logical_and(predicted >= pred_thr, reference < ref_thr)
-    fp, _ = np.histogram(
-        predicted[fp_mask],
-        bins=N_bins
-    )
+    fp_mask = np.logical_and(predicted >= pred_thr, reference < ref_thresh)
+    fp, _ = np.histogram(predicted[fp_mask], bins=N_bins)
 
-    fn_mask = np.logical_and(predicted < pred_thr, reference >= ref_thr)
-    fn, _ = np.histogram(
-        reference[fn_mask],
-        bins=bins
-    )
+    fn_mask = np.logical_and(predicted < pred_thr, reference >= ref_thresh)
+    fn, _ = np.histogram(reference[fn_mask], bins=bins)
 
     # plot the histograms
     if ax is None:
@@ -439,19 +418,22 @@ ax : matplotlib.axes.Axes  |  None, optional
     x_values = x_values
 
     l1 = ax.plot(x_values, (tp) / ds_cmls_size, color="C0", linewidth=0.5)
-    p1 = ax.fill_between(x_values, (tp) / ds_cmls_size, alpha=0.3, color="C0", label="TP")
+    p1 = ax.fill_between(
+        x_values, (tp) / ds_cmls_size, alpha=0.3, color="C0", label="TP"
+    )
 
     l2 = ax.plot(x_values, (fp) / ds_cmls_size, color="C2", linewidth=0.5)
-    p2 = ax.fill_between(x_values, (fp) / ds_cmls_size, alpha=0.3, color="C2", label="FP")
+    p2 = ax.fill_between(
+        x_values, (fp) / ds_cmls_size, alpha=0.3, color="C2", label="FP"
+    )
 
     l3 = ax.plot(x_values, (fn) / ds_cmls_size, color="C3", linewidth=0.5)
-    p3 = ax.fill_between(x_values, (fn) / ds_cmls_size, alpha=0.3, color="C3", label="FN")
+    p3 = ax.fill_between(
+        x_values, (fn) / ds_cmls_size, alpha=0.3, color="C3", label="FN"
+    )
 
     ax.set_xscale("log")
-    ax.axvspan(0, ref_thr, alpha=0.1, color="grey", label="DRY")
+    ax.axvspan(0, ref_thresh, alpha=0.1, color="grey", label="DRY")
     ax.legend()
 
-    return {
-        "lines": [l1, l2, l3],
-        "fills": [p1, p2, p3]
-    }
+    return {"lines": [l1, l2, l3], "fills": [p1, p2, p3]}
