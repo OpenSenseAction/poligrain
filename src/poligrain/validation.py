@@ -21,13 +21,13 @@ def plot_hexbin(
     ax: (matplotlib.axes.Axes | None) = None,
     **kwargs,
 ) -> PolyCollection:
-    """Scatter density plot of reference values against the estimated values.
+    """Scatter density plot of reference against the estimated rainfall values.
 
     This function compares the estimated to reference values equal to, or above, a
     given threshold, on a point to point basis. The threshold can be different for
     the reference and estimated values. Note: it does not take any information on
     temporal resolution or aggregation into account, so these have to already match
-    in the input numpy arrays.
+    in the input arrays.
 
 
     Parameters
@@ -104,13 +104,13 @@ def calculate_rainfall_metrics(
     ref_thresh: float = 0.0,
     est_thresh: float = 0.0,
 ) -> dict[str, float]:
-    """Calculate verification metrics for rainfall estimation.
+    """Verification metrics for rainfall estimation.
 
     This function calculates verification metrics based on reference and estimated
-    rainfall rates, equal to or above a given threshold. NaNs are excluded.
-    The threshold is applied to all metric calculations so the metrics essentially match
-    the data plotted in the scatter plots (validation.plot_hexbin). Note thate the units 
-    of 'R_sum...' and 'R_mean...' depend on the units of the input arrays.
+    rainfall rates (or sums), equal to or above a given threshold. The threshold is 
+    applied to all metric calculations so the metrics essentially match the data 
+    plotted in the scatter plots (validation.plot_hexbin). NaNs are excluded. Note: 
+    the units of 'R_sum...' and 'R_mean...' will depend on the units of the input arrays. 
     Metrics include:
     - Pearson correlation coefficient (r)
     - Coefficient of variation (CV)
@@ -214,12 +214,13 @@ def calculate_wet_dry_metrics(
     reference: npt.ArrayLike,
     estimate: npt.ArrayLike,
 ) -> dict[str, float]:
-    """Calculate verification metrics for wet-dry classification.
+    """Verification metrics for wet-dry classification.
 
     This function calculates verification metrics based on binary classification of wet
-    and dry intervals in the reference and estimated data. If the input array is not
-    boolean but contains rainfall values, a threshold of 0 is set, and any value > 0 
-    is considered 'wet'. NaNs are excluded from the calculation in the function.
+    and dry intervals in the reference and estimated data. 'wet' is considered True, 
+    and 'dry' is False. If the input array is not boolean but contains rainfall values, 
+    a threshold of 0 is set, and any value > 0 is considered 'wet'. NaNs are excluded 
+    from the calculation in the function.
     Metrics include:
     - Matthews correlation coefficient (MCC)
 
@@ -351,37 +352,44 @@ def print_metrics_table(metrics: dict[str, float]) -> None:
     return print("\n".join(table_lines))
 
 
-def plot_confusion_matrix_distributions(
+def plot_confusion_matrix_count(
     reference: npt.ArrayLike,
-    predicted: npt.ArrayLike,
+    estimated: npt.ArrayLike,
+    n_sublinks: (int | None) = None,
     ref_thresh: float = 0.0,
     pred_thr: float = 0.0,
     N_bins: int = 101,
     bin_type: str = "linear",
     ax: (matplotlib.axes.Axes | None) = None,
 ) -> dict[str, list]:
-    """Plot the distributions of the confusion matrix.
+    """Plot the count of the distributions of the confusion matrix.
 
-    The true positives and false positives are based on the predicted data. The false
-    negatives are based on the reference data.
+    The true positives and false positives are based on the estimated data. The false
+    negatives are based on the reference data. 
     The extent of the bins runs from 0.01 to 100 mm/h.
 
     Parameters
     ----------
     reference : npt.ArrayLike
         Rainfall reference.
-    predicted : npt.ArrayLike
-        Predicted rainfall.
+    estimated : npt.ArrayLike
+        Estimated rainfall.
+    time_interval : int
+        Time interval of the data, in minutes.
+    n_sublinks : int | None, optional
+        Number of sublinks in the data set. By default None in which case the y-values 
+        correspond to the entire data set.
     ref_thresh : float, optional
         All values >= threshold in reference are taken
         into account. By default 0.0, i.e. no threshold.
     pred_thr : float, optional
-        All values >= threshold in predicted are taken
+        All values >= threshold in estimated are taken
         into account. By default 0.0., i.e. no threshold.
     N_bins : int, optional
         Number of bins to use in the histograms. By default 101.
     bin_type : str, optional
-        Type of binning to use. Either "linear" or "log". By default "linear".
+        Type of binning to use on the data. Either "linear" or "log". 
+        By default "linear".
     ax : matplotlib.axes.Axes  |  None, optional
     An `Axes` object on which to plot. If not supplied, a new figure with an
     `Axes` will be created. By default None.
@@ -391,49 +399,169 @@ def plot_confusion_matrix_distributions(
     PolyCollection
     """
     if bin_type == "linear":
-        bins = np.linspace(0, 100, N_bins)
-        x_values = np.linspace(0, 100, N_bins - 1)
+        bins = np.linspace(0.01, 100, N_bins)
+        x_values = np.linspace(0.01, 100, N_bins - 1)
     elif bin_type == "log":
         bins = np.logspace(
             -2, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
         )
-    x_values = np.logspace(
-        -2, 2, num=N_bins - 1, endpoint=True, base=10, dtype=None, axis=0
-    )
+        x_values = np.logspace(
+            -2, 2, num=N_bins - 1, endpoint=True, base=10, dtype=None, axis=0
+        )
 
     # initiate the histograms
-    tp_mask = np.logical_and(predicted >= pred_thr, reference >= ref_thresh)
-    tp, _ = np.histogram(predicted[tp_mask], bins=N_bins)
+    tp_mask = np.logical_and(estimated >= pred_thr, reference >= ref_thresh)
+    tp, _ = np.histogram(estimated[tp_mask], bins=N_bins)
 
-    fp_mask = np.logical_and(predicted >= pred_thr, reference < ref_thresh)
-    fp, _ = np.histogram(predicted[fp_mask], bins=N_bins)
+    fp_mask = np.logical_and(estimated >= pred_thr, reference < ref_thresh)
+    fp, _ = np.histogram(estimated[fp_mask], bins=N_bins)
 
-    fn_mask = np.logical_and(predicted < pred_thr, reference >= ref_thresh)
+    fn_mask = np.logical_and(estimated < pred_thr, reference >= ref_thresh)
     fn, _ = np.histogram(reference[fn_mask], bins=bins)
 
     # plot the histograms
     if ax is None:
         _, ax = plt.subplots()
 
-    x_values = x_values
 
-    l1 = ax.plot(x_values, (tp) / ds_cmls_size, color="C0", linewidth=0.5)
+    if n_sublinks == None:
+        n_sublinks = 1 
+        y_label = "Time interval /ncount [-]"
+    else:
+        n_sublinks = n_sublinks
+        y_label = "Time interval /ncount per sublink [-]"
+
+    l1 = ax.plot(x_values, (tp) / n_sublinks, color="tab:blue", linewidth=0.5)
     p1 = ax.fill_between(
-        x_values, (tp) / ds_cmls_size, alpha=0.3, color="C0", label="TP"
+        x_values, (tp) / n_sublinks, alpha=0.3, color="tab:blue", label="TP"
     )
 
-    l2 = ax.plot(x_values, (fp) / ds_cmls_size, color="C2", linewidth=0.5)
+    l2 = ax.plot(x_values, (fp) / n_sublinks, color="tab:green", linewidth=0.5)
     p2 = ax.fill_between(
-        x_values, (fp) / ds_cmls_size, alpha=0.3, color="C2", label="FP"
+        x_values, (fp) / n_sublinks, alpha=0.3, color="tab:green", label="FP"
     )
 
-    l3 = ax.plot(x_values, (fn) / ds_cmls_size, color="C3", linewidth=0.5)
+    l3 = ax.plot(x_values, (fn) / n_sublinks, color="tab:orange", linewidth=0.5)
     p3 = ax.fill_between(
-        x_values, (fn) / ds_cmls_size, alpha=0.3, color="C3", label="FN"
+        x_values, (fn) / n_sublinks, alpha=0.3, color="tab:orange", label="FN"
     )
 
     ax.set_xscale("log")
     ax.axvspan(0, ref_thresh, alpha=0.1, color="grey", label="DRY")
+    
+    ax.set_ylabel(f"{y_label}")
+    ax.set_xlabel("Rainfall Rate [mm/h]")
+    
+    
+    ax.legend()
+
+    return {"lines": [l1, l2, l3], "fills": [p1, p2, p3]}
+
+
+def plot_confusion_matrix_sum(
+    reference: npt.ArrayLike,
+    estimated: npt.ArrayLike,
+    time_interval: int,
+    n_sublinks: (int | None) = None,
+    ref_thresh: float = 0.0,
+    pred_thr: float = 0.0,
+    N_bins: int = 101,
+    bin_type: str = "linear",
+    ax: (matplotlib.axes.Axes | None) = None,
+) -> dict[str, list]:
+    """Plot the rainfall sum of the distributions of the confusion matrix.
+
+    The true positives and false positives are based on the estimated data. The false
+    negatives are based on the reference data. 
+    The extent of the bins runs from 0.01 to 100 mm/h.
+
+    Parameters
+    ----------
+    reference : npt.ArrayLike
+        Rainfall reference.
+    estimated : npt.ArrayLike
+        Estimated rainfall.
+    time_interval : int
+        Time interval of the data, in minutes.
+    n_sublinks : int | None, optional
+        Number of sublinks in the data set. By default None in which case the y-values 
+        correspond to the entire data set.
+    ref_thresh : float, optional
+        All values >= threshold in reference are taken
+        into account. By default 0.0, i.e. no threshold.
+    pred_thr : float, optional
+        All values >= threshold in estimated are taken
+        into account. By default 0.0., i.e. no threshold.
+    N_bins : int, optional
+        Number of bins to use in the histograms. By default 101.
+    bin_type : str, optional
+        Type of binning to use on the data. Either "linear" or "log". 
+        By default "linear".
+    ax : matplotlib.axes.Axes  |  None, optional
+    An `Axes` object on which to plot. If not supplied, a new figure with an
+    `Axes` will be created. By default None.
+
+    Returns
+    -------
+    PolyCollection
+    """
+    if bin_type == "linear":
+        bins = np.linspace(0.01, 100, N_bins)
+        x_values = np.linspace(0.01, 100, N_bins - 1)
+    elif bin_type == "log":
+        bins = np.logspace(
+            -2, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
+        )
+        x_values = np.logspace(
+            -2, 2, num=N_bins - 1, endpoint=True, base=10, dtype=None, axis=0
+        )
+
+    # initiate the histograms
+    tp_mask = np.logical_and(estimated >= pred_thr, reference >= ref_thresh)
+    tp, _ = np.histogram(estimated[tp_mask], bins=N_bins)
+
+    fp_mask = np.logical_and(estimated >= pred_thr, reference < ref_thresh)
+    fp, _ = np.histogram(estimated[fp_mask], bins=N_bins)
+
+    fn_mask = np.logical_and(estimated < pred_thr, reference >= ref_thresh)
+    fn, _ = np.histogram(reference[fn_mask], bins=bins)
+
+    # plot the histograms
+    if ax is None:
+        _, ax = plt.subplots()
+
+
+    if n_sublinks == None:
+        n_sublinks = 1 
+        y_label = "Rainfall amount [mm]"
+    else:
+        n_sublinks = n_sublinks
+        y_label = "Rainfall amount /nper sublink [mm]"
+
+    bin_centre = (bins[1:] + bins[:-1]) / 2
+    rate_to_sum = time_interval / 60  # convert rate to sum
+
+    l1 = ax.plot(x_values, (bin_centre * rate_to_sum) * ((tp) / n_sublinks), color="tab:blue", linewidth=0.5)
+    p1 = ax.fill_between(
+        x_values, (bin_centre * rate_to_sum) * ((tp) / n_sublinks), alpha=0.3, color="tab:blue", label="TP"
+    )
+
+    l2 = ax.plot(x_values, (bin_centre * rate_to_sum) * ((fp) / n_sublinks), color="tab:green", linewidth=0.5)
+    p2 = ax.fill_between(
+        x_values, (bin_centre * rate_to_sum) * ((fp) / n_sublinks), alpha=0.3, color="tab:green", label="FP"
+    )
+
+    l3 = ax.plot(x_values, (bin_centre * rate_to_sum) * ((fn) / n_sublinks), color="tab:orange", linewidth=0.5)
+    p3 = ax.fill_between(
+        x_values, (bin_centre * rate_to_sum) * ((fn) / n_sublinks), alpha=0.3, color="tab:orange", label="FN"
+    )
+
+    ax.set_xscale("log")
+    ax.axvspan(0, ref_thresh, alpha=0.1, color="grey", label="DRY")
+    
+    ax.set_ylabel(f"{y_label}")
+    ax.set_xlabel("Rainfall Rate [mm/h]")
+
     ax.legend()
 
     return {"lines": [l1, l2, l3], "fills": [p1, p2, p3]}
