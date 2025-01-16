@@ -3,14 +3,14 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import PolyCollection
-from matplotlib.lines import Line2D
+from matplotlib.patches import StepPatch
 
 import poligrain as plg
 
 
 def test_plot_hexbin():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -26,7 +26,7 @@ def test_plot_hexbin():
 
 def test_plot_hexbin_without_ax():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     # Call the function without providing an axis
@@ -40,7 +40,7 @@ def test_plot_hexbin_without_ax():
 
 def test_plot_hexbin_without_colorbar():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -62,8 +62,8 @@ def test_calculate_rainfall_metrics_with_thresholds():
         ref_array, est_array, ref_thresh=0.1, est_thresh=0.1
     )
 
-    assert metrics["reference_rainfall_threshold"] == 0.1
-    assert metrics["estimates_rainfall_threshold"] == 0.1
+    assert metrics["ref_thresh"] == 0.1
+    assert metrics["est_thresh"] == 0.1
     assert np.isclose(
         metrics["pearson_correlation_coefficient"], -0.385, atol=0.001, equal_nan=True
     )
@@ -80,27 +80,19 @@ def test_calculate_rainfall_metrics_with_thresholds():
         metrics["reference_mean_rainfall"], 0.456, atol=0.001, equal_nan=True
     )
     assert np.isclose(
-        metrics["estimated_mean_rainfall"], 0.456, atol=0.001, equal_nan=True
-    )
-    assert np.isclose(
-        metrics["reference_rainfall_sum"], 4.109, atol=0.001, equal_nan=True
-    )
-    assert np.isclose(
-        metrics["estimated_rainfall_sum"], 4.200, atol=0.001, equal_nan=True
+        metrics["estimate_mean_rainfall"], 0.456, atol=0.001, equal_nan=True
     )
 
-    assert np.isclose(metrics["false_wet_ratio"], 0.375, atol=0.001, equal_nan=True)
-    assert np.isclose(metrics["missed_wet_ratio"], 0.75, atol=0.001, equal_nan=True)
     assert np.isclose(
-        metrics["false_wet_rainfall_rate"], 1.0, atol=0.001, equal_nan=True
+        metrics["false_positive_mean_rainfall"], 1.0, atol=0.001, equal_nan=True
     )
     assert np.isclose(
-        metrics["missed_wet_rainfall_rate"], 1.0, atol=0.001, equal_nan=True
+        metrics["false_negative_mean_rainfall"], 1.0, atol=0.001, equal_nan=True
     )
     assert metrics["N_all"] == 12
     assert metrics["N_nan"] == 0
-    assert metrics["N_nan_reference"] == 0
-    assert metrics["N_nan_estimate"] == 0
+    assert metrics["N_nan_ref"] == 0
+    assert metrics["N_nan_est"] == 0
 
 
 def test_calculate_rainfall_metrics_with_nans():
@@ -109,8 +101,8 @@ def test_calculate_rainfall_metrics_with_nans():
 
     metrics = plg.validation.calculate_rainfall_metrics(ref_array, est_array)
 
-    assert metrics["reference_rainfall_threshold"] == 0.0
-    assert metrics["estimates_rainfall_threshold"] == 0.0
+    assert metrics["ref_thresh"] == 0.0
+    assert metrics["est_thresh"] == 0.0
     assert np.isclose(
         metrics["pearson_correlation_coefficient"], 0.1186, atol=0.001, equal_nan=True
     )
@@ -131,25 +123,17 @@ def test_calculate_rainfall_metrics_with_nans():
     assert np.isclose(
         metrics["estimated_mean_rainfall"], 0.387, atol=0.001, equal_nan=True
     )
-    assert np.isclose(
-        metrics["reference_rainfall_sum"], 2.11, atol=0.001, equal_nan=True
-    )
-    assert np.isclose(
-        metrics["estimated_rainfall_sum"], 3.10, atol=0.001, equal_nan=True
-    )
 
-    assert np.isclose(metrics["false_wet_ratio"], 0.5, atol=0.001, equal_nan=True)
-    assert np.isclose(metrics["missed_wet_ratio"], 0.5, atol=0.001, equal_nan=True)
     assert np.isclose(
-        metrics["false_wet_rainfall_rate"], 0.55, atol=0.001, equal_nan=True
+        metrics["false_positive_mean_rainfall"], 0.55, atol=0.001, equal_nan=True
     )
     assert np.isclose(
-        metrics["missed_wet_rainfall_rate"], 0.55, atol=0.001, equal_nan=True
+        metrics["false_negative_mean_rainfall"], 0.55, atol=0.001, equal_nan=True
     )
     assert metrics["N_all"] == 12
     assert metrics["N_nan"] == 4
-    assert metrics["N_nan_reference"] == 2
-    assert metrics["N_nan_estimate"] == 3
+    assert metrics["N_nan_ref"] == 2
+    assert metrics["N_nan_est"] == 3
 
 
 def test_calculate_rainfall_metrics_with_zeros():
@@ -158,8 +142,8 @@ def test_calculate_rainfall_metrics_with_zeros():
 
     metrics = plg.validation.calculate_rainfall_metrics(ref_array, est_array)
 
-    assert metrics["reference_rainfall_threshold"] == 0.0
-    assert metrics["estimates_rainfall_threshold"] == 0.0
+    assert metrics["ref_thresh"] == 0.0
+    assert metrics["est_thresh"] == 0.0
     assert np.isclose(
         metrics["pearson_correlation_coefficient"], np.nan, atol=0.001, equal_nan=True
     )
@@ -185,147 +169,110 @@ def test_calculate_rainfall_metrics_with_zeros():
         metrics["estimated_rainfall_sum"], 4.200, atol=0.001, equal_nan=True
     )
 
-    assert np.isclose(metrics["false_wet_ratio"], 0.5, atol=0.001, equal_nan=True)
-    assert np.isclose(metrics["missed_wet_ratio"], np.nan, atol=0.001, equal_nan=True)
     assert np.isclose(
-        metrics["false_wet_rainfall_rate"], 0.700, atol=0.001, equal_nan=True
+        metrics["false_positive_mean_rainfall"], 0.700, atol=0.001, equal_nan=True
     )
     assert np.isclose(
-        metrics["missed_wet_rainfall_rate"], np.nan, atol=0.001, equal_nan=True
+        metrics["false_negative_mean_rainfall"], np.nan, atol=0.001, equal_nan=True
     )
     assert metrics["N_all"] == 12
     assert metrics["N_nan"] == 0
-    assert metrics["N_nan_reference"] == 0
-    assert metrics["N_nan_estimate"] == 0
+    assert metrics["N_nan_ref"] == 0
+    assert metrics["N_nan_est"] == 0
+
+
+def test_calculate_wet_dry_metrics_with_thresholds():
+    ref_array = np.array([1, 1, 0, 0, 0.1, 0.01, 0, 0, 1, 1, 0, 0])
+    est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, 0, 0.1, 1, 0])
+
+    metrics = plg.validation.calculate_wet_dry_metrics(
+        ref_array, est_array, ref_thresh=0.1, est_thresh=0.1
+    )
+
+    assert np.isclose(
+        metrics["matthews_correlation_coefficient"], -0.169, atol=0.01, equal_nan=True
+    )
+    assert np.isclose(metrics["true_positive_ratio"], 0.400, atol=0.01, equal_nan=True)
+    assert np.isclose(metrics["true_negative_ratio"], 0.428, atol=0.01, equal_nan=True)
+    assert np.isclose(metrics["false_positive_ratio"], 0.571, atol=0.01, equal_nan=True)
+    assert np.isclose(metrics["false_negative_ratio"], 0.600, atol=0.01, equal_nan=True)
+    assert metrics["N_dry_ref"] == 7
+    assert metrics["N_wet_ref"] == 5
+    assert metrics["N_tp"] == 2
+    assert metrics["N_tn"] == 3
+    assert metrics["N_fp"] == 4
+    assert metrics["N_fn"] == 3
+    assert metrics["N_all"] == 12
+    assert metrics["N_nan"] == 0
+    assert metrics["N_nan_ref"] == 0
+    assert metrics["N_nan_est"] == 0
 
 
 def test_calculate_wet_dry_metrics_with_nans():
-    ref_array = np.array(
-        [
-            True,
-            True,
-            False,
-            False,
-            True,
-            True,
-            False,
-            False,
-            True,
-            np.nan,
-            np.nan,
-            False,
-        ]
-    )
-    est_array = np.array(
-        [
-            False,
-            True,
-            True,
-            False,
-            False,
-            True,
-            True,
-            False,
-            np.nan,
-            np.nan,
-            np.nan,
-            False,
-        ]
-    )
+    ref_array = np.array([1, 1, 0, 0, 0.1, 0.01, 0, 0, 1, np.nan, 0, np.nan])
+    est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, np.nan, np.nan, np.nan, 1])
 
     metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
 
-    assert np.isclose(metrics["matthews_correlation_coefficient"], 0.099, atol=0.01)
-    assert np.isclose(metrics["true_wet_ratio"], 0.5, atol=0.01)
-    assert np.isclose(metrics["true_dry_ratio"], 0.6, atol=0.01)
-    assert np.isclose(metrics["false_wet_ratio"], 0.4, atol=0.01)
-    assert np.isclose(metrics["missed_wet_ratio"], 0.5, atol=0.01)
-    assert metrics["N_dry_reference"] == 5
-    assert metrics["N_wet_reference"] == 4
-    assert metrics["N_true_wet"] == 2
-    assert metrics["N_true_dry"] == 3
-    assert metrics["N_false_wet"] == 2
-    assert metrics["N_missed_wet"] == 2
+    assert np.isclose(
+        metrics["matthews_correlation_coefficient"], np.nan, atol=0.01, equal_nan=True
+    )
+    assert np.isclose(metrics["true_positive_ratio"], 1.0, atol=0.01, equal_nan=True)
+    assert np.isclose(metrics["true_negative_ratio"], np.nan, atol=0.01, equal_nan=True)
+    assert np.isclose(
+        metrics["false_positive_ratio"], np.nan, atol=0.01, equal_nan=True
+    )
+    assert np.isclose(metrics["false_negative_ratio"], 0.0, atol=0.01, equal_nan=True)
+    assert metrics["N_dry_ref"] == 0
+    assert metrics["N_wet_ref"] == 8
+    assert metrics["N_tp"] == 8
+    assert metrics["N_tn"] == 0
+    assert metrics["N_fp"] == 0
+    assert metrics["N_fn"] == 0
     assert metrics["N_all"] == 12
-    assert metrics["N_nan"] == 3
-    assert metrics["N_nan_reference"] == 2
-    assert metrics["N_nan_estimate"] == 3
+    assert metrics["N_nan"] == 4
+    assert metrics["N_nan_ref"] == 2
+    assert metrics["N_nan_est"] == 3
 
 
-def test_calculate_wet_dry_metrics_without_bools():
-    ref_array = np.array([1, 1, 0, 0, 0.1, 0.01, 0, 0, 1, 1, 0, 0])
+def test_calculate_wet_dry_metrics_with_zeros():
+    ref_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, 0, 0.1, 1, 0])
 
     metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
 
-    assert np.isclose(metrics["matthews_correlation_coefficient"], 0.0, atol=0.01)
-    assert np.isclose(metrics["true_wet_ratio"], 0.5, atol=0.01)
-    assert np.isclose(metrics["true_dry_ratio"], 0.5, atol=0.01)
-    assert np.isclose(metrics["false_wet_ratio"], 0.5, atol=0.01)
-    assert np.isclose(metrics["missed_wet_ratio"], 0.5, atol=0.01)
-    assert metrics["N_dry_reference"] == 6
-    assert metrics["N_wet_reference"] == 6
-    assert metrics["N_true_wet"] == 3
-    assert metrics["N_true_dry"] == 3
-    assert metrics["N_false_wet"] == 3
-    assert metrics["N_missed_wet"] == 3
+    assert np.isclose(
+        metrics["matthews_correlation_coefficient"], np.nan, atol=0.01, equal_nan=True
+    )
+    assert np.isclose(metrics["true_positive_ratio"], 1.0, atol=0.01, equal_nan=True)
+    assert np.isclose(metrics["true_negative_ratio"], np.nan, atol=0.01, equal_nan=True)
+    assert np.isclose(
+        metrics["false_positive_ratio"], np.nan, atol=0.01, equal_nan=True
+    )
+    assert np.isclose(metrics["false_negative_ratio"], 0.0, atol=0.01, equal_nan=True)
+    assert metrics["N_dry_ref"] == 0
+    assert metrics["N_wet_ref"] == 12
+    assert metrics["N_tp"] == 12
+    assert metrics["N_tn"] == 0
+    assert metrics["N_fp"] == 0
+    assert metrics["N_fn"] == 0
     assert metrics["N_all"] == 12
     assert metrics["N_nan"] == 0
-    assert metrics["N_nan_reference"] == 0
-    assert metrics["N_nan_estimate"] == 0
-
-
-def test_calculate_wet_dry_metrics_replaced_with_zeros():
-    ref_array = np.array(
-        [True, True, False, False, True, True, False, False, True, True, False, False]
-    )
-    est_array = np.array(
-        [
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-        ]
-    )
-
-    metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
-
-    assert np.isclose(metrics["matthews_correlation_coefficient"], 0.0, atol=0.01)
-    assert np.isclose(metrics["true_wet_ratio"], 0.0, atol=0.01)
-    assert np.isclose(metrics["true_dry_ratio"], 1.0, atol=0.01)
-    assert np.isclose(metrics["false_wet_ratio"], 0.0, atol=0.01)
-    assert np.isclose(metrics["missed_wet_ratio"], 1.0, atol=0.01)
-    assert metrics["N_dry_reference"] == 6
-    assert metrics["N_wet_reference"] == 6
-    assert metrics["N_true_wet"] == 0
-    assert metrics["N_true_dry"] == 6
-    assert metrics["N_false_wet"] == 0
-    assert metrics["N_missed_wet"] == 6
-    assert metrics["N_all"] == 12
-    assert metrics["N_nan"] == 0
-    assert metrics["N_nan_reference"] == 0
-    assert metrics["N_nan_estimate"] == 0
+    assert metrics["N_nan_ref"] == 0
+    assert metrics["N_nan_est"] == 0
 
 
 def test_print_metrics_table(capsys):
     metrics = {
-        "reference_rainfall_threshold": 0.1,
+        "ref_thresh": 0.1,
         "pearson_correlation_coefficient": 0.85,
         "coefficient_of_variation": 0.1,
         "root_mean_square_error": 1.5,
         "mean_absolute_error": 1.3,
         "percent_bias": 5.0,
-        "mean_rainfall_rate_ref": 1.1,
-        "false_wet_ratio": 0.2,
-        "false_wet_rainfall_rate": 0.5,
+        "reference_mean_rainfall": 1.1,
+        "false_positive_ratio": 0.2,
+        "false_positive_mean_rainfall": 0.5,
         "N_all": 1000,
     }
 
@@ -340,93 +287,99 @@ def test_print_metrics_table(capsys):
     assert "Root mean square error" in output
     assert "Mean absolute error" in output
     assert "Percent bias" in output
-    assert "Mean rainfall rate ref" in output
-    assert "False wet ratio" in output
-    assert "False wet rainfall rate" in output
-    assert "N all" in output
+    assert "Mean reference rainfall" in output
+    assert "False positive ratio" in output
+    assert "False positive mean rainfall" in output
+    assert "Total data points" in output
 
 
 def test_plot_confusion_matrix_count():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
-    lines, fills = plg.validation.plot_confusion_matrix_count(
-        radar_array, cmls_array, ax=ax
-    )
+    steps = plg.validation.plot_confusion_matrix_count(radar_array, cmls_array, ax=ax)
 
     # Check if the return type is correct
-    assert isinstance(lines[0], Line2D)
-    assert isinstance(fills[0], PolyCollection)
+    assert isinstance(steps[0], StepPatch)
     plt.close("all")
 
 
 def test_plot_confusion_matrix_count_bin_type():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
-    lines, fills = plg.validation.plot_confusion_matrix_count(
+    steps = plg.validation.plot_confusion_matrix_count(
         radar_array, cmls_array, ax=ax, bin_type="linear"
     )
 
     # Check if the spacing between the x-values is linear
-    assert np.isclose(np.diff(lines[0].get_xdata()).sum(), 98.99, atol=0.01)
+    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 99.89, atol=0.01)
     plt.close("all")
 
 
-def test_plot_confusion_matrix_count_n_sublinks():
+def test_plot_confusion_matrix_count_custom_bins():
+    radar_array = np.arange(0, 200, 0.1)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+
+    fig, ax = plt.subplots()
+    steps = plg.validation.plot_confusion_matrix_count(
+        radar_array, cmls_array, ax=ax, bin_type="log", bins=np.linspace(0, 200, 201)
+    )
+
+    # Check if the spacing of the custom bins supplied is used in the function
+    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 200, atol=0.1)
+    plt.close("all")
+
+
+def test_plot_confusion_matrix_count_y_normalized():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
     threshold = 1
 
     fig, ax = plt.subplots()
-    lines, fills = plg.validation.plot_confusion_matrix_count(
+    steps = plg.validation.plot_confusion_matrix_count(
         radar_array,
         cmls_array,
         ref_thresh=threshold,
         est_thresh=threshold,
         ax=ax,
-        n_sublinks=50,
+        normalize_y=50,
     )
 
     tp_mask = np.logical_and(cmls_array >= threshold, radar_array >= threshold)
     tp, _ = np.histogram(cmls_array[tp_mask], bins=np.linspace(0.01, 100, 101))
 
-    assert lines[0].get_ydata()[0] == tp[0] / 50
+    # Check if the height of the first step corresponds to the input histogram
+    assert steps[0].get_data().to_numpy()[0] == tp[0] / 50
     plt.close("all")
 
 
 def test_plot_confusion_matrix_count_without_ax():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
-    lines, fills = plg.validation.plot_confusion_matrix_count(radar_array, cmls_array)
+    steps = plg.validation.plot_confusion_matrix_count(radar_array, cmls_array)
 
     # Check if the return type is correct
-    assert isinstance(lines[0], Line2D)
-    assert isinstance(fills[0], PolyCollection)
+    assert isinstance(steps[0], StepPatch)
     plt.close("all")
 
 
 def test_plot_confusion_matrix_sum():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
-    lines, fills = plg.validation.plot_confusion_matrix_sum(
-        radar_array, cmls_array, ax=ax
-    )
+    steps = plg.validation.plot_confusion_matrix_sum(radar_array, cmls_array, ax=ax)
 
     # Check if the return type is correct
-    assert isinstance(lines[0], Line2D)
-    assert isinstance(fills[0], PolyCollection)
+    assert isinstance(steps[0], StepPatch)
     plt.close("all")
-
-
-# def test_plot_confusion_matrix_count_input_type():
