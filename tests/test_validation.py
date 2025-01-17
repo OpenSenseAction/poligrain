@@ -1,9 +1,8 @@
 from __future__ import annotations
-import pytest
-import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from matplotlib.collections import PolyCollection
 from matplotlib.patches import StepPatch
 
@@ -12,7 +11,7 @@ import poligrain as plg
 
 def test_plot_hexbin():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -28,7 +27,7 @@ def test_plot_hexbin():
 
 def test_plot_hexbin_without_ax():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     # Call the function without providing an axis
@@ -42,7 +41,7 @@ def test_plot_hexbin_without_ax():
 
 def test_plot_hexbin_without_colorbar():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -208,7 +207,7 @@ def test_calculate_wet_dry_metrics_with_thresholds():
 def test_calculate_wet_dry_metrics_with_nans():
     ref_array = np.array([1, 1, 0, 0, 0.1, 0.01, 0, 0, 1, np.nan, 0, np.nan])
     est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, np.nan, np.nan, np.nan, 1])
-    
+
     with pytest.warns(RuntimeWarning):
         metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
 
@@ -294,7 +293,7 @@ def test_print_metrics_table(capsys):
 
 def test_plot_confusion_matrix_count():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -307,7 +306,7 @@ def test_plot_confusion_matrix_count():
 
 def test_plot_confusion_matrix_count_bin_type():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -322,7 +321,7 @@ def test_plot_confusion_matrix_count_bin_type():
 
 def test_plot_confusion_matrix_count_custom_bins():
     radar_array = np.arange(0, 200, 0.1)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
@@ -337,7 +336,7 @@ def test_plot_confusion_matrix_count_custom_bins():
 
 def test_plot_confusion_matrix_count_y_normalized():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
     threshold = 1
 
@@ -352,16 +351,16 @@ def test_plot_confusion_matrix_count_y_normalized():
     )
 
     tp_mask = np.logical_and(cmls_array >= threshold, radar_array >= threshold)
-    tp, _ = np.histogram(cmls_array[tp_mask], bins=np.linspace(0.01, 100, 101))
+    tp, _ = np.histogram(cmls_array[tp_mask], bins=np.linspace(0.1, 100, 101))
 
     # Check if the height of the first step corresponds to the input histogram
-    assert steps[0].get_data().to_numpy()[0] == tp[0] / 50
+    assert steps[0].get_data()[0][0] == tp[0] / 50
     plt.close("all")
 
 
 def test_plot_confusion_matrix_count_without_ax():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     steps = plg.validation.plot_confusion_matrix_count(radar_array, cmls_array)
@@ -373,11 +372,13 @@ def test_plot_confusion_matrix_count_without_ax():
 
 def test_plot_confusion_matrix_sum():
     radar_array = np.arange(0, 100, 0.01)
-    noise = np.random.Generator(loc=0.0, scale=0.1, size=radar_array.shape)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
     cmls_array = radar_array + noise
 
     fig, ax = plt.subplots()
-    steps = plg.validation.plot_confusion_matrix_sum(radar_array, cmls_array, ax=ax)
+    steps = plg.validation.plot_confusion_matrix_sum(
+        radar_array, cmls_array, time_interval=5, ax=ax
+    )
 
     # Check if the return type is correct
     assert isinstance(steps[0], StepPatch)
