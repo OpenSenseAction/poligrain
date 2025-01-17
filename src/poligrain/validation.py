@@ -538,9 +538,10 @@ def plot_confusion_matrix_count(
         )
 
     if normalize_y == 1:
+        y_norm = 1
         y_label = "Count time intervals [-]"
     else:
-        norm_y = normalize_y
+        y_norm = normalize_y
         y_label = "Count time intervals \n per sublink [-]"
 
     # initiate the histograms
@@ -558,7 +559,7 @@ def plot_confusion_matrix_count(
         _, ax = plt.subplots()
 
     sp1 = ax.stairs(
-        (tp) / norm_y,
+        (tp) / y_norm,
         bins,
         color="tab:blue",
         linewidth=0.5,
@@ -568,7 +569,7 @@ def plot_confusion_matrix_count(
     )
 
     sp2 = ax.stairs(
-        (fp) / norm_y,
+        (fp) / y_norm,
         bins,
         color="tab:green",
         linewidth=0.5,
@@ -578,7 +579,7 @@ def plot_confusion_matrix_count(
     )
 
     sp3 = ax.stairs(
-        (fn) / norm_y,
+        (fn) / y_norm,
         bins,
         color="tab:orange",
         linewidth=0.5,
@@ -671,9 +672,10 @@ def plot_confusion_matrix_sum(
         bin_cent = (bins[:-1] + bins[1:]) / 2
 
     if normalize_y == 1:
+        y_norm = 1
         y_label = "Rainfall amount [mm]"
     else:
-        norm_y = normalize_y
+        y_norm = normalize_y
         y_label = "Rainfall amount \nper sublink [mm]"
 
     # initiate the histograms
@@ -693,7 +695,7 @@ def plot_confusion_matrix_sum(
     rate_to_sum = time_interval / 60  # convert rate to sum
 
     sp1 = ax.stairs(
-        (bin_cent * rate_to_sum) * ((tp) / norm_y),
+        (bin_cent * rate_to_sum) * ((tp) / y_norm),
         bins,
         color="tab:blue",
         linewidth=0.5,
@@ -703,7 +705,7 @@ def plot_confusion_matrix_sum(
     )
 
     sp2 = ax.stairs(
-        (bin_cent * rate_to_sum) * ((fp) / norm_y),
+        (bin_cent * rate_to_sum) * ((fp) / y_norm),
         bins,
         color="tab:green",
         linewidth=0.5,
@@ -713,7 +715,7 @@ def plot_confusion_matrix_sum(
     )
 
     sp3 = ax.stairs(
-        (bin_cent * rate_to_sum) * ((fn) / norm_y),
+        (bin_cent * rate_to_sum) * ((fn) / y_norm),
         bins,
         color="tab:orange",
         linewidth=0.5,
