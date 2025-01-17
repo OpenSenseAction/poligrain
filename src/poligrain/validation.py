@@ -477,7 +477,7 @@ def plot_confusion_matrix_count(
     normalize_y: int = 1,
     ref_thresh: float = 0.0,
     est_thresh: float = 0.0,
-    N_bins: int = 101,
+    n_bins: int = 101,
     bin_type: str = "linear",
     bins: (npt.ArrayLike | None) = None,
     ax: (matplotlib.axes.Axes | None) = None,
@@ -485,7 +485,7 @@ def plot_confusion_matrix_count(
     """Plot the count of the distributions of the confusion matrix.
 
     This function plots the distribution of the number of time intervals (counts) of
-    true positives, false positives, and false negatives for N_bins (default 101) of
+    true positives, false positives, and false negatives for n_bins (default 101) of
     rainfall intensity. The extent of the bins runs from 0.1 to 100 mm/h. Bins can be
     linear (default) or logarithmic. Supplying an array with custom bin edges is also
     possible using the kwarg 'bin' (which defaults to None). This will overwrite the
@@ -510,13 +510,13 @@ def plot_confusion_matrix_count(
     est_thresh : float, optional
         All values >= threshold in estimated are taken
         into account. By default 0.0., i.e. no threshold.
-    N_bins : int, optional
+    n_bins : int, optional
         Number of bins to use in the histograms. By default 101.
     bin_type : str, optional
         Type of binning to use on the data. Either "linear" or "log".
         By default "linear".
     bins : npt.ArrayLike | None, optional
-        Custom bin edges to use. If supplied, this will override `N_bins` and
+        Custom bin edges to use. If supplied, this will override `n_bins` and
         `bin_type`. By default None.
     ax : matplotlib.axes.Axes  |  None, optional
     An `Axes` object on which to plot. If not supplied, a new figure with an
@@ -531,10 +531,10 @@ def plot_confusion_matrix_count(
     if bins is not None:
         bins = np.asarray(bins)
     elif bin_type == "linear":
-        bins = np.linspace(0.1, 100, N_bins)
+        bins = np.linspace(0.1, 100, n_bins)
     elif bin_type == "log":
         bins = np.logspace(
-            -1, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
+            -1, 2, num=n_bins, endpoint=True, base=10, dtype=None, axis=0
         )
 
     if normalize_y == 1:
@@ -606,7 +606,7 @@ def plot_confusion_matrix_sum(
     normalize_y: int = 1,
     ref_thresh: float = 0.0,
     est_thresh: float = 0.0,
-    N_bins: int = 101,
+    n_bins: int = 101,
     bin_type: str = "linear",
     bins: (npt.ArrayLike | None) = None,
     ax: (matplotlib.axes.Axes | None) = None,
@@ -614,7 +614,7 @@ def plot_confusion_matrix_sum(
     """Plot the rainfall sum of the distributions of the confusion matrix.
 
     This function plots the distribution of the rainfall sum of true positives, false
-    positives, and false negatives for N_bins (default 101) of rainfall intensity.
+    positives, and false negatives for n_bins (default 101) of rainfall intensity.
     The extent of the bins runs from 0.1 to 100 mm/h. Bins can be linear (default) or
     logarithmic. Supplying an array with custom bin edges is also possible using the
     kwarg 'bin' (which defaults to None). This will overwrite the hard coded linear and
@@ -641,13 +641,13 @@ def plot_confusion_matrix_sum(
     est_thresh : float, optional
         All values >= threshold in estimated are taken
         into account. By default 0.0., i.e. no threshold.
-    N_bins : int, optional
+    n_bins : int, optional
         Number of bins to use in the histograms. By default 101.
     bin_type : str, optional
         Type of binning to use on the data. Either "linear" or "log".
         By default "linear".
     bins : npt.ArrayLike | None, optional
-        Custom bin edges to use. If supplied, this will override `N_bins` and
+        Custom bin edges to use. If supplied, this will override `n_bins` and
         `bin_type`. By default None.
     ax : matplotlib.axes.Axes  |  None, optional
     An `Axes` object on which to plot. If not supplied, a new figure with an
@@ -659,20 +659,26 @@ def plot_confusion_matrix_sum(
     """
     assert reference.shape == estimate.shape
 
+    bin_cent = None
+
     if bins is not None:
         bins = np.asarray(bins)
         bin_cent = (bins[:-1] + bins[1:]) / 2
     elif bin_type == "linear":
-        bins = np.linspace(0.1, 100, N_bins)
+        bins = np.linspace(0.1, 100, n_bins)
         bin_cent = (bins[:-1] + bins[1:]) / 2
     elif bin_type == "log":
         bins = np.logspace(
-            -1, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
+            -1, 2, num=n_bins, endpoint=True, base=10, dtype=None, axis=0
         )
         bin_cent = (bins[:-1] + bins[1:]) / 2
     else:
         msg = "unsupported bin_type, must be 'linear' or 'log'"
         raise ValueError(msg)
+
+    if bin_cent is None:
+        msg = "sums could not be computed because bins were not initialized due"
+        raise RuntimeError(msg)
 
     if normalize_y == 1:
         y_norm = 1
