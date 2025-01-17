@@ -1,6 +1,6 @@
 """Functions for calculating verification metrics and making (scatter) plots."""
 
-# pylint: disable=C0103
+# pylint: disable=C0103 # allow capital letters in variables
 
 from __future__ import annotations
 
@@ -663,8 +663,6 @@ def plot_confusion_matrix_sum(
     """
     assert reference.shape == estimate.shape
 
-    bin_cent = None
-
     if bins is not None:
         bins = np.asarray(bins)
         bin_cent = (bins[:-1] + bins[1:]) / 2
@@ -677,12 +675,9 @@ def plot_confusion_matrix_sum(
         )
         bin_cent = (bins[:-1] + bins[1:]) / 2
     else:
-        msg = "unsupported bin_type, must be 'linear' or 'log'"
+        bin_cent = None
+        msg = "Unsupported bin_type, must be 'linear' or 'log'."
         raise ValueError(msg)
-
-    if bin_cent is None:
-        msg = "sums could not be computed because bins were not initialized due"
-        raise RuntimeError(msg)
 
     if normalize_y == 1:
         y_norm = 1

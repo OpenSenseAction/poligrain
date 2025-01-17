@@ -311,11 +311,11 @@ def test_plot_confusion_matrix_count_bin_type():
 
     fig, ax = plt.subplots()
     steps = plg.validation.plot_confusion_matrix_count(
-        radar_array, cmls_array, ax=ax, bin_type="linear"
+        radar_array, cmls_array, ax=ax, bin_type="log"
     )
 
     # Check if the spacing between the x-values is linear
-    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 99.89, atol=0.01)
+    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 99.90, atol=0.01)
     plt.close("all")
 
 
@@ -378,6 +378,96 @@ def test_plot_confusion_matrix_sum():
     fig, ax = plt.subplots()
     steps = plg.validation.plot_confusion_matrix_sum(
         radar_array, cmls_array, time_interval=5, ax=ax
+    )
+
+    # Check if the return type is correct
+    assert isinstance(steps[0], StepPatch)
+    plt.close("all")
+
+
+def test_plot_confusion_matrix_sum_bin_type():
+    radar_array = np.arange(0, 100, 0.01)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+
+    fig, ax = plt.subplots()
+    steps = plg.validation.plot_confusion_matrix_sum(
+        radar_array, cmls_array, time_interval=5, ax=ax, bin_type="log"
+    )
+
+    # Check if the spacing between the x-values is linear
+    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 99.90, atol=0.01)
+    plt.close("all")
+
+
+def test_plot_confusion_matrix_sum_custom_bins():
+    radar_array = np.arange(0, 200, 0.1)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+
+    fig, ax = plt.subplots()
+    steps = plg.validation.plot_confusion_matrix_sum(
+        radar_array,
+        cmls_array,
+        ax=ax,
+        bin_type="log",
+        time_interval=5,
+        bins=np.linspace(0, 200, 201),
+    )
+
+    # Check if the spacing of the custom bins supplied is used in the function
+    assert np.isclose(np.diff(steps[0].get_data().edges).sum(), 200, atol=0.1)
+    plt.close("all")
+
+
+def test_plot_confusion_matrix_sum_unsupported_bins():
+    radar_array = np.arange(0, 100, 0.01)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+
+    with pytest.raises(
+        ValueError, match="Unsupported bin_type, must be 'linear' or 'log'."
+    ):
+        plg.validation.plot_confusion_matrix_sum(
+            radar_array, cmls_array, time_interval=5, bin_type="unsupported"
+        )
+
+
+def test_plot_confusion_matrix_sum_y_normalized():
+    radar_array = np.arange(0, 100, 0.01)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+    threshold = 0
+
+    fig, ax = plt.subplots()
+    steps = plg.validation.plot_confusion_matrix_sum(
+        radar_array,
+        cmls_array,
+        ref_thresh=threshold,
+        est_thresh=threshold,
+        time_interval=5,
+        ax=ax,
+        normalize_y=50,
+    )
+
+    tp_mask = np.logical_and(cmls_array >= threshold, radar_array >= threshold)
+    tp, def_bins = np.histogram(cmls_array[tp_mask], bins=np.linspace(0.1, 100, 101))
+
+    bin_cent = (def_bins[:-1] + def_bins[1:]) / 2
+    rate_to_sum = 5 / 60
+
+    # Check if the height of the first step corresponds to the input histogram
+    assert steps[0].get_data()[0][-1] == (bin_cent[-1] * rate_to_sum) * (tp[-1] / 50)
+    plt.close("all")
+
+
+def test_plot_confusion_matrix_sum_without_ax():
+    radar_array = np.arange(0, 100, 0.01)
+    noise = np.random.default_rng().normal(loc=0.0, scale=0.1, size=radar_array.shape)
+    cmls_array = radar_array + noise
+
+    steps = plg.validation.plot_confusion_matrix_sum(
+        radar_array, cmls_array, time_interval=15
     )
 
     # Check if the return type is correct
