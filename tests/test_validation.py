@@ -1,4 +1,6 @@
-# from __future__ import annotations
+from __future__ import annotations
+import pytest
+import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -140,7 +142,8 @@ def test_calculate_rainfall_metrics_with_zeros():
     ref_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, 0, 0.1, 1, 0])
 
-    metrics = plg.validation.calculate_rainfall_metrics(ref_array, est_array)
+    with pytest.warns(RuntimeWarning):
+        metrics = plg.validation.calculate_rainfall_metrics(ref_array, est_array)
 
     assert metrics["ref_thresh"] == 0.0
     assert metrics["est_thresh"] == 0.0
@@ -205,8 +208,9 @@ def test_calculate_wet_dry_metrics_with_thresholds():
 def test_calculate_wet_dry_metrics_with_nans():
     ref_array = np.array([1, 1, 0, 0, 0.1, 0.01, 0, 0, 1, np.nan, 0, np.nan])
     est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, np.nan, np.nan, np.nan, 1])
-
-    metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
+    
+    with pytest.warns(RuntimeWarning):
+        metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
 
     assert np.isclose(
         metrics["matthews_correlation_coefficient"], np.nan, atol=0.01, equal_nan=True
@@ -233,7 +237,8 @@ def test_calculate_wet_dry_metrics_with_zeros():
     ref_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     est_array = np.array([0, 1, 1, 0, 0, 1, 0.1, 0, 0, 0.1, 1, 0])
 
-    metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
+    with pytest.warns(RuntimeWarning):
+        metrics = plg.validation.calculate_wet_dry_metrics(ref_array, est_array)
 
     assert np.isclose(
         metrics["matthews_correlation_coefficient"], np.nan, atol=0.01, equal_nan=True
