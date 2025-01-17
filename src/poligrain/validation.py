@@ -158,9 +158,11 @@ def calculate_rainfall_metrics(
     estimate = estimate[~nan_idx]
 
     # apply threshold and filter out values strictly less than the threshold
-    thresh_idx = (reference < ref_thresh) | (estimate < est_thresh)
+    thresh_idx = (reference < ref_thresh) & (estimate < est_thresh)
     reference_ge_thresh = reference[np.logical_not(thresh_idx)]
+    reference_ge_thresh[reference_ge_thresh < ref_thresh] = 0
     estimate_ge_thresh = estimate[np.logical_not(thresh_idx)]
+    estimate_ge_thresh[estimate_ge_thresh < est_thresh] = 0
 
     assert reference.shape == estimate.shape
 
@@ -266,13 +268,13 @@ def calculate_wet_dry_metrics(
     assert reference.shape == estimate.shape
 
     # calculate the MCC
-    N_tp = ((reference is True) & (estimate is True)).sum()
-    N_tn = np.sum((reference is False) & (estimate is False))
-    N_fp = np.sum((reference is False) & (estimate is True))
-    N_fn = np.sum((reference is True) & (estimate is False))
+    N_tp = np.sum(np.logical_and(reference, estimate))
+    N_tn = np.sum(np.logical_and(np.logical_not(reference), np.logical_not(estimate)))
+    N_fp = np.sum(np.logical_and(np.logical_not(reference), estimate))
+    N_fn = np.sum(np.logical_and(reference, np.logical_not(estimate)))
 
-    N_wet_ref = np.sum(reference is True)
-    N_dry_ref = np.sum(reference is False)
+    N_wet_ref = np.sum(reference)
+    N_dry_ref = np.sum(np.logical_not(reference))
 
     true_positive_ratio = N_tp / N_wet_ref
     true_negative_ratio = N_tn / N_dry_ref
