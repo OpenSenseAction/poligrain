@@ -670,6 +670,9 @@ def plot_confusion_matrix_sum(
             -1, 2, num=N_bins, endpoint=True, base=10, dtype=None, axis=0
         )
         bin_cent = (bins[:-1] + bins[1:]) / 2
+    else:
+        msg = "unsupported bin_type, must be 'linear' or 'log'"
+        raise ValueError(msg)
 
     if normalize_y == 1:
         y_norm = 1
