@@ -1,5 +1,7 @@
 """Functions for calculating verification metrics and making (scatter) plots."""
 
+# pylint: disable=C0103
+
 from __future__ import annotations
 
 import matplotlib.axes
