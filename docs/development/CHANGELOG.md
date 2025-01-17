@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR 40](https://github.com/OpenSenseAction/poligrain/pull/40) Add functions
+  for plotting CML metadata (by [@bwalraven](https://github.com/bwalraven))
+
 ### Bug fixes
 
 ### Maintenance
