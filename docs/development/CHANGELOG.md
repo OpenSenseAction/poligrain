@@ -13,6 +13,38 @@
 
 ### Breaking changes
 
+## v0.2.2
+
+Add back support for Python 3.9.
+
+## v0.2.1
+
+This is just a quick release to start tracking via zenodo to get a DOI.
+
+## v0.2.0
+
+### New features
+
+- [PR75](https://github.com/OpenSenseAction/poligrain/pull/75) Add function to
+  easily plot grid, line and point data (by
+  [@cchwala](https://github.com/cchwala))
+- [PR76](https://github.com/OpenSenseAction/poligrain/pull/76) add function to
+  download small example datasets from newly created data repo at
+  https://github.com/cchwala/opensense_example_data/tree/main (by
+  [@cchwala](https://github.com/cchwala))
+
+### Bug fixes
+
+- [PR74](https://github.com/OpenSenseAction/poligrain/pull/74) fix xarray
+  scatter plot CI error in notebook (by [@cchwala](https://github.com/cchwala))
+
+### Maintenance
+
+- [PR74](https://github.com/OpenSenseAction/poligrain/pull/74) remove version
+  capping (by [@cchwala](https://github.com/cchwala))
+
+### Breaking changes
+
 ## v0.1.1
 
 This is just a quick update to make a version available with less strict
