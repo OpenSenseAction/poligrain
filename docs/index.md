@@ -20,6 +20,7 @@ API <api/poligrain>
 notebooks/Plotting.ipynb
 notebooks/Visualize_metadata.ipynb
 notebooks/Calculate_distances.ipynb
+notebooks/Example_validation.ipynb
 notebooks/Get_grid_at_lines_and_points.ipynb
 notebooks/Grid_intersection.ipynb
 notebooks/OS_csv_to_nc_cookbook.ipynb
