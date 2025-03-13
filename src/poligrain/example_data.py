@@ -13,7 +13,7 @@ from pathlib import Path
 
 import xarray as xr
 
-BASE_URL = "https://github.com/cchwala/opensense_example_data"
+BASE_URL = "https://github.com/OpenSenseAction/opensense_example_data"
 VERSION = "main"
 
 
