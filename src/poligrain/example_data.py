@@ -13,7 +13,7 @@ from pathlib import Path
 
 import xarray as xr
 
-BASE_URL = "https://github.com/cchwala/opensense_example_data"
+BASE_URL = "https://github.com/OpenSenseAction/opensense_example_data"
 VERSION = "main"
 
 
@@ -63,31 +63,40 @@ def download_data_file(url, local_path=".", local_file_name=None, print_output=F
     return request_return_meassage  # noqa: RET504
 
 
-def load_openmrg_5min_2h(data_dir="."):
+def load_openmrg(data_dir=".", subset="8d"):
     """Load 2.5 hours of OpenMRG data with a 5-min resolution.
+
+    Parameters
+    ----------
+    data_dir : str, optional
+       Directory where the data will be stored. Default is current directory.
+    subset : str, optional
+       Subset of data to load. Options are '8d' (8 days, native temporal resolution)
+       and '5min_2h' (all data aggregated to 5 minute temporal resolution).
+       Default is '8d'.
 
     Returns
     -------
     ds_rad, ds_cmls, ds_gauges_municp, ds_gauge_smhi
 
     """
-    fn = "openmrg_cml_5min_2h.nc"
+    fn = f"openmrg_cml_{subset}.nc"
     url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
     data_path = Path(data_dir)
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_cmls = xr.open_dataset(data_path / fn)
 
-    fn = "openmrg_rad_5min_2h.nc"
+    fn = f"openmrg_rad_{subset}.nc"
     url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_rad = xr.open_dataset(data_path / fn)
 
-    fn = "openmrg_municp_gauge_5min_2h.nc"
+    fn = f"openmrg_municp_gauge_{subset}.nc"
     url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_gauges_municp = xr.open_dataset(data_path / fn)
 
-    fn = "openmrg_smhi_gauge_5min_2h.nc"
+    fn = f"openmrg_smhi_gauge_{subset}.nc"
     url = f"{BASE_URL}/raw/{VERSION}/OpenMRG/{fn}"
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_gauge_smhi = xr.open_dataset(data_path / fn)
