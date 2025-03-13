@@ -61,7 +61,7 @@ def test_load_openmrg_5min_2h():
             ds_cmls,
             ds_gauges_municp,
             ds_gauge_smhi,
-        ) = plg.example_data.load_openmrg_5min_2h(data_dir=tmp_dir_name)
+        ) = plg.example_data.load_openmrg(data_dir=tmp_dir_name, subset="5min_2h")
 
         # Check radar data
         npt.assert_almost_equal(
