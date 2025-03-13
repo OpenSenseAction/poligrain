@@ -2,6 +2,7 @@
 
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
+[![codecov](https://codecov.io/gh/OpenSenseAction/poligrain/graph/badge.svg?token=4DSA7KB3PC)](https://codecov.io/gh/OpenSenseAction/poligrain)
 
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
