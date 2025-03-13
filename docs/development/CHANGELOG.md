@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR89](https://github.com/OpenSenseAction/poligrain/pull/89) add function to
+  download 8-day example datasets for OpenMRG with processed CML data (by
+  [@cchwala](https://github.com/cchwala))
 - [PR 40](https://github.com/OpenSenseAction/poligrain/pull/40) Add functions
   for plotting CML metadata (by [@bwalraven](https://github.com/bwalraven))
 
