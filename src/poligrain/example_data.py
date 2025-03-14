@@ -64,7 +64,7 @@ def download_data_file(url, local_path=".", local_file_name=None, print_output=F
 
 
 def load_openmrg(data_dir=".", subset="8d"):
-    """Load 2.5 hours of OpenMRG data with a 5-min resolution.
+    """Load example OpenMRG data.
 
     Parameters
     ----------
@@ -102,3 +102,38 @@ def load_openmrg(data_dir=".", subset="8d"):
     ds_gauge_smhi = xr.open_dataset(data_path / fn)
 
     return ds_rad, ds_cmls, ds_gauges_municp, ds_gauge_smhi
+
+
+def load_openrainer(data_dir=".", subset="8d"):
+    """Load OpenRainER example data.
+
+    Parameters
+    ----------
+    data_dir : str, optional
+       Directory where the data will be stored. Default is current directory.
+    subset : str, optional
+       Subset of data to load. Options are '8d' (8 days, native temporal resolution)
+       No other option is currently implemented. Default is '8d'.
+
+    Returns
+    -------
+    ds_rad, ds_cmls, ds_gauges
+
+    """
+    fn = f"openrainer_cml_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenRainER/{fn}"
+    data_path = Path(data_dir)
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_cmls = xr.open_dataset(data_path / fn)
+
+    fn = f"openrainer_radar_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenRainER/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_rad = xr.open_dataset(data_path / fn)
+
+    fn = f"openrainer_gauges_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenRainER/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_gauges = xr.open_dataset(data_path / fn)
+
+    return ds_rad, ds_cmls, ds_gauges
