@@ -99,3 +99,40 @@ def test_load_openmrg_5min_2h():
         ds_cmls.close()
         ds_gauges_municp.close()
         ds_gauge_smhi.close()
+
+
+def test_load_openrainer():
+    # We download the data and just check a little bit of the data. Here
+    # we do not yet check that data format conventions are correct.
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        (
+            ds_rad,
+            ds_cmls,
+            ds_gauges,
+        ) = plg.example_data.load_openrainer(data_dir=tmp_dir_name, subset="8d")
+
+        # Check radar data
+        npt.assert_almost_equal(
+            ds_rad.R.sum(dim="time").data[120:122, 115:118],
+            np.array([[41.74, 43.84, 45.77], [41.43, 45.61, 47.68]]),
+        )
+
+        # Check CML data
+        npt.assert_almost_equal(
+            ds_cmls.isel(cml_id=42, sublink_id=1).rsl.data[11:16],
+            np.array([-55.0, -54.8, -54.2, -54.8, -54.2]),
+        )
+
+        # Check content of muncip gauge data
+        npt.assert_almost_equal(
+            ds_gauges.isel(id=10).rainfall_amount.sum(dim="time"),
+            np.array(50.4000002),
+        )
+        npt.assert_almost_equal(
+            ds_gauges.lon.data[:3], np.array([10.2258301, 11.4945698, 11.3415499])
+        )
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_rad.close()
+        ds_cmls.close()
+        ds_gauges.close()
