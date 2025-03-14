@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR90](https://github.com/OpenSenseAction/poligrain/pull/90) add function to
+  download 8-day example datasets for OpenRainER (by
+  [@cchwala](https://github.com/cchwala))
 - [PR89](https://github.com/OpenSenseAction/poligrain/pull/89) add function to
   download 8-day example datasets for OpenMRG with processed CML data (by
   [@cchwala](https://github.com/cchwala))
