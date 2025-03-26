@@ -137,3 +137,34 @@ def load_openrainer(data_dir=".", subset="8d"):
     ds_gauges = xr.open_dataset(data_path / fn)
 
     return ds_rad, ds_cmls, ds_gauges
+
+
+def load_ams_pws(data_dir=".", subset="full_dataset"):
+    """Load Amsterdam PWS example data.
+
+    Parameters
+    ----------
+    data_dir : str, optional
+       Directory where the data will be stored. Default is current directory.
+    subset : str, optional
+       Subset of data to load. Options are 'full_dataset' (25 months, native
+       temporal resolution) No other option is currently implemented. Default is
+       'full_dataset'.
+
+    Returns
+    -------
+    ds_pws, ds_gauges
+
+    """
+    fn = f"AMS_PWS_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/ams_pws/{fn}"
+    data_path = Path(data_dir)
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_pws = xr.open_dataset(data_path / fn)
+
+    fn = f"AMS_point_reference{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenRainER/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_gauges = xr.open_dataset(data_path / fn)
+
+    return ds_pws, ds_gauges

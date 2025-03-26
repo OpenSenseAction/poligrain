@@ -136,3 +136,31 @@ def test_load_openrainer():
         ds_rad.close()
         ds_cmls.close()
         ds_gauges.close()
+
+
+def test_load_ams_pws():
+    # We download the data and just check a little bit of the data. Here
+    # we do not yet check that data format conventions are correct.
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        (
+            ds_pws,
+            ds_gauges,
+        ) = plg.example_data.load_ams_pws(data_dir=tmp_dir_name, subset="full_dataset")
+
+        # Check pws data
+        npt.assert_almost_equal(
+            ds_pws.rainfall.isel(time=range(20000, 21000)).sum(dim="time").data[0:3],
+            np.array([0.202, 0.0, 0.20048115]),
+        )
+
+        npt.assert_almost_equal(ds_pws.lon.data[:2], np.array([4.670664, 4.67494]))
+
+        # Check gauge data
+        npt.assert_almost_equal(
+            ds_gauges.lon.isel(id=range(3, 5)).lon.data,
+            np.array([4.9773763, 4.87422293]),
+        )
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_pws.close()
+        ds_gauges.close()
