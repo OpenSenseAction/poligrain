@@ -50,6 +50,11 @@ def test_GridAtPoint():
         expected_time_series,
     )
 
+    # also test that gauge IDs are correctly assigned to the output DataArray
+    # and are also attached to the GridAtPoints instance.
+    assert (da_result_time_series.id == da_points.id).all()
+    assert (get_grid_at_points.id == da_points.id).all()
+
     # same as above but with changed order of 'time' and 'id'
     da_result_time_series = get_grid_at_points(
         da_gridded_data=da_grid_data, da_point_data=da_points.transpose("time", "id")
