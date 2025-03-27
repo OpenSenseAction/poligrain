@@ -70,7 +70,7 @@ def test_GridAtPoint():
         da_point_data=da_points.isel(time=0),
     )
     np.testing.assert_almost_equal(
-        da_result_time_series.isel(time=0).data,
+        da_result_time_series.data,
         expected_time_series[:, 0].transpose(),
     )
 
