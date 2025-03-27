@@ -382,6 +382,11 @@ class GridAtPoints:
             point are taken from `da_point_data`.
 
         """
+        if "time" not in da_gridded_data.dims:
+            da_gridded_data = da_gridded_data.copy().expand_dims("time")
+        if "time" not in da_point_data.dims:
+            da_point_data = da_point_data.copy().expand_dims("time")
+
         gridded_data_at_point_list = []
         for t in da_gridded_data.time.to_numpy():
             da_gridded_data_t = da_gridded_data.sel(time=t)
