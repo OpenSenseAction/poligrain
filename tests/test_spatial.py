@@ -74,6 +74,15 @@ def test_GridAtPoint():
         expected_time_series[:, 0].transpose(),
     )
 
+    # test raise when using different time stamps
+    with pytest.raises(
+        ValueError, match="Both data arrays need to have matching time stamps."
+    ):
+        da_result_time_series = get_grid_at_points(
+            da_gridded_data=da_grid_data.isel(time=slice(1, 4)),
+            da_point_data=da_points.isel(time=slice(0, 3)),
+        )
+
     # testing for nnear=9 and 'best'
     get_grid_at_points = plg.spatial.GridAtPoints(
         da_gridded_data=da_grid_data,
