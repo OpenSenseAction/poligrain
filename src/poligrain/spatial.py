@@ -278,16 +278,18 @@ class GridAtLines:
         Parameters
         ----------
         da_gridded_data
-            3-D data of the gridded data. The order of dimensions must be
-            ('time', 'y', 'x'). The grid must be the same as in the initialization
-            of the current object because the intersection weights are calculated
-            at initialization.
+            3D ('time', 'y', 'x') or 2D ('y', 'x') data of the gridded data. The order
+            of dimensions is important. The grid must be the same as in the
+            initialization of the current object because the intersection weights are
+            calculated at initialization.
 
         Returns
         -------
         gridded_data_along_line
-            The time series for each grid intersection of each line. The IDs for each
-            line are taken from `ds_line_data` in `__init__`.
+            The time series (in case 3D data with time dimension was passed) or single
+            value (in case 2D data without time dimension was passed) for each grid
+            intersection of each line. The IDs for each line are taken from
+            `ds_line_data` in `__init__`.
         """
         time_dim_was_expanded = False
         if "time" not in da_gridded_data.dims:
@@ -487,7 +489,8 @@ def _get_statfunc(funcname):
                 return func(y, axis=1)
 
         except Exception as err:
-            raise NameError(f"Unknown function name option: {funcname!r}") from err  # noqa: EM102
+            msg = f"Unknown function name option: {funcname!r}"
+            raise NameError(msg) from err
     return newfunc
 
 
@@ -514,7 +517,8 @@ def best(x, y):
     """
     if type(x) == np.ndarray:  # pylint: disable=unidiomatic-typecheck
         if x.ndim != 1:
-            raise ValueError("`x` must be a 1-d array of floats or a float.")  # noqa: EM101
+            msg = "`x` must be a 1-d array of floats or a float."
+            raise ValueError(msg)
         if len(x) != len(y):
             raise ValueError(
                 f"Length of `x` ({len(x)}) and `y` ({len(y)}) must be equal."  # noqa: EM102
@@ -973,9 +977,11 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
         # Calculate the precise distances to nearby gauges
         distances = np.array(
             [
-                line.distance(Point(coords_gauge[ind]))
-                if ind != len(coords_gauge)
-                else np.inf  # set to np.inf if outside max_distance
+                (
+                    line.distance(Point(coords_gauge[ind]))
+                    if ind != len(coords_gauge)
+                    else np.inf
+                )  # set to np.inf if outside max_distance
                 for ind in ind_nearest_gauges
             ]
         )
