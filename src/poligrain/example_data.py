@@ -157,13 +157,13 @@ def load_ams_pws(data_dir=".", subset="full_dataset"):
 
     """
     fn = f"ams_pws_{subset}.nc"
-    url = f"{BASE_URL}/raw/{VERSION}/ams_pws/{fn}"
+    url = f"{BASE_URL}/raw/{VERSION}/AMS_PWS/{fn}"
     data_path = Path(data_dir)
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_pws = xr.open_dataset(data_path / fn)
 
     fn = f"ams_gauges_{subset}.nc"
-    url = f"{BASE_URL}/raw/{VERSION}/OpenRainER/{fn}"
+    url = f"{BASE_URL}/raw/{VERSION}/AMS_PWS/{fn}"
     download_data_file(url=url, local_file_name=fn, local_path=data_dir)
     ds_gauges = xr.open_dataset(data_path / fn)
 
