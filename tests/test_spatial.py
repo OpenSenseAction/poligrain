@@ -50,6 +50,11 @@ def test_GridAtPoint():
         expected_time_series,
     )
 
+    # also test that gauge IDs are correctly assigned to the output DataArray
+    # and are also attached to the GridAtPoints instance.
+    assert (da_result_time_series.id == da_points.id).all()
+    assert (get_grid_at_points.id == da_points.id).all()
+
     # same as above but with changed order of 'time' and 'id'
     da_result_time_series = get_grid_at_points(
         da_gridded_data=da_grid_data, da_point_data=da_points.transpose("time", "id")
@@ -58,6 +63,30 @@ def test_GridAtPoint():
         da_result_time_series.data,
         expected_time_series.transpose(),
     )
+
+    # Using only the first time stamp
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data.isel(time=0),
+        da_point_data=da_points.isel(time=0),
+        nnear=1,
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data.isel(time=0),
+        da_point_data=da_points.isel(time=0),
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series[:, 0].transpose(),
+    )
+
+    # test raise when using different time stamps
+    with pytest.raises(
+        ValueError, match="Both data arrays need to have matching time stamps."
+    ):
+        da_result_time_series = get_grid_at_points(
+            da_gridded_data=da_grid_data.isel(time=slice(1, 4)),
+            da_point_data=da_points.isel(time=slice(0, 3)),
+        )
 
     # testing for nnear=9 and 'best'
     get_grid_at_points = plg.spatial.GridAtPoints(
@@ -128,6 +157,22 @@ def test_GridAtLines():
         da_expected_time_series.data,
     )
     np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
+
+    # test for passing only one time step
+    #
+    # note that the CML test data does only have the coordinates and no time dimension
+    # This needs to be changed once we want to test with `nnear` and `stat` as done in
+    # GridAtPoints.
+    get_grid_at_lines = plg.spatial.GridAtLines(
+        da_gridded_data=da_grid_data.isel(time=0),
+        ds_line_data=ds_cmls,
+        grid_point_location="center",
+    )
+    radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data.isel(time=0))
+    np.testing.assert_almost_equal(
+        radar_along_cml.data,
+        da_expected_time_series.isel(time=0).data,
+    )
 
 
 # Copy-paste test from wradlib for the associated copied wradlib function
