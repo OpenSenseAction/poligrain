@@ -348,15 +348,26 @@ class GridAtPoints:
         da_point_data: xr.DataArray | xr.Dataset,
         nnear: int,
         stat: str = "best",
+        use_lon_lat=True,
     ):
+        self.use_lon_lat = use_lon_lat
+        if use_lon_lat:
+            x_points = da_point_data.lon.to_numpy()
+            y_points = da_point_data.lat.to_numpy()
+            x_grid = da_gridded_data.lon.to_numpy()
+            y_grid = da_gridded_data.lat.to_numpy()
+        else:
+            x_points = da_point_data.x.to_numpy()
+            y_points = da_point_data.y.to_numpy()
+            x_grid = da_gridded_data.x.to_numpy()
+            y_grid = da_gridded_data.y.to_numpy()
+
         # Get radar pixel coordinates as (N, 2) array
-        x_grid = da_gridded_data.lon.to_numpy()
-        y_grid = da_gridded_data.lat.to_numpy()
         assert x_grid.shape == y_grid.shape
         xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten())))
 
         # Initialize function to get grid values at points
-        xy_points = np.stack([da_point_data.lon, da_point_data.lat], axis=1)
+        xy_points = np.stack([x_points, y_points], axis=1)
 
         # copy-paste code from wradlib.adjust.RawAtObs.__init__
         obs_coords = xy_points
