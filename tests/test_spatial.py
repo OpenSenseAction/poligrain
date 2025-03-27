@@ -162,12 +162,26 @@ def test_GridAtLines():
         da_gridded_data=da_grid_data,
         ds_line_data=ds_cmls,
         grid_point_location="center",
+        use_lon_lat=False,  # this should be default, but we enforce it here to be sure
     )
     np.testing.assert_almost_equal(
         get_grid_at_lines.intersect_weights.data.todense(),
         da_expected_intersect_weights.data,
     )
+    radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data)
+    np.testing.assert_almost_equal(
+        radar_along_cml.data,
+        da_expected_time_series.data,
+    )
+    np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
 
+    # same as above but using lon-lat instead of x-y coordinates
+    get_grid_at_lines = plg.spatial.GridAtLines(
+        da_gridded_data=da_grid_data,
+        ds_line_data=ds_cmls,
+        grid_point_location="center",
+        use_lon_lat=True,
+    )
     radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data)
     np.testing.assert_almost_equal(
         radar_along_cml.data,
@@ -534,6 +548,10 @@ def get_grid_intersect_ts_test_data(return_xarray=False):
             "site_0_lat": ("cml_id", [-0.5, 0]),
             "site_1_lon": ("cml_id", [0, 2.5]),
             "site_1_lat": ("cml_id", [3.5, 0]),
+            "site_0_x": ("cml_id", [0, 0.5]),
+            "site_0_y": ("cml_id", [-0.5, 0]),
+            "site_1_x": ("cml_id", [0, 2.5]),
+            "site_1_y": ("cml_id", [3.5, 0]),
         },
     )
 

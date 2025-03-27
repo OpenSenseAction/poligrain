@@ -260,15 +260,32 @@ class GridAtLines:
         da_gridded_data: xr.DataArray | xr.Dataset,
         ds_line_data: xr.DataArray | xr.Dataset,
         grid_point_location: str = "center",
+        use_lon_lat: bool = False,
     ):
+        self.use_lon_lat = use_lon_lat
+        if use_lon_lat:
+            x1_line = ds_line_data.site_0_lon.data
+            y1_line = ds_line_data.site_0_lat.data
+            x2_line = ds_line_data.site_1_lon.data
+            y2_line = ds_line_data.site_1_lat.data
+            x_grid = da_gridded_data.lon.data
+            y_grid = da_gridded_data.lat.data
+        else:
+            x1_line = ds_line_data.site_0_x.data
+            y1_line = ds_line_data.site_0_y.data
+            x2_line = ds_line_data.site_1_x.data
+            y2_line = ds_line_data.site_1_y.data
+            x_grid = da_gridded_data.x_grid.data
+            y_grid = da_gridded_data.y_grid.data
+
         self.intersect_weights = calc_sparse_intersect_weights_for_several_cmls(
-            x1_line=ds_line_data.site_0_lon.values,
-            y1_line=ds_line_data.site_0_lat.values,
-            x2_line=ds_line_data.site_1_lon.values,
-            y2_line=ds_line_data.site_1_lat.values,
+            x1_line=x1_line,
+            y1_line=y1_line,
+            x2_line=x2_line,
+            y2_line=y2_line,
             cml_id=ds_line_data.cml_id,
-            x_grid=da_gridded_data.lon.values,
-            y_grid=da_gridded_data.lat.values,
+            x_grid=x_grid,
+            y_grid=y_grid,
             grid_point_location=grid_point_location,
         )
 
@@ -302,10 +319,20 @@ class GridAtLines:
         )
 
         gridded_data_along_line["time"] = da_gridded_data.time
+        # Add lon-lat for each CML to allow easy plotting of the resultsing data.
+        # Lon-lat coordinates are required by our metadata standards, hence we
+        # can assume they are available.
         gridded_data_along_line["site_0_lon"] = self.intersect_weights.site_0_lon
-        gridded_data_along_line["site_1_lat"] = self.intersect_weights.site_1_lat
-        gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
         gridded_data_along_line["site_0_lat"] = self.intersect_weights.site_0_lat
+        gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
+        gridded_data_along_line["site_1_lat"] = self.intersect_weights.site_1_lat
+        # also add x-y coordinates in case we used them for calculations before
+        # because we know they are there.
+        if not self.use_lon_lat:
+            gridded_data_along_line["site_0_x"] = self.intersect_weights.site_0_x
+            gridded_data_along_line["site_0_y"] = self.intersect_weights.site_0_y
+            gridded_data_along_line["site_1_x"] = self.intersect_weights.site_1_x
+            gridded_data_along_line["site_1_y"] = self.intersect_weights.site_1_y
 
         if time_dim_was_expanded:
             gridded_data_along_line = gridded_data_along_line.isel(time=0)
