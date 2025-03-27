@@ -307,8 +307,8 @@ def plot_plg(
         point_x_name = "lon"
         point_y_name = "lat"
     else:
-        grid_x_name = "xs"
-        grid_y_name = "ys"
+        grid_x_name = "x_grid"
+        grid_y_name = "y_grid"
         point_x_name = "x"
         point_y_name = "y"
 
