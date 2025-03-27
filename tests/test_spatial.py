@@ -59,6 +59,21 @@ def test_GridAtPoint():
         expected_time_series.transpose(),
     )
 
+    # Using only the first time stamp
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data.isel(time=0),
+        da_point_data=da_points.isel(time=0),
+        nnear=1,
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data.isel(time=0),
+        da_point_data=da_points.isel(time=0),
+    )
+    np.testing.assert_almost_equal(
+        da_result_time_series.isel(time=0).data,
+        expected_time_series[:, 0].transpose(),
+    )
+
     # testing for nnear=9 and 'best'
     get_grid_at_points = plg.spatial.GridAtPoints(
         da_gridded_data=da_grid_data,
