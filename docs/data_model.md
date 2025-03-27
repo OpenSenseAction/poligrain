@@ -11,11 +11,13 @@ Note that only longitude and latitude coordinates (in decimal degrees) are
 required to meet the
 [OPENSENSE OS data format conventions](https://github.com/OpenSenseAction/OS_data_format_conventions).
 Additionally we require `x` and `y` (and `site_0_x`, etc. for line data), which
-should be projected coordinates, to be present in a `xarray.Dataset`. They are
-used for distance calculations. We provide a simple function to do the
-projection, but the user is free to choose which projection to use. Since we use
-the projected coordinates for distance calculation, it should preserve distances
-as good as possible in the region of interest.
+should be projected coordinates, to be present in a `xarray.Dataset` for certain
+function that rely on distance calculations (e.g. for finding neighbors) because
+distance calculations are not correct when done with lon-lat in degrees. We
+provide a simple function to do the projection, but the user is free to choose
+which projection to use. Since we use the projected coordinates for distance
+calculation, it should preserve distances as good as possible in the region of
+interest.
 
 ## Point data
 
@@ -83,17 +85,17 @@ Coordinates:
   * y                (y) float64 384B -3.413e+06 -3.415e+06 ... -3.507e+06
     lat              (y, x) float32 7kB 57.21 57.21 57.21 ... 58.06 58.06 58.06
     lon              (y, x) float32 7kB 11.41 11.45 11.48 ... 12.59 12.62 12.66
-    xs               (y, x) float64 14kB 6.457e+05 6.478e+05 ... 7.157e+05
-    ys               (y, x) float64 14kB 6.343e+06 6.343e+06 ... 6.441e+06
+    x_grid           (y, x) float64 14kB 6.457e+05 6.478e+05 ... 7.157e+05
+    y_grid           (y, x) float64 14kB 6.343e+06 6.343e+06 ... 6.441e+06
 Data variables:
     rainfall_amount  (time, y, x) float64 440kB 0.01078 0.0 ... 0.121 0.05403
 ```
 
-Here, `xs` and `ys` are the projected coordinates with the same shape as `lon`
-and `lat`. Most often only `lon` and `lat` are provided. Note that `x` and `y`
-are only 1D arrays. They might define an equidistant 2D xy-grid but that is not
-a requirement in our data model. We rely on `xs` and `ys` for distance
-calculations.
+Here, `x_grid` and `y_grid` are the projected coordinates with the same 2D shape
+as `lon` and `lat`. Most often only `lon` and `lat` are provided. Note that `x`
+and `y` are only 1D arrays. They might define an equidistant 2D xy-grid but that
+is not a requirement in our data model. We rely on `x_grid` and `y_grid` when
+doing distance calculations.
 
 Note that there are different ways to define the location of grid cells, e.g.
 the coordinates can define the grid centroid or the lower left corner. We take
