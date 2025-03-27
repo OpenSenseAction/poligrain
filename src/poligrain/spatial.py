@@ -289,6 +289,11 @@ class GridAtLines:
             The time series for each grid intersection of each line. The IDs for each
             line are taken from `ds_line_data` in `__init__`.
         """
+        time_dim_was_expanded = False
+        if "time" not in da_gridded_data.dims:
+            da_gridded_data = da_gridded_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
+
         gridded_data_along_line = get_grid_time_series_at_intersections(
             grid_data=da_gridded_data,
             intersect_weights=self.intersect_weights,
@@ -300,6 +305,8 @@ class GridAtLines:
         gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
         gridded_data_along_line["site_0_lat"] = self.intersect_weights.site_0_lat
 
+        if time_dim_was_expanded:
+            gridded_data_along_line = gridded_data_along_line.isel(time=0)
         return gridded_data_along_line
 
 
