@@ -278,17 +278,24 @@ class GridAtLines:
         Parameters
         ----------
         da_gridded_data
-            3-D data of the gridded data. The order of dimensions must be
-            ('time', 'y', 'x'). The grid must be the same as in the initialization
-            of the current object because the intersection weights are calculated
-            at initialization.
+            3D ('time', 'y', 'x') or 2D ('y', 'x') data of the gridded data. The order
+            of dimensions is important! The grid must be the same as in the
+            initialization of the current object because the intersection weights are
+            calculated at initialization.
 
         Returns
         -------
         gridded_data_along_line
-            The time series for each grid intersection of each line. The IDs for each
-            line are taken from `ds_line_data` in `__init__`.
+            The time series (in case 3D data with time dimension was passed) or single
+            values (in case 2D data without time dimension was passed) for each grid
+            intersection of each line. The IDs for each line are taken from
+            `ds_line_data` in `__init__`.
         """
+        time_dim_was_expanded = False
+        if "time" not in da_gridded_data.dims:
+            da_gridded_data = da_gridded_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
+
         gridded_data_along_line = get_grid_time_series_at_intersections(
             grid_data=da_gridded_data,
             intersect_weights=self.intersect_weights,
@@ -300,6 +307,8 @@ class GridAtLines:
         gridded_data_along_line["site_1_lon"] = self.intersect_weights.site_1_lon
         gridded_data_along_line["site_0_lat"] = self.intersect_weights.site_0_lat
 
+        if time_dim_was_expanded:
+            gridded_data_along_line = gridded_data_along_line.isel(time=0)
         return gridded_data_along_line
 
 
@@ -354,34 +363,47 @@ class GridAtPoints:
         raw_coords = xy_grid
         self.statfunc = _get_statfunc(stat)
         self.raw_ix = _get_neighbours_ix(obs_coords, raw_coords, nnear)
+        self.id = da_point_data.id.data
 
     def __call__(
         self, da_gridded_data: xr.DataArray, da_point_data: xr.DataArray
     ) -> xr.DataArray:
         """Return grid values at points.
 
-        Note that here, both inputs must be a `xr.DataArray` with a `time` dimension.
+        Note that here, both inputs must be a `xr.DataArray`. They can have a `time`
+        dimension or can be only one time step.
         We require `da_point_data` as input because it is needed for the calculation
         in case of `nnear > 1` and `stat="best"`.
 
         Parameters
         ----------
         da_gridded_data
-            The gridded data on the same grid as used in `__init__`. It has to have a
-            time dimension over which it is iterated.
+            3D ('time', 'y', 'x') or 2D ('y', 'x') DataArray of gridded data on the same
+             grid as used in `__init__`.
         da_point_data : xr.DataArray
             The point data with the same coordinates and exact same ordering as used
-            in `__init__`. There has to be a `time` dimension. The time stamps from
-            `da_gridded_data` are selected. Hence, `da_point_data` and `da_gridded_data`
-            should have matching time stamps. The time period can be longer or shorter,
-            though. Non matching time stamps are just not considered.
+            in `__init__`. It can have a `time` dimension or not, but has to match
+            `da_gridded_data`. If time stamps are provided `da_point_data` and
+            `da_gridded_data` must have matching time stamps.
 
         Returns
         -------
-            The time series of grid values at each point. The IDs for each
-            point are taken from `da_point_data`.
+            The time series (in case 3D data with time dimension was passed) or single
+            values (in case 2D data without time dimension was passed) of grid values at
+            each point. The IDs for each point are taken from `da_point_data`.
 
         """
+        time_dim_was_expanded = False
+        if "time" not in da_gridded_data.dims:
+            da_gridded_data = da_gridded_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
+        if "time" not in da_point_data.dims:
+            da_point_data = da_point_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
+        if np.any(da_point_data.time != da_gridded_data.time):
+            msg = "Both data arrays need to have matching time stamps."
+            raise ValueError(msg)
+
         gridded_data_at_point_list = []
         for t in da_gridded_data.time.to_numpy():
             da_gridded_data_t = da_gridded_data.sel(time=t)
@@ -407,7 +429,7 @@ class GridAtPoints:
         if da_point_data.dims[0] != "time":
             gridded_data_at_points = np.transpose(gridded_data_at_points)
 
-        return xr.DataArray(
+        da_gridded_data_at_points = xr.DataArray(
             data=gridded_data_at_points,
             dims=da_point_data.dims,
             coords={
@@ -417,6 +439,9 @@ class GridAtPoints:
                 "id": da_point_data.id,
             },
         )
+        if time_dim_was_expanded:
+            da_gridded_data_at_points = da_gridded_data_at_points.isel(time=0)
+        return da_gridded_data_at_points
 
 
 def _get_neighbours_ix(obs_coords, raw_coords, nnear):
@@ -466,7 +491,8 @@ def _get_statfunc(funcname):
                 return func(y, axis=1)
 
         except Exception as err:
-            raise NameError(f"Unknown function name option: {funcname!r}") from err  # noqa: EM102
+            msg = f"Unknown function name option: {funcname!r}"
+            raise NameError(msg) from err
     return newfunc
 
 
@@ -493,7 +519,8 @@ def best(x, y):
     """
     if type(x) == np.ndarray:  # pylint: disable=unidiomatic-typecheck
         if x.ndim != 1:
-            raise ValueError("`x` must be a 1-d array of floats or a float.")  # noqa: EM101
+            msg = "`x` must be a 1-d array of floats or a float."
+            raise ValueError(msg)
         if len(x) != len(y):
             raise ValueError(
                 f"Length of `x` ({len(x)}) and `y` ({len(y)}) must be equal."  # noqa: EM102
@@ -952,9 +979,11 @@ def get_closest_points_to_line(ds_cmls, ds_gauges, max_distance, n_closest):
         # Calculate the precise distances to nearby gauges
         distances = np.array(
             [
-                line.distance(Point(coords_gauge[ind]))
-                if ind != len(coords_gauge)
-                else np.inf  # set to np.inf if outside max_distance
+                (
+                    line.distance(Point(coords_gauge[ind]))
+                    if ind != len(coords_gauge)
+                    else np.inf
+                )  # set to np.inf if outside max_distance
                 for ind in ind_nearest_gauges
             ]
         )
