@@ -153,6 +153,22 @@ def test_GridAtLines():
     )
     np.testing.assert_equal(radar_along_cml.dims, da_expected_time_series.dims)
 
+    # test for passing only one time step
+    #
+    # note that the CML test data does only have the coordinates and no time dimension
+    # This needs to be changed once we want to test with `nnear` and `stat` as done in
+    # GridAtPoints.
+    get_grid_at_lines = plg.spatial.GridAtLines(
+        da_gridded_data=da_grid_data.isel(time=0),
+        ds_line_data=ds_cmls,
+        grid_point_location="center",
+    )
+    radar_along_cml = get_grid_at_lines(da_gridded_data=da_grid_data.isel(time=0))
+    np.testing.assert_almost_equal(
+        radar_along_cml.data,
+        da_expected_time_series.isel(time=0).data,
+    )
+
 
 # Copy-paste test from wradlib for the associated copied wradlib function
 def test__get_statfunc():
