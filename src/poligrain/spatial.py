@@ -382,10 +382,13 @@ class GridAtPoints:
             point are taken from `da_point_data`.
 
         """
+        time_dim_was_expanded = False
         if "time" not in da_gridded_data.dims:
             da_gridded_data = da_gridded_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
         if "time" not in da_point_data.dims:
             da_point_data = da_point_data.copy().expand_dims("time")
+            time_dim_was_expanded = True
         if np.any(da_point_data.time != da_gridded_data.time):
             msg = "Both data arrays need to have matching time stamps."
             raise ValueError(msg)
@@ -415,7 +418,7 @@ class GridAtPoints:
         if da_point_data.dims[0] != "time":
             gridded_data_at_points = np.transpose(gridded_data_at_points)
 
-        return xr.DataArray(
+        da_gridded_data_at_points = xr.DataArray(
             data=gridded_data_at_points,
             dims=da_point_data.dims,
             coords={
@@ -425,6 +428,9 @@ class GridAtPoints:
                 "id": da_point_data.id,
             },
         )
+        if time_dim_was_expanded:
+            da_gridded_data_at_points = da_gridded_data_at_points.isel(time=0)
+        return da_gridded_data_at_points
 
 
 def _get_neighbours_ix(obs_coords, raw_coords, nnear):
