@@ -198,9 +198,10 @@ def test_plot_plg():
         ds_cmls.site_1_lon, ds_cmls.site_1_lat, ref_str
     )
 
-    ds_rad.coords["xs"], ds_rad.coords["ys"] = plg.spatial.project_point_coordinates(
-        ds_rad.lon, ds_rad.lat, ref_str
-    )
+    (
+        ds_rad.coords["x_grid"],
+        ds_rad.coords["y_grid"],
+    ) = plg.spatial.project_point_coordinates(ds_rad.lon, ds_rad.lat, ref_str)
 
     # plot with x-y (use_lon_lat=False)
     plg.plot_map.plot_plg(
