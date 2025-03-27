@@ -363,6 +363,7 @@ class GridAtPoints:
         raw_coords = xy_grid
         self.statfunc = _get_statfunc(stat)
         self.raw_ix = _get_neighbours_ix(obs_coords, raw_coords, nnear)
+        self.id = da_point_data.id.data
 
     def __call__(
         self, da_gridded_data: xr.DataArray, da_point_data: xr.DataArray
