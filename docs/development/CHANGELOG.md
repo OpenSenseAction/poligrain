@@ -4,9 +4,6 @@
 
 ### New features
 
-- [PR92](https://github.com/OpenSenseAction/poligrain/pull/92) add function to
-  download 25 month PWS dataset covering Amsterdam (by
-  [@maxmargraf](https://github.com/maxmargraf))
 - [PR95](https:github.com/OpenSenseAction/poligrain/pull/95) allow x-y
   coordinates and use it as default in GridAtPoints and GridAtLines, also switch
   to `x_grid` and `y_grid` instead of `xs` and `ys` for projected radar
@@ -14,6 +11,9 @@
 - [PR94](https:github.com/OpenSenseAction/poligrain/pull/94) add option to pass
   data without time dimension to `GridAtPoints` and `GridAtLines` (by
   [@cchwala](https://github.com/cchwala)
+- [PR92](https://github.com/OpenSenseAction/poligrain/pull/92) add function to
+  download 25 month PWS dataset covering Amsterdam (by
+  [@maxmargraf](https://github.com/maxmargraf))
 - [PR90](https://github.com/OpenSenseAction/poligrain/pull/90) add function to
   download 8-day example datasets for OpenRainER (by
   [@cchwala](https://github.com/cchwala))
