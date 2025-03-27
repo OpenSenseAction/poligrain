@@ -386,6 +386,9 @@ class GridAtPoints:
             da_gridded_data = da_gridded_data.copy().expand_dims("time")
         if "time" not in da_point_data.dims:
             da_point_data = da_point_data.copy().expand_dims("time")
+        if np.any(da_point_data.time != da_gridded_data.time):
+            msg = "Both data arrays need to have matching time stamps."
+            raise ValueError(msg)
 
         gridded_data_at_point_list = []
         for t in da_gridded_data.time.to_numpy():
