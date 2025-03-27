@@ -12,11 +12,7 @@ import poligrain as plg
 def test_GridAtPoint():
     da_grid_data, _, _, _ = get_grid_intersect_ts_test_data(return_xarray=True)
     da_grid_data[0, 3, 1] = np.nan
-    da_grid_data[
-        8:,
-        3,
-        1,
-    ] = 0
+    da_grid_data[8:, 3, 1] = 0
     da_points = xr.DataArray(
         data=[
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -26,6 +22,10 @@ def test_GridAtPoint():
         coords={
             "lon": ("id", [0, 1]),
             "lat": ("id", [2, 3]),
+            # Since these are fake coords, we just take the lon-lat here, too.
+            # Same is done in the gridded data.
+            "x": ("id", [0, 1]),
+            "y": ("id", [2, 3]),
         },
     )
     expected_time_series = np.array(
@@ -39,12 +39,29 @@ def test_GridAtPoint():
         da_gridded_data=da_grid_data,
         da_point_data=da_points,
         nnear=1,
+        use_lon_lat=False,  # this should be the default, but we force it for clarity
     )
     da_result_time_series = get_grid_at_points(
         da_gridded_data=da_grid_data,
         da_point_data=da_points,
     )
 
+    np.testing.assert_almost_equal(
+        da_result_time_series.data,
+        expected_time_series,
+    )
+
+    # same as above but using lon-lat instead of x-y (which is default)
+    get_grid_at_points = plg.spatial.GridAtPoints(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+        nnear=1,
+        use_lon_lat=True,
+    )
+    da_result_time_series = get_grid_at_points(
+        da_gridded_data=da_grid_data,
+        da_point_data=da_points,
+    )
     np.testing.assert_almost_equal(
         da_result_time_series.data,
         expected_time_series,
@@ -496,14 +513,15 @@ def get_grid_intersect_ts_test_data(return_xarray=False):
     # intersections weights.
 
     x, y = np.arange(4), np.arange(4)
+    x_grid, y_grid = np.meshgrid(x, y)
     lon, lat = np.meshgrid(x, y)
     grid_data = xr.DataArray(
         data=grid_data,
         dims=("time", "y", "x"),
         coords={
             "time": np.arange(10),
-            "x": x,
-            "y": y,
+            "x_grid": (("y", "x"), x_grid),
+            "y_grid": (("y", "x"), y_grid),
             "lon": (("y", "x"), lon),
             "lat": (("y", "x"), lat),
         },

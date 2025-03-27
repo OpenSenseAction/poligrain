@@ -348,7 +348,7 @@ class GridAtPoints:
         da_point_data: xr.DataArray | xr.Dataset,
         nnear: int,
         stat: str = "best",
-        use_lon_lat=True,
+        use_lon_lat=False,
     ):
         self.use_lon_lat = use_lon_lat
         if use_lon_lat:
@@ -359,8 +359,8 @@ class GridAtPoints:
         else:
             x_points = da_point_data.x.to_numpy()
             y_points = da_point_data.y.to_numpy()
-            x_grid = da_gridded_data.x.to_numpy()
-            y_grid = da_gridded_data.y.to_numpy()
+            x_grid = da_gridded_data.x_grid.to_numpy()
+            y_grid = da_gridded_data.y_grid.to_numpy()
 
         # Get radar pixel coordinates as (N, 2) array
         assert x_grid.shape == y_grid.shape
