@@ -139,7 +139,7 @@ def load_openrainer(data_dir=".", subset="8d"):
     return ds_rad, ds_cmls, ds_gauges
 
 
-def load_ams_pws(data_dir=".", subset="full_dataset"):
+def load_ams_pws(data_dir=".", subset="full_period"):
     """Load Amsterdam PWS example data.
 
     Parameters
@@ -147,9 +147,9 @@ def load_ams_pws(data_dir=".", subset="full_dataset"):
     data_dir : str, optional
        Directory where the data will be stored. Default is current directory.
     subset : str, optional
-       Subset of data to load. Options are 'full_dataset' (25 months, native
+       Subset of data to load. Options are 'full_period' (25 months, native
        temporal resolution) No other option is currently implemented. Default is
-       'full_dataset'.
+       'full_period'.
 
     Returns
     -------

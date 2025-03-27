@@ -157,7 +157,7 @@ def test_load_ams_pws():
         (
             ds_pws,
             ds_gauges,
-        ) = plg.example_data.load_ams_pws(data_dir=tmp_dir_name, subset="full_dataset")
+        ) = plg.example_data.load_ams_pws(data_dir=tmp_dir_name, subset="full_period")
 
         # Check pws data
         npt.assert_almost_equal(
