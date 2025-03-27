@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR94](https:github.com/OpenSenseAction/poligrain/pull/94) add option to pass
+  data without time dimension to `GridAtPoints` and `GridAtLines` (by
+  [@cchwala](https://github.com/cchwala))
 - [PR90](https://github.com/OpenSenseAction/poligrain/pull/90) add function to
   download 8-day example datasets for OpenRainER (by
   [@cchwala](https://github.com/cchwala))
