@@ -279,7 +279,7 @@ class GridAtLines:
         ----------
         da_gridded_data
             3D ('time', 'y', 'x') or 2D ('y', 'x') data of the gridded data. The order
-            of dimensions is important. The grid must be the same as in the
+            of dimensions is important! The grid must be the same as in the
             initialization of the current object because the intersection weights are
             calculated at initialization.
 
@@ -287,7 +287,7 @@ class GridAtLines:
         -------
         gridded_data_along_line
             The time series (in case 3D data with time dimension was passed) or single
-            value (in case 2D data without time dimension was passed) for each grid
+            values (in case 2D data without time dimension was passed) for each grid
             intersection of each line. The IDs for each line are taken from
             `ds_line_data` in `__init__`.
         """
@@ -369,26 +369,27 @@ class GridAtPoints:
     ) -> xr.DataArray:
         """Return grid values at points.
 
-        Note that here, both inputs must be a `xr.DataArray` with a `time` dimension.
+        Note that here, both inputs must be a `xr.DataArray`. They can have a `time`
+        dimension or can be only one time step.
         We require `da_point_data` as input because it is needed for the calculation
         in case of `nnear > 1` and `stat="best"`.
 
         Parameters
         ----------
         da_gridded_data
-            The gridded data on the same grid as used in `__init__`. It has to have a
-            time dimension over which it is iterated.
+            3D ('time', 'y', 'x') or 2D ('y', 'x') DataArray of gridded data on the same
+             grid as used in `__init__`.
         da_point_data : xr.DataArray
             The point data with the same coordinates and exact same ordering as used
-            in `__init__`. There has to be a `time` dimension. The time stamps from
-            `da_gridded_data` are selected. Hence, `da_point_data` and `da_gridded_data`
-            should have matching time stamps. The time period can be longer or shorter,
-            though. Non matching time stamps are just not considered.
+            in `__init__`. It can have a `time` dimension or not, but has to match
+            `da_gridded_data`. If time stamps are provided `da_point_data` and
+            `da_gridded_data` must have matching time stamps.
 
         Returns
         -------
-            The time series of grid values at each point. The IDs for each
-            point are taken from `da_point_data`.
+            The time series (in case 3D data with time dimension was passed) or single
+            values (in case 2D data without time dimension was passed) of grid values at
+            each point. The IDs for each point are taken from `da_point_data`.
 
         """
         time_dim_was_expanded = False
