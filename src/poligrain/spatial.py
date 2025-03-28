@@ -336,6 +336,7 @@ class GridAtLines:
 
         if time_dim_was_expanded:
             gridded_data_along_line = gridded_data_along_line.isel(time=0)
+            gridded_data_along_line = gridded_data_along_line.drop_vars("time")
         return gridded_data_along_line
 
 
