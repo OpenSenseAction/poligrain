@@ -205,6 +205,12 @@ def test_GridAtLines():
         da_expected_time_series.isel(time=0).data,
     )
 
+    # Make sure that `time` is not in coords here because we pass data
+    # without a time stamp. Internally `expand_dims('time')` is used
+    # and we do `.isel(time=0)` when returning data. This is not enough,
+    # though. This led to unexpected behavior.
+    assert "time" not in radar_along_cml.coords
+
 
 # Copy-paste test from wradlib for the associated copied wradlib function
 def test__get_statfunc():
