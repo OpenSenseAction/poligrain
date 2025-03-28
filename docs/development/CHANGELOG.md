@@ -22,6 +22,10 @@
 
 ### Bug fixes
 
+- [PR96](https:github.com/OpenSenseAction/poligrain/pull/96) fix problem of
+  GridAtLines which returned `time` in coords when passing data without time
+  dimension (by [@cchwala](https://github.com/cchwala))
+
 ### Maintenance
 
 ### Breaking changes
