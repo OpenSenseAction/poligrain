@@ -4,6 +4,16 @@
 
 ### New features
 
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.3.0
+
+### New features
+
 - [PR95](https:github.com/OpenSenseAction/poligrain/pull/95) allow x-y
   coordinates and use it as default in GridAtPoints and GridAtLines, also switch
   to `x_grid` and `y_grid` instead of `xs` and `ys` for projected radar
