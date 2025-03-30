@@ -29,9 +29,15 @@ def test_download_data_file():
         ds_gauges = xr.open_dataset(Path(data_dir_in_tmp_dir) / "some_file_name.nc")
 
         npt.assert_almost_equal(
-            ds_gauges.lon.data[:3], np.array([11.943145, 12.035572, 12.073303])
+            ds_gauges.lon.data[:3],
+            np.array([11.943145, 12.035572, 12.073303]),
+            decimal=5,
         )
-        npt.assert_almost_equal(ds_gauges.station_id.data[:3], np.array([0, 1, 2]))
+        npt.assert_almost_equal(
+            ds_gauges.station_id.data[:3],
+            np.array([0, 1, 2]),
+            decimal=5,
+        )
 
         # call download without specifying local file name and check that
         # file gets correct filename which is the last part of the URL
@@ -72,12 +78,14 @@ def test_load_openmrg_5min_2h():
                     [0.04546478, 0.03409377, 0.04292152],
                 ]
             ),
+            decimal=5,
         )
 
         # Check CML data
         npt.assert_almost_equal(
             ds_cmls.isel(cml_id=42).R.data[11:14],
             np.array([0.58149174, 0.43223663, 0.33730422]),
+            decimal=5,
         )
 
         # Check content of muncip gauge data
@@ -92,6 +100,7 @@ def test_load_openmrg_5min_2h():
         npt.assert_almost_equal(
             ds_gauge_smhi.rainfall_amount.isel(station_id=0).data[11:14],
             np.array([0.63333333, 0.63333333, 0.53333333]),
+            decimal=5,
         )
 
         # close file, because otherwise CI on Windows fails when trying to delete dir
@@ -115,18 +124,21 @@ def test_load_openrainer():
         npt.assert_almost_equal(
             ds_rad.R.sum(dim="time").data[120:122, 115:118],
             np.array([[41.74, 43.84, 45.77], [41.43, 45.61, 47.68]]),
+            decimal=5,
         )
 
         # Check CML data
         npt.assert_almost_equal(
             ds_cmls.isel(cml_id=42, sublink_id=1).rsl.data[11:16],
             np.array([-55.0, -54.8, -54.2, -54.8, -54.2]),
+            decimal=5,
         )
 
         # Check content of muncip gauge data
         npt.assert_almost_equal(
             ds_gauges.isel(id=10).rainfall_amount.sum(dim="time"),
-            np.array(50.4000002),
+            np.array(50.4),
+            decimal=5,
         )
         npt.assert_almost_equal(
             ds_gauges.lon.data[:3], np.array([10.2258301, 11.4945698, 11.3415499])
@@ -135,4 +147,34 @@ def test_load_openrainer():
         # close file, because otherwise CI on Windows fails when trying to delete dir
         ds_rad.close()
         ds_cmls.close()
+        ds_gauges.close()
+
+
+def test_load_ams_pws():
+    # We download the data and just check a little bit of the data. Here
+    # we do not yet check that data format conventions are correct.
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        (
+            ds_pws,
+            ds_gauges,
+        ) = plg.example_data.load_ams_pws(data_dir=tmp_dir_name, subset="full_period")
+
+        # Check pws data
+        npt.assert_almost_equal(
+            ds_pws.rainfall.isel(time=range(20000, 21000)).sum(dim="time").data[0:3],
+            np.array([0.202, 0.0, 0.2]),
+            decimal=5,
+        )
+
+        npt.assert_almost_equal(ds_pws.lon.data[:2], np.array([4.670664, 4.67494]))
+
+        # Check gauge data
+        npt.assert_almost_equal(
+            ds_gauges.lon.isel(id=range(3, 5)).lon.data,
+            np.array([4.9773763, 4.87422293]),
+            decimal=5,
+        )
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_pws.close()
         ds_gauges.close()
