@@ -4,6 +4,10 @@
 
 ### New features
 
+- [PR99](https:github.com/OpenSenseAction/poligrain/pull/99) by default add
+  colorbar also when only plotting lines and/or points with `plot_plg` (by
+  [@cchwala](https://github.com/cchwala))
+
 ### Bug fixes
 
 ### Maintenance
