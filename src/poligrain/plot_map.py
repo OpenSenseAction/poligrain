@@ -240,6 +240,8 @@ def plot_plg(
     edge_color="k",
     edge_width=0.5,
     marker_size=20,
+    add_colorbar=True,
+    colorbar_label="",
     kwargs_cmls_plot=None,
     kwargs_gauges_plot=None,
 ):
@@ -312,12 +314,20 @@ def plot_plg(
         point_x_name = "x"
         point_y_name = "y"
 
+    plotted_objects = []
     if da_grid is not None:
-        da_grid.plot.pcolormesh(
-            x=grid_x_name, y=grid_y_name, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax
+        pc = da_grid.plot.pcolormesh(
+            x=grid_x_name,
+            y=grid_y_name,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+            ax=ax,
+            add_colorbar=False,
         )
+        plotted_objects.append(pc)
     if da_cmls is not None:
-        plot_lines(
+        line_collection = plot_lines(
             cmls=da_cmls,
             vmin=kwargs_cmls_plot.pop("vmin", vmin),
             vmax=kwargs_cmls_plot.pop("vmax", vmax),
@@ -329,8 +339,9 @@ def plot_plg(
             pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
             **kwargs_cmls_plot,
         )
+        plotted_objects.append(line_collection)
     if da_gauges is not None:
-        ax.scatter(
+        point_collection = ax.scatter(
             x=da_gauges[point_x_name],
             y=da_gauges[point_y_name],
             c=da_gauges.data,
@@ -343,4 +354,7 @@ def plot_plg(
             zorder=2,
             **kwargs_gauges_plot,
         )
+        plotted_objects.append(point_collection)
+    if add_colorbar:
+        plt.colorbar(plotted_objects[0], ax=ax, label=colorbar_label)
     return ax
