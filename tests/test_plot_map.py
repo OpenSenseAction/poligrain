@@ -240,3 +240,12 @@ def test_plot_plg():
             da_cmls=ds_cmls.R.sum(dim="time"),
             foo=1,
         )
+
+    # Pass lines and points as xr.Dataset and plot them with single color.
+    # Radar data is still plotted with cmap.
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls,
+        da_gauges=ds_gauges_municp,
+        use_lon_lat=True,
+    )
