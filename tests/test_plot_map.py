@@ -240,3 +240,23 @@ def test_plot_plg():
             da_cmls=ds_cmls.R.sum(dim="time"),
             foo=1,
         )
+
+    # Pass lines and points as xr.Dataset and plot them with single color.
+    # Radar data is still plotted with cmap.
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls,
+        da_gauges=ds_gauges_municp,
+        use_lon_lat=True,
+    )
+
+    # Test with wrong `da_gauges` type (not xr.Dataset or xr.DataArray). For radar and
+    # CML data we do not have to check this because we do not have the specific
+    # if-elif-else clause as we have for the gauges.
+    with pytest.raises(
+        ValueError, match="`da_gauges` has to be xr.Dataset or xr.DataArray"
+    ):
+        plg.plot_map.plot_plg(
+            da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+            da_gauges=ds_gauges_municp.rainfall_amount.data,
+        )
