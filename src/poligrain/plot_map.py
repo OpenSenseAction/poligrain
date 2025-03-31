@@ -240,6 +240,8 @@ def plot_plg(
     edge_color="k",
     edge_width=0.5,
     marker_size=20,
+    line_color="k",
+    point_color="k",
     add_colorbar=True,
     colorbar_label="",
     kwargs_cmls_plot=None,
@@ -247,8 +249,10 @@ def plot_plg(
 ):
     """Plot point, line and grid data.
 
-    The data to be plotted has to be provided as xr.DataArray conforming
-    to our naming conventions. Data has to be for one selected time step.
+    The data to be plotted has to be provided as xr.DataArray or xr.Dataset conforming
+    to our naming conventions. Data has to be for one selected time step if provided
+    as xr.DataArray. For points and lines providing data as xr.Dataset is allowed and
+    then only locations of sensors are plotted with single color.
 
     Data of the three different sources can be passed all at once, but one
     can also pass only one or two of them. `vmin`, `vmax` and `cmap` will be
@@ -259,10 +263,12 @@ def plot_plg(
     ----------
     da_grid : xr.DataArray, optional
         2D gridded data (only one time step), typically from weather radar
-    da_cmls : xr.DataArray, optional
-        CML data (for one specific time step)
+    da_cmls : xr.DataArray or xr.Dataset, optional
+        CML data (for one specific time step) if passed as xr.DataArray. If
+        passed as xr.Dataset only the locations will be plotted.
     da_gauges : xr.DataArray, optional
-        Gauge data (for on specific time step)
+        Gauge data (for on specific time step) if passed as xr.DataArray. If
+        passed as xr.Dataset only the locations will be plotted.
     vmin : float, optional
         vmin for all three data sources, by default None. If set to None
         it will be derived individually for each data source when plotting.
@@ -288,6 +294,18 @@ def plot_plg(
         Size of points and lines, by default 20. Note that the value is directly
         passed to plt.scatter for plotting points but for the width of the lines
         it is divided by 10 so that visually the have more or less the same size.
+    line_color : str, optional
+        Color of lines if `da_cmls` is provided as xr.Dataset, by default "k".
+        If `da_cmls` is provided as xr.DataArray this is ignored and the cmap
+        is applied for the colored lines.
+    point_color : str, optional
+       Color of points if `da_gauges` is provided as xr.Dataset, by default "k".
+       If `da_gauges` is provided as xr.DataArray this is ignored and the cmap
+       is applied for the colored points.
+    add_colorbar : bool, optional
+        If True adds a color bar to the plot, by default True.
+    colorbar_label : str, optional
+        Label for the color bar, by default ""
     kwargs_cmls_plot : dict or None, optional
         kwargs to be passed to the CML plotting function, by default None. See
         `plot_lines` for supported kwargs.
@@ -335,26 +353,42 @@ def plot_plg(
             use_lon_lat=use_lon_lat,
             ax=ax,
             line_width=kwargs_cmls_plot.pop("line_width", marker_size / 10),
+            line_color=kwargs_cmls_plot.pop("line_color", line_color),
             pad_color=kwargs_cmls_plot.pop("edge_color", edge_color),
             pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
             **kwargs_cmls_plot,
         )
         plotted_objects.append(line_collection)
     if da_gauges is not None:
-        point_collection = ax.scatter(
-            x=da_gauges[point_x_name],
-            y=da_gauges[point_y_name],
-            c=da_gauges.data,
-            vmin=kwargs_gauges_plot.pop("vmin", vmin),
-            vmax=kwargs_gauges_plot.pop("vmax", vmax),
-            cmap=kwargs_gauges_plot.pop("cmap", cmap),
-            s=kwargs_gauges_plot.pop("s", marker_size),
-            edgecolors=kwargs_gauges_plot.pop("edge_color", edge_color),
-            linewidths=kwargs_gauges_plot.pop("line_width", edge_width),
-            zorder=2,
-            **kwargs_gauges_plot,
-        )
-        plotted_objects.append(point_collection)
+        if isinstance(da_gauges, xr.DataArray):
+            point_collection = ax.scatter(
+                x=da_gauges[point_x_name],
+                y=da_gauges[point_y_name],
+                c=da_gauges.data,
+                vmin=kwargs_gauges_plot.pop("vmin", vmin),
+                vmax=kwargs_gauges_plot.pop("vmax", vmax),
+                cmap=kwargs_gauges_plot.pop("cmap", cmap),
+                s=kwargs_gauges_plot.pop("s", marker_size),
+                edgecolors=kwargs_gauges_plot.pop("edge_color", edge_color),
+                linewidths=kwargs_gauges_plot.pop("line_width", edge_width),
+                zorder=2,
+                **kwargs_gauges_plot,
+            )
+            plotted_objects.append(point_collection)
+        elif isinstance(da_gauges, xr.Dataset):
+            ax.scatter(
+                x=da_gauges[point_x_name],
+                y=da_gauges[point_y_name],
+                c=point_color,
+                s=kwargs_gauges_plot.pop("s", marker_size),
+                edgecolors=kwargs_gauges_plot.pop("edge_color", edge_color),
+                linewidths=kwargs_gauges_plot.pop("line_width", edge_width),
+                zorder=2,
+                **kwargs_gauges_plot,
+            )
+        else:
+            msg = "`da_gauges` has to be xr.Dataset or xr.DataArray"
+            raise ValueError(msg)
     if add_colorbar:
         plt.colorbar(plotted_objects[0], ax=ax, label=colorbar_label)
     return ax
