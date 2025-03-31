@@ -4,6 +4,9 @@
 
 ### New features
 
+- [PR100](https:github.com/OpenSenseAction/poligrain/pull/100) allow to plot
+  lines and points with single color in
+  `plot_plg`(by[@cchwala](https://github.com/cchwala))
 - [PR99](https:github.com/OpenSenseAction/poligrain/pull/99) by default add
   colorbar also when only plotting lines and/or points with `plot_plg` (by
   [@cchwala](https://github.com/cchwala))
