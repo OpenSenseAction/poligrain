@@ -332,7 +332,7 @@ def plot_plg(
         point_x_name = "x"
         point_y_name = "y"
 
-    plotted_objects = []
+    plotted_objects_for_cmap = []
     if da_grid is not None:
         pc = da_grid.plot.pcolormesh(
             x=grid_x_name,
@@ -343,7 +343,7 @@ def plot_plg(
             ax=ax,
             add_colorbar=False,
         )
-        plotted_objects.append(pc)
+        plotted_objects_for_cmap.append(pc)
     if da_cmls is not None:
         line_collection = plot_lines(
             cmls=da_cmls,
@@ -358,7 +358,11 @@ def plot_plg(
             pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
             **kwargs_cmls_plot,
         )
-        plotted_objects.append(line_collection)
+        # only add line_collection in case we really want to apply a cmap
+        # based on CML data, i.e. only if passed as xr.DataArray and
+        # not if passed as xr.Dataset.
+        if isinstance(da_cmls, xr.DataArray):
+            plotted_objects_for_cmap.append(line_collection)
     if da_gauges is not None:
         if isinstance(da_gauges, xr.DataArray):
             point_collection = ax.scatter(
@@ -374,7 +378,7 @@ def plot_plg(
                 zorder=2,
                 **kwargs_gauges_plot,
             )
-            plotted_objects.append(point_collection)
+            plotted_objects_for_cmap.append(point_collection)
         elif isinstance(da_gauges, xr.Dataset):
             ax.scatter(
                 x=da_gauges[point_x_name],
@@ -389,6 +393,6 @@ def plot_plg(
         else:
             msg = "`da_gauges` has to be xr.Dataset or xr.DataArray"
             raise ValueError(msg)
-    if add_colorbar:
-        plt.colorbar(plotted_objects[0], ax=ax, label=colorbar_label)
+    if add_colorbar and len(plotted_objects_for_cmap) > 0:
+        plt.colorbar(plotted_objects_for_cmap[0], ax=ax, label=colorbar_label)
     return ax
