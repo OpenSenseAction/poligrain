@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9, <4.0.0"
+python = ">=3.10, <4.0.0"
 # main package dependencies
 netcdf4 = ">=1.6.5"
 xarray = ">=2023.12.0"
@@ -47,6 +47,7 @@ sphinx-autodoc-typehints = { version = "*", optional = true }
 nbsphinx = { version = "*", optional = true }
 pypandoc-binary = { version = "*", optional = true }
 llvmlite = ">=0.42.0"
+cartopy = ">=0.25.0"
 
 [tool.poetry.group.dev.dependencies]
 # only required for dev work on local machine
