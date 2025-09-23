@@ -311,6 +311,8 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
+    type_background_map : str, optional
+        type of background map ("OSM" for OpenStreetMap, "GM" for GoogleMaps, "NE" for Natural Earth.
 
     """
     if kwargs_cmls_plot is None:
@@ -320,6 +322,52 @@ def plot_plg(
 
     if ax is None:
         _, ax = plt.subplots()
+
+
+     # ADDED CODE FOR PLOTTING BACKGROUND MAP:
+     Coordinates = "[3.274, 7.273, 50.58, 53.593]"	# Plotting area: minimum longitude, maximum longitude, minimum latitude, maximum latitude. Plotting area for Europe.
+     extent = list(map(float, Coordinates.strip('[]').split(',')))	# Automatically obtain list of floats of values for bounding box.
+     Projection = "yes"                               # "yes" to use projection with EPSG code given below:
+     projection = ccrs.epsg(3035)     		# epsg:3035 = ETRS89 / ETRS-LAEA (suited for Europe). See https://epsg.io/ for EPSG codes per region.
+
+    # To use OpenStreetMap:
+    if type_background_map=="OSM":
+       request = cimgt.OSM()
+       # Set map:
+       ax = plt.axes(projection=request.crs)
+       ax.set_extent(extent)
+       ax.add_image(request, ValueRequest)
+    # To use Google Maps:
+    if type_background_map=="GM":
+       request = cimgt.GoogleTiles(style=style)
+       # Set map:
+       ax = plt.axes(projection=request.crs)
+       ax.set_extent(extent)
+       ax.add_image(request, ValueRequest)
+    # To use Natural Earth map:
+    if type_background_map=="NE":
+       # Map settings (e.g. projection and extent of area):
+       if Projection=="yes":
+          ax = plt.axes(projection=projection)
+       else:
+          ax = plt.axes(projection=transform)
+       ax.set_extent(extent)
+
+    #if type_background_map=="NE":
+       # Add natural earth features and borders in case of Natural Earth map:
+       #ax.add_feature(cartopy.feature.LAND, facecolor=ColorLand)
+       #ax.add_feature(cartopy.feature.OCEAN, facecolor=ColorOceanRiverLakes)
+       #ax.add_feature(cartopy.feature.LAKES, facecolor=ColorOceanRiverLakes, linewidth=0.00001,zorder=1)
+       #if DrawRivers=="yes":
+          #ax.add_feature(cartopy.feature.RIVERS, edgecolor=ColorOceanRiverLakes, linewidth=1.2, zorder=2)
+       #if DrawProvinces=="yes":
+          #ax.add_feature(cartopy.feature.STATES.with_scale("10m"), linewidth=0.3, zorder=2, edgecolor="gray")
+       #if DrawCountries=="yes":    
+          #ax.add_feature(cartopy.feature.BORDERS, linestyle="-", linewidth=0.3, zorder=2)
+       #if DrawCoastlines=="yes":
+           #ax.coastlines(resolution="10m", linewidth=0.3, zorder=2)
+       #if DrawLakelines=="yes":
+          #ax.add_feature(cartopy.feature.LAKES, edgecolor="black", linewidth=0.3, facecolor="none",zorder=2)
 
     if use_lon_lat:
         grid_x_name = "lon"
