@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import cartopy
+import cartopy.crs
+import cartopy.io.img_tiles as cimgt
 import matplotlib.axes
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
@@ -10,6 +13,7 @@ import numpy.typing as npt
 import xarray as xr
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Colormap, Normalize
+import cartopy.mpl.ticker as cticker
 
 
 def scatter_lines(
@@ -123,6 +127,7 @@ def scatter_lines(
     # This is required because x and y bounds are not adjusted after adding the `lines`.
     ax.autoscale()
 
+    #>>>return plt.savefig("TE.jpg", bbox_inches = "tight", dpi = 300)
     return lines
 
 
@@ -139,6 +144,7 @@ def plot_lines(
     line_style: str = "-",
     cap_style: str = "round",
     ax: (matplotlib.axes.Axes | None) = None,
+    type_background_map: str = "None",
 ) -> LineCollection:
     """Plot paths of line-based sensors like CMLs.
 
@@ -178,14 +184,14 @@ def plot_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
+    type_background_map : str, optional
+        type of background map ("OSM" for OpenStreetMap, "GM" for GoogleMaps, "NE" for Natural Earth. Default is None.
 
     Returns
     -------
     LineCollection
 
     """
-    if ax is None:
-        _, ax = plt.subplots()
 
     try:
         color_data = cmls.data
@@ -210,22 +216,42 @@ def plot_lines(
         y0_name = "site_0_y"
         y1_name = "site_1_y"
 
-    return scatter_lines(
-        x0=cmls[x0_name].values,
-        y0=cmls[y0_name].values,
-        x1=cmls[x1_name].values,
-        y1=cmls[y1_name].values,
-        s=line_width,
-        c=color_data,
-        pad_width=pad_width,
-        pad_color=pad_color,
-        cap_style=cap_style,
-        line_style=line_style,
-        ax=ax,
-        vmin=vmin,
-        vmax=vmax,
-        cmap=cmap,
-    )
+    if type_background_map=="OSM" or type_background_map=="GM" or type_background_map=="NE":
+        return scatter_lines_background(
+            x0=cmls[x0_name].values,
+            y0=cmls[y0_name].values,
+            x1=cmls[x1_name].values,
+            y1=cmls[y1_name].values,
+            s=line_width,
+            c=color_data,
+            pad_width=pad_width,
+            pad_color=pad_color,
+            cap_style=cap_style,
+            line_style=line_style,
+            ax=ax,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+        )
+    else:
+        if ax is None:
+            _, ax = plt.subplots()
+        return scatter_lines(
+            x0=cmls[x0_name].values,
+            y0=cmls[y0_name].values,
+            x1=cmls[x1_name].values,
+            y1=cmls[y1_name].values,
+            s=line_width,
+            c=color_data,
+            pad_width=pad_width,
+            pad_color=pad_color,
+            cap_style=cap_style,
+            line_style=line_style,
+            ax=ax,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+        )
 
 
 def plot_plg(
@@ -311,9 +337,6 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
-    type_background_map : str, optional
-        type of background map ("OSM" for OpenStreetMap, "GM" for GoogleMaps, "NE" for Natural Earth.
-
     """
     if kwargs_cmls_plot is None:
         kwargs_cmls_plot = {}
@@ -322,52 +345,6 @@ def plot_plg(
 
     if ax is None:
         _, ax = plt.subplots()
-
-
-     # ADDED CODE FOR PLOTTING BACKGROUND MAP:
-     Coordinates = "[3.274, 7.273, 50.58, 53.593]"	# Plotting area: minimum longitude, maximum longitude, minimum latitude, maximum latitude. Plotting area for Europe.
-     extent = list(map(float, Coordinates.strip('[]').split(',')))	# Automatically obtain list of floats of values for bounding box.
-     Projection = "yes"                               # "yes" to use projection with EPSG code given below:
-     projection = ccrs.epsg(3035)     		# epsg:3035 = ETRS89 / ETRS-LAEA (suited for Europe). See https://epsg.io/ for EPSG codes per region.
-
-    # To use OpenStreetMap:
-    if type_background_map=="OSM":
-       request = cimgt.OSM()
-       # Set map:
-       ax = plt.axes(projection=request.crs)
-       ax.set_extent(extent)
-       ax.add_image(request, ValueRequest)
-    # To use Google Maps:
-    if type_background_map=="GM":
-       request = cimgt.GoogleTiles(style=style)
-       # Set map:
-       ax = plt.axes(projection=request.crs)
-       ax.set_extent(extent)
-       ax.add_image(request, ValueRequest)
-    # To use Natural Earth map:
-    if type_background_map=="NE":
-       # Map settings (e.g. projection and extent of area):
-       if Projection=="yes":
-          ax = plt.axes(projection=projection)
-       else:
-          ax = plt.axes(projection=transform)
-       ax.set_extent(extent)
-
-    #if type_background_map=="NE":
-       # Add natural earth features and borders in case of Natural Earth map:
-       #ax.add_feature(cartopy.feature.LAND, facecolor=ColorLand)
-       #ax.add_feature(cartopy.feature.OCEAN, facecolor=ColorOceanRiverLakes)
-       #ax.add_feature(cartopy.feature.LAKES, facecolor=ColorOceanRiverLakes, linewidth=0.00001,zorder=1)
-       #if DrawRivers=="yes":
-          #ax.add_feature(cartopy.feature.RIVERS, edgecolor=ColorOceanRiverLakes, linewidth=1.2, zorder=2)
-       #if DrawProvinces=="yes":
-          #ax.add_feature(cartopy.feature.STATES.with_scale("10m"), linewidth=0.3, zorder=2, edgecolor="gray")
-       #if DrawCountries=="yes":    
-          #ax.add_feature(cartopy.feature.BORDERS, linestyle="-", linewidth=0.3, zorder=2)
-       #if DrawCoastlines=="yes":
-           #ax.coastlines(resolution="10m", linewidth=0.3, zorder=2)
-       #if DrawLakelines=="yes":
-          #ax.add_feature(cartopy.feature.LAKES, edgecolor="black", linewidth=0.3, facecolor="none",zorder=2)
 
     if use_lon_lat:
         grid_x_name = "lon"
@@ -444,3 +421,188 @@ def plot_plg(
     if add_colorbar and len(plotted_objects_for_cmap) > 0:
         plt.colorbar(plotted_objects_for_cmap[0], ax=ax, label=colorbar_label)
     return ax
+
+
+def scatter_lines_background(
+    x0: npt.ArrayLike | float,
+    y0: npt.ArrayLike | float,
+    x1: npt.ArrayLike | float,
+    y1: npt.ArrayLike | float,
+    s: float = 3,
+    c: (str | npt.ArrayLike) = "C0",
+    line_style: str = "-",
+    pad_width: float = 0,
+    pad_color: str = "k",
+    cap_style: str = "round",
+    vmin: float | None = None,
+    vmax: float | None = None,
+    cmap: (str | Colormap) = "viridis",
+    ax: (matplotlib.axes.Axes | None) = None,
+    transform = None,
+) -> LineCollection:
+    """Plot lines as if you would use plt.scatter for points.
+
+    Parameters
+    ----------
+    x0 : npt.ArrayLike | float
+        x coordinate of start point of line
+    y0 : npt.ArrayLike | float
+        y coordinate of start point of line
+    x1 : npt.ArrayLike | float
+        x coordinate of end point of line
+    y1 : npt.ArrayLike | float
+        y coordinate of end point of line
+    s : float, optional
+        The width of the lines. In case of coloring lines with a `cmap`, this is the
+        width of the colored line, which is extend by `pad_width` with colored outline
+        using `pad_color`. By default 1.
+    c : str  |  npt.ArrayLike, optional
+        The color of the lines. If something array-like is passe, this data is used
+        to color the lines based on the `cmap`, `vmin` and `vmax`. By default "C0".
+    line_style : str, optional
+        Line style as used by matplotlib, default is "-".
+    pad_width : float, optional
+        The width of the outline, i.e. edge width, around the lines, by default 0.
+    pad_color: str, optional
+        Color of the padding, i.e. the edge color of the lines. Default is "k".
+    cap_style: str, optional
+        Whether to have "round" or rectangular ("butt") ends of the lines.
+        Default is "round".
+    vmin : float  |  None, optional
+        Minimum value of colormap, by default None.
+    vmax : float  |  None, optional
+        Maximum value of colormap, by default None.
+    cmap : str  |  Colormap, optional
+        A matplotlib colormap either as string or a `Colormap` object,
+        by default "turbo".
+    ax : matplotlib.axes.Axes  |  None, optional
+        A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
+        will be created. By default None.
+
+    Returns
+    -------
+    LineCollection
+        _description_
+    """
+    #if ax is None: >>> discarded this, also in plot_lines. Hope this is not an issue.
+    #    _, ax = plt.subplots()
+
+    # Value for request: determines resolution of background map / size of text (e.g. city names on map; for OpenStreetMap and GoogleMaps only).
+    ValueRequest = 10
+    type_background_map="OSM"
+    # When zooming in use larger values. Too large values may result in an error. Then use lower values.
+
+    #Coordinates = "[-10, 30, 32.7, 73]"	# Plotting area: minimum longitude, maximum longitude, minimum latitude, maximum latitude. Plotting area for Europe.
+    Coordinates = "[11.4, 12.7, 57.2, 58.1]"
+    extent = list(map(float, Coordinates.strip('[]').split(',')))	# Automatically obtain list of floats of values for bounding box.
+    projection = cartopy.crs.epsg(3035)     		# Projection (epsg code), for Natural Earth background only.
+                                           # epsg:3035 = ETRS89 / ETRS-LAEA (suited for Europe). See https://epsg.io/ for EPSG codes per region.
+                                           # cartopy.crs.PlateCarree() can work for the entire world.
+    ColorLand = "lightgrey"                  	# Color of land surface.
+    ColorOceanRiverLakes = "lightblue"      	# Color of oceans, seas, rivers and lakes.
+    DrawCoastlines = "yes"    			# "yes" for drawing coastlines. Note that coastlines and country borders seem less accurate compared to OpenStreetMap and GoogleMap.
+    DrawCountries = "yes"	  			# "yes" for drawing country borders.
+    DrawLakelines = "yes"     			# "yes" for drawing lake lines.
+    transform = cartopy.crs.PlateCarree()
+    # No need to add extend anymore, except for Natural Earth (NE).
+
+
+    # To use OpenStreetMap:
+    if type_background_map=="OSM":
+        request = cimgt.OSM()
+        # Set map:
+        ax = plt.axes(projection=request.crs)
+        #ax.set_extent(extent)
+        ax.add_image(request, ValueRequest)
+    # To use Google Maps:
+    if type_background_map=="GM":
+        style = "street"    # Style of background map (only for GoogleMaps): "satellite", "street".
+        request = cimgt.GoogleTiles(style=style)
+        # Set map:
+        ax = plt.axes(projection=request.crs)
+        #ax.set_extent(extent)
+        ax.add_image(request, ValueRequest)
+    # To use Natural Earth map:
+    if type_background_map=="NE":
+        # Map settings (e.g. projection and extent of area):
+        ax = plt.axes(projection=projection)
+        ax.set_extent(extent)   # >>>note THAT extent is only needed for Natural Earth maps.
+
+
+    if type_background_map=="NE":
+       # Add natural earth features and borders in case of Natural Earth map:
+       ax.add_feature(cartopy.feature.LAND, facecolor=ColorLand)
+       ax.add_feature(cartopy.feature.OCEAN, facecolor=ColorOceanRiverLakes)
+       ax.add_feature(cartopy.feature.LAKES, facecolor=ColorOceanRiverLakes, linewidth=0.00001,zorder=1)
+       if DrawCountries=="yes":    
+          ax.add_feature(cartopy.feature.BORDERS, linestyle="-", linewidth=0.3, zorder=2)
+       if DrawCoastlines=="yes":
+           ax.coastlines(resolution="10m", linewidth=0.3, zorder=2)
+       if DrawLakelines=="yes":
+          ax.add_feature(cartopy.feature.LAKES, edgecolor="black", linewidth=0.3, facecolor="none",zorder=2)
+
+
+    x0 = np.atleast_1d(x0)
+    y0 = np.atleast_1d(y0)
+    x1 = np.atleast_1d(x1)
+    y1 = np.atleast_1d(y1)
+
+    data = None if isinstance(c, str) else c
+
+    if pad_width == 0:
+        path_effects = None
+    else:
+        path_effects = [
+            pe.Stroke(
+                linewidth=s + pad_width, foreground=pad_color, capstyle=cap_style
+            ),
+            pe.Normal(),
+        ]
+
+    if data is None:
+        lines = LineCollection(
+            [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
+            linewidth=s,
+            linestyles=line_style,
+            capstyle=cap_style,
+            color=c,
+            path_effects=path_effects,
+        )
+
+    #else:>>>> this was the reason lines were not plotted on the OSM / GM / NE map: >>> do we really need this functionality?
+        #if vmax is None:
+         #   vmax = np.nanmax(data)
+        #if vmin is None:
+         #   vmin = np.nanmin(data)
+        #norm = Normalize(vmin=vmin, vmax=vmax)
+
+     
+
+        lines = LineCollection(
+            [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
+            #norm=norm,
+            cmap=cmap,
+            linewidths=s,
+            linestyles=line_style,
+            capstyle=cap_style,
+            path_effects=path_effects,
+            transform=transform,
+        )
+        lines.set_array(data)
+
+  
+    # 2.4 Settings for parallels & meridians.
+    alpha_parallel_meridians = 0.5			# The alpha blending value, between 0 (transparent) and 1 (opaque) for parallels & meridians.
+    line_style_parallels_meridans = "--"		# The line style for parallels & meridians.
+    line_width = 1					# Line width of parallels & meridians.
+    PlotParallelsMeridiansInFront = "yes"           # "yes" for drawing parallels & meridians in front of all other visualizations.
+
+    #ax.set_axisbelow(False)  # does not work to put parallel & meridians in front
+    ax.gridlines(color='black', alpha=alpha_parallel_meridians, linestyle=line_style_parallels_meridans, linewidth=line_width, draw_labels=True)    # wish: do set in front; make grid lines optional
+
+    ax.add_collection(lines)
+    # This is required because x and y bounds are not adjusted after adding the `lines`.
+    #ax.autoscale()
+    ##return lines
+    #return plt.show()
+    return plt.savefig("test.jpg", bbox_inches = "tight", dpi = 300)
