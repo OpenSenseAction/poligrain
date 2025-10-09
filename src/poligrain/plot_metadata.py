@@ -106,7 +106,7 @@ def plot_len_vs_freq_hexbin(
         An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
     **kwargs
-        Optional keyword arguments to pass to the `scatter` function.
+        Optional keyword arguments to pass to the `hexbin` function.
 
     Returns
     -------
@@ -129,6 +129,182 @@ def plot_len_vs_freq_hexbin(
     ax.set_ylabel("Frequency (GHz)")
 
     return hexbin
+
+
+def plot_len_vs_freq_jointplot(
+    length: xr.DataArray,
+    frequency: xr.DataArray,
+    marker_color: str = "k",
+    marker_size: float = 10,
+    grid: bool = True,
+    bin_width_len: float = 1,
+    bin_width_freq: float = 1,
+    axes: (list[matplotlib.axes.Axes] | None) = None,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    list[PathCollection],
+    PathCollection,
+    np.ndarray,
+    np.ndarray,
+    list[PathCollection],
+]:
+    """Scatter plot of path length vs. frequency with histograms as margin plots.
+
+    This function mimics Seaborn's `jointplot` function, but relies only on Matplotlib.
+    It creates a scatter plot of path length vs. frequency as the main plot with the
+    distribution of each as variable as marginal histograms.
+
+    Parameters
+    ----------
+    length : xr.DataArray
+        Path length of line-based sensors, according to the OPENSENSE data format
+        conventions in meters.
+    frequency : xr.DataArray
+        Frequency of line-based sensors, according to the OPENSENSE data format
+        conventions in megahertz.
+    marker_color : str, optional
+        Color of the markers in the main plot. By default "k".
+    marker_size : int, optional
+        Size of the markers in the main plot. By default 10.
+    grid : bool, optional
+        Add major grid lines to the main plot. By default True.
+    bin_width_len : float, optional
+        Width of the bins (kms) for the path length margin plot. By default 1 km bins.
+    bin_width_freq : float, optional
+        Width of the bins (GHz) for the frequency margin plot. By default 1 GHz bins.
+    axes : list[matplotlib.axes.Axes]  |  None, optional
+        A list of `Axes` objects in order of a figure with 2x2 subplots. I.e. [top left,
+        top right, bottom left, bottom right]. Defaults to None. If not supplied, a new
+        figure with four `Axes` will be created.  Note that the top right subplot will be
+        turned off.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray, list[PathCollection], PathCollection, np.ndarray, np.ndarray, list[PathCollection]]
+    """
+    if axes is None:
+        _, axes = plt.subplots(
+            2,
+            2,
+            gridspec_kw={
+                "hspace": 0.05,
+                "wspace": 0.05,
+                "width_ratios": [5, 1],
+                "height_ratios": [1, 5],
+            },
+        )
+    ax = axes.flatten()
+
+    # turn off top right subplot
+    ax[1].axis("off")
+
+    # divide frequency and length by 1000 to convert to km and GHz
+    # and flatten arrays to plot histograms with a single color
+    len_values = length.broadcast_like(frequency).values.flatten() / 1000  # noqa: PD011
+    freq_values = frequency.values.flatten() / 1000  # noqa: PD011
+
+    # -----------------------------------
+    # MAIN SCATTER PLOT
+    # -----------------------------------
+    scatter = ax[2].scatter(len_values, freq_values, color=marker_color, s=marker_size)
+    ax[2].set_xlabel("Length [km]")
+    ax[2].set_ylabel("Frequency [GHz]")
+
+    # Add gridlines
+    if grid:
+        ax[2].grid(True, linestyle="-", color="lightgray")
+        ax[2].set_axisbelow(True)
+
+    # Remove black tick marks but keep labels
+    ax[2].tick_params(axis="y", length=0)
+    ax[2].tick_params(axis="x", length=0)
+
+    # Adapt spines for Seaborn-look
+    for spine in ax[2].spines.values():
+        spine.set_color("darkgrey")
+
+    # -----------------------------------
+    # TOP MARGIN HISTOGRAM (x-axis)
+    # -----------------------------------
+    bin_width_len = bin_width_len
+    bins_len = np.arange(
+        np.floor(len_values.min()),
+        np.ceil(len_values.max()) + bin_width_len,
+        bin_width_len,
+    )
+
+    hist_x, bins_x, patches_x = ax[0].hist(
+        len_values, bins=bins_len, color="lightgray", edgecolor="white"
+    )
+
+    # Remove x-ticks
+    ax[0].tick_params(axis="x", bottom=False, labelbottom=False)
+
+    # Remove y-ticks but keep labels
+    ax[0].tick_params(axis="y", length=0)
+
+    # Add more y-tick labels
+    ax[0].yaxis.set_major_locator(plt.MaxNLocator(3))
+
+    # Label y-axis
+    ax[0].set_ylabel("Count")
+
+    # Add grid: solid vertical, dashed horizontal
+    ax[0].grid(axis="x", linestyle="-", color="lightgray")
+    ax[0].grid(axis="y", linestyle="--", color="lightgray")
+
+    # Adapt spines for Seaborn-look
+    for spine in ["left", "right", "top"]:
+        ax[0].spines[spine].set_visible(False)
+    ax[0].spines["bottom"].set_color("darkgray")
+
+    # Align limits of marginals with main scatter plot
+    ax[0].set_xlim(ax[2].get_xlim())
+    ax[3].set_ylim(ax[2].get_ylim())
+
+    # -----------------------------------
+    # RIGHT MARGIN HISTOGRAM (y-axis)
+    # -----------------------------------
+    bin_width_freq = bin_width_freq
+    bins_freq = np.arange(
+        np.floor(freq_values.min()),
+        np.ceil(freq_values.max()) + bin_width_freq,
+        bin_width_freq,
+    )
+
+    hist_y, bins_y, patches_y = ax[3].hist(
+        freq_values,
+        bins=bins_freq,
+        orientation="horizontal",
+        color="lightgray",
+        edgecolor="white",
+    )
+
+    # Remove y-ticks and labels
+    ax[3].tick_params(axis="y", left=False, labelleft=False)
+
+    # Remove x-tick marks but keep labels
+    ax[3].tick_params(axis="x", length=0)
+
+    # Add more x-tick labels
+    ax[3].xaxis.set_major_locator(plt.MaxNLocator(3))
+
+    # Move x-ticks to top
+    ax[3].xaxis.tick_top()
+    ax[3].xaxis.set_label_position("top")
+    ax[3].set_xlabel("Count")
+
+    # Add grid: solid horizontal, dashed vertical
+    ax[3].grid(axis="y", linestyle="-", color="lightgray")
+    ax[3].grid(axis="x", linestyle="--", color="lightgray")
+
+    # Adapt spines for Seaborn-look
+    for spine in ["right", "top", "bottom"]:
+        ax[3].spines[spine].set_visible(False)
+    ax[3].spines["left"].set_color("darkgray")
+
+    return hist_x, bins_x, patches_x, scatter, hist_y, bins_y, patches_y
 
 
 def plot_distribution(
@@ -174,7 +350,7 @@ def plot_distribution(
         An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
     **kwargs
-        Optional keyword arguments to pass to the `scatter` function.
+        Optional keyword arguments to pass to the `hist` function.
 
     Returns
     -------
@@ -298,3 +474,80 @@ def plot_polarization(
     ax.set_ylabel("Count (nr. of CMLs)")
 
     return bars
+
+def plot_data_availability_distribution(
+    dataset: xr.Dataset | xr.DataArray,
+    variable: str = "rsl",
+    bins: (int | np.ndarray) = 10,
+    color: str = "grey",
+    edgecolor: str = "black",
+    ax: (matplotlib.axes.Axes | None) = None,
+    **kwargs,
+) -> tuple[np.ndarray, np.ndarray, list[PathCollection]]:
+    
+    """Histogram with distribution of data avaibility per cml. 
+    
+    Plots availability as a percentage of the total data set length. 
+
+    Parameters
+    ----------
+    dataset : xr.Dataset 
+        Dataset with variables named according to OPENSENSE data format. 
+    variable : str
+        Variable to derive the availability from. For example 'rsl' or 'tsl'. 
+        By default 'rsl'.
+    percentage : bool
+        If True, then the number of sublinks per bin are plotted as a percentage,
+        otherwise they are plotted as a count. By default True.
+    bins : int  |  np.ndarray, optional
+        Number of bins or bin edges. By default 10.
+    color : str, optional
+        Color of the histogram. By default "grey".
+    edgecolor : str, optional
+        Color of the edges. By default "black".
+    ax : matplotlib.axes.Axes  |  None, optional
+        An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
+        will be created. By default None.
+    **kwargs
+        Optional keyword arguments to pass to the `scatter` function.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray, list[PathCollection]]
+    """
+    
+    if ax is None:
+        _, ax = plt.subplots()
+
+    hist, bins, patches = None, None, None
+
+    # Count valid (non-NaN) values over time
+    valid_counts = dataset[variable].count(dim="time")
+
+    # Total number of time steps
+    total_counts = dataset.sizes["time"]
+
+    # Compute percentage availability
+    availability_pct = (valid_counts / total_counts) * 100
+
+    # Flatten array to plot histograms with a single color 
+    availability_pct = availability_pct.values.flatten()
+
+    # assign weights and plot histogram
+    w = np.ones_like(availability_pct) * 100 / len(availability_pct)
+    hist, bins, patches = ax.hist(
+        availability_pct,
+        bins=bins,
+        weights=w,
+        color=color,
+        edgecolor=edgecolor,
+        **kwargs,
+    )
+    
+    ax.set_xticks(np.arange(0, 110, 10))
+
+    # add axes labels
+    ax.set_ylabel("Percentage")
+    ax.set_xlabel("Data availability of cmls (%)")
+
+    return hist, bins, patches
