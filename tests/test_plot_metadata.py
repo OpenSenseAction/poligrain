@@ -101,8 +101,8 @@ def test_plot_len_vs_freq_jointplot_return():
     assert isinstance(bins_x, np.ndarray)
     assert isinstance(hist_y, np.ndarray)
     assert isinstance(bins_y, np.ndarray)
-    assert isinstance(patches_x, list)
-    assert isinstance(patches_y, list)
+    assert isinstance(patches_x, BarContainer)
+    assert isinstance(patches_y, BarContainer)
     assert isinstance(scatter, PathCollection)
 
 
