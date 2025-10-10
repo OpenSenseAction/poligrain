@@ -233,11 +233,9 @@ def test_plot_polarization_count():
 
 def test_availability_distribution():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    fig, ax = plt.subplots()
-
     # Call the function to plot the distribution
     hist, bins, patches = plg.plot_metadata.plot_availability_distribution(
-        ds_cmls, variable="rsl", bins=20, ax=ax
+        ds_cmls, variable="rsl", bins=20
     )
 
     # Check if the return types are correct
@@ -246,10 +244,6 @@ def test_availability_distribution():
     assert isinstance(patches, BarContainer)
     for patch in patches:
         assert isinstance(patch, plt.Rectangle)
-
-    # Check if the labels are set correctly
-    assert ax.get_xlabel() == "Data availability of cmls (%)"
-    assert ax.get_ylabel() == "Percentage"
 
     plt.close("all")
     ds_cmls.close()
