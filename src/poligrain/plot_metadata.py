@@ -176,12 +176,14 @@ def plot_len_vs_freq_jointplot(
     axes : list[matplotlib.axes.Axes]  |  None, optional
         A list of `Axes` objects in order of a figure with 2x2 subplots. I.e. [top left,
         top right, bottom left, bottom right]. Defaults to None. If not supplied, a new
-        figure with four `Axes` will be created.  Note that the top right subplot will be
-        turned off.
+        figure with four `Axes` will be created.  Note that the top right subplot will 
+        be turned off.
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray, list[PathCollection], PathCollection, np.ndarray, np.ndarray, list[PathCollection]]
+    tuple[np.ndarray, np.ndarray, list[PathCollection], 
+    PathCollection, 
+    np.ndarray, np.ndarray, list[PathCollection]]
     """
     if axes is None:
         _, axes = plt.subplots(
@@ -227,11 +229,11 @@ def plot_len_vs_freq_jointplot(
     # -----------------------------------
     # TOP MARGIN HISTOGRAM (x-axis)
     # -----------------------------------
-    bin_width_len = bin_width_len
+    bin_width_x = bin_width_len
     bins_len = np.arange(
         np.floor(len_values.min()),
-        np.ceil(len_values.max()) + bin_width_len,
-        bin_width_len,
+        np.ceil(len_values.max()) + bin_width_x,
+        bin_width_x,
     )
 
     hist_x, bins_x, patches_x = ax[0].hist(
@@ -266,11 +268,11 @@ def plot_len_vs_freq_jointplot(
     # -----------------------------------
     # RIGHT MARGIN HISTOGRAM (y-axis)
     # -----------------------------------
-    bin_width_freq = bin_width_freq
+    bin_width_y = bin_width_freq
     bins_freq = np.arange(
         np.floor(freq_values.min()),
-        np.ceil(freq_values.max()) + bin_width_freq,
-        bin_width_freq,
+        np.ceil(freq_values.max()) + bin_width_y,
+        bin_width_y,
     )
 
     hist_y, bins_y, patches_y = ax[3].hist(
@@ -475,6 +477,7 @@ def plot_polarization(
 
     return bars
 
+
 def plot_availability_distribution(
     dataset: xr.Dataset,
     variable: str = "rsl",
@@ -484,17 +487,16 @@ def plot_availability_distribution(
     ax: (matplotlib.axes.Axes | None) = None,
     **kwargs,
 ) -> tuple[np.ndarray, np.ndarray, list[PathCollection]]:
-    
-    """Histogram with distribution of data avaibility per cml. 
-    
-    Plots availability as a percentage of the total data set length. 
+    """Histogram with distribution of data avaibility per cml.
+
+    Plots availability as a percentage of the total data set length.
 
     Parameters
     ----------
-    dataset : xr.Dataset 
-        Dataset with variables named according to OPENSENSE data format. 
+    dataset : xr.Dataset
+        Dataset with variables named according to OPENSENSE data format.
     variable : str
-        Variable to derive the availability from. For example 'rsl' or 'tsl'. 
+        Variable to derive the availability from. For example 'rsl' or 'tsl'.
         By default 'rsl'.
     percentage : bool
         If True, then the number of sublinks per bin are plotted as a percentage,
@@ -515,7 +517,6 @@ def plot_availability_distribution(
     -------
     tuple[np.ndarray, np.ndarray, list[PathCollection]]
     """
-    
     if ax is None:
         _, ax = plt.subplots()
 
@@ -530,8 +531,8 @@ def plot_availability_distribution(
     # Compute percentage availability
     availability_pct = (valid_counts / total_counts) * 100
 
-    # Flatten array to plot histograms with a single color 
-    availability_pct = availability_pct.values.flatten()
+    # Flatten array to plot histograms with a single color
+    availability_pct = availability_pct.values.flatten() # noqa: PD011
 
     # assign weights and plot histogram
     w = np.ones_like(availability_pct) * 100 / len(availability_pct)
@@ -543,7 +544,7 @@ def plot_availability_distribution(
         edgecolor=edgecolor,
         **kwargs,
     )
-    
+
     ax.set_xticks(np.arange(0, 110, 10))
 
     # add axes labels
@@ -551,6 +552,7 @@ def plot_availability_distribution(
     ax.set_xlabel("Data availability of cmls (%)")
 
     return hist, bins, patches
+
 
 def plot_availability_time_series(
     dataset: xr.Dataset,
@@ -563,15 +565,15 @@ def plot_availability_time_series(
     marker_size: float = 10,
     ax: (matplotlib.axes.Axes | None) = None,
     **kwargs,
-    ) -> tuple(PathCollection, PathCollection):
+) -> tuple(PathCollection, PathCollection):
     """Scatter plot of sublink and cml availability over time.
 
     Parameters
     ----------
-    dataset : xr.Dataset 
-        Dataset with variables named according to OPENSENSE data format. 
+    dataset : xr.Dataset
+        Dataset with variables named according to OPENSENSE data format.
     variable : str
-        Variable to derive the availability from. For example 'rsl' or 'tsl'. 
+        Variable to derive the availability from. For example 'rsl' or 'tsl'.
         By default 'rsl'.
     show_links : {'both', 'sublinks', 'cmls'}, optional
         Which links to show in the plot.
@@ -579,12 +581,12 @@ def plot_availability_time_series(
         - 'sublinks': only plot sublinks
         - 'cmls': only plot link paths
     resample_to : (str | None)
-        Optional interval to resample the availability in case the native frequency is too high.  
-        Strings should follow xarray's resampling arguments, i.e 'D' for daily, 'H' for hourly.
-        By default None.
+        Optional interval to resample the availability in case the native frequency is
+        too high.         Strings should follow xarray's resampling arguments,
+        i.e 'D' for daily, 'H' for hourly. By default None.
     mean_over: (str | None)
-        Optional period to take the mean over. Must be a dt attribute like 'hour', 'dayofweek', 'month', etc.
-        By default None.
+        Optional period to take the mean over. Must be a dt attribute like 'hour', 
+        'dayofweek', 'month', etc. By default None.
     marker_color_sublinks : str, optional
         Color of the markers for the sublink time series. By default "k".
     marker_color_cmls : str, optional
@@ -601,11 +603,10 @@ def plot_availability_time_series(
     -------
     tuple(PathCollection, PathCollection)
     """
-
     if ax is None:
-       _, ax = plt.subplots()
+        _, ax = plt.subplots()
 
-    availability_bool = dataset[variable].notnull()
+    availability_bool = dataset[variable].notnull() # noqa: PD004
 
     # True if any sublink for a given cml is valid at that time step
     cmls_available = availability_bool.any(dim="sublink_id")
@@ -616,14 +617,19 @@ def plot_availability_time_series(
     # Number of sublinks available at each time step
     num_sublinks = availability_bool.sum(dim=("cml_id", "sublink_id"))
 
-    time_array = availability_bool['time']
+    time_array = availability_bool["time"]
 
     # Optionally resample to e.g. daily means
     if resample_to is not None:
         num_sublinks = num_sublinks.resample(time=resample_to).mean()
         num_cmls = num_cmls.resample(time=resample_to).mean()
 
-        time_array = availability_bool['time'].resample(time=resample_to).mean().time.dt.floor(resample_to)
+        time_array = (
+            availability_bool["time"]
+            .resample(time=resample_to)
+            .mean()
+            .time.dt.floor(resample_to)
+        )
 
     # Optionally take the mean over a certain period, e.g. diurnal variation
     if mean_over is not None:
@@ -633,7 +639,7 @@ def plot_availability_time_series(
         time_array = np.unique(period.values)
 
     # Create scatter plot
-    scatter_sublinks = scatter_cmls = None # to avoid reference before assignment error
+    scatter_sublinks = scatter_cmls = None  # to avoid reference before assignment error
 
     if show_links in ("both", "sublinks"):
         scatter_sublinks = ax.scatter(
@@ -654,7 +660,7 @@ def plot_availability_time_series(
             label="link paths",
             **kwargs,
         )
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Mean nr. of available links per time interval')
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Mean nr. of available links per time interval")
 
     return scatter_sublinks, scatter_cmls

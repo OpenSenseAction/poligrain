@@ -3,7 +3,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from matplotlib.collections import PolyCollection, PathCollection
+from matplotlib.collections import PathCollection, PolyCollection
 from matplotlib.container import BarContainer
 
 import poligrain as plg
@@ -87,6 +87,7 @@ def test_plot_len_vs_freq_hexbin_no_ax():
     assert isinstance(hexbin, PolyCollection)
     ds_cmls.close()
 
+
 def test_plot_len_vs_freq_jointplot_return():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     length, frequency = ds_cmls.length, ds_cmls.frequency
@@ -103,6 +104,7 @@ def test_plot_len_vs_freq_jointplot_return():
     assert isinstance(patches_x, list)
     assert isinstance(patches_y, list)
     assert isinstance(scatter, PathCollection)
+
 
 def test_plot_len_vs_freq_jointplot_grid():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
@@ -228,6 +230,7 @@ def test_plot_polarization_count():
     plt.close("all")
     ds_cmls.close()
 
+
 def test_availability_distribution():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
     fig, ax = plt.subplots()
@@ -247,37 +250,48 @@ def test_availability_distribution():
     # Check if the labels are set correctly
     assert ax.get_xlabel() == "Data availability of cmls (%)"
     assert ax.get_ylabel() == "Percentage"
-    
+
     plt.close("all")
     ds_cmls.close()
 
 
 def test_availability_time_series_return():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(ds_cmls)
+    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(
+        ds_cmls
+    )
     assert isinstance(scatter_sublinks, PathCollection)
     assert isinstance(scatter_cmls, PathCollection)
+
 
 def test_availability_time_series_links_shown():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(ds_cmls, show_links="sublinks")
+    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(
+        ds_cmls, show_links="sublinks"
+    )
     assert isinstance(scatter_sublinks, PathCollection)
     assert scatter_cmls is None
 
-    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(ds_cmls, show_links="cmls")
+    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(
+        ds_cmls, show_links="cmls"
+    )
     assert scatter_sublinks is None
     assert isinstance(scatter_cmls, PathCollection)
 
+
 def test_availability_time_series_resample():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(ds_cmls, resample_to="D")
+    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(
+        ds_cmls, resample_to="D"
+    )
     assert isinstance(scatter_sublinks, PathCollection)
     assert isinstance(scatter_cmls, PathCollection)
 
 
 def test_availability_time_series_mean_over():
     ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
-    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(ds_cmls, mean_over="hour")
+    scatter_sublinks, scatter_cmls = plg.plot_metadata.plot_availability_time_series(
+        ds_cmls, mean_over="hour"
+    )
     assert isinstance(scatter_sublinks, PathCollection)
     assert isinstance(scatter_cmls, PathCollection)
-
