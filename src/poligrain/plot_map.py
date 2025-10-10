@@ -31,6 +31,7 @@ def scatter_lines(
     vmax: float | None = None,
     cmap: (str | Colormap) = "viridis",
     ax: (matplotlib.axes.Axes | None) = None,
+    data_crs: (cartopy.crs.Projection | None) = None
 ) -> LineCollection:
     """Plot lines as if you would use plt.scatter for points.
 
@@ -70,6 +71,12 @@ def scatter_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
+    data_crs : cartopy.crs.Projection | None, optional
+        The coordinate reference system of the data provided. The default is None.
+        In the default case cartopy.crs.PlateCarree will be used when plotting
+        with a `ax` that is a `cartopy.mpl.geoaxes.GeoAxes`. When plotting with `ax`
+        being a normal `matplotlib.axes.Axes` `data_crs` has to be None since the
+        coordinate transformation it implies are not supported by matplotlib.
 
     Returns
     -------
@@ -77,7 +84,7 @@ def scatter_lines(
         _description_
     """
     if ax is None:
-        _, ax = plt.subplots()
+        ax = plt.axes()
 
     x0 = np.atleast_1d(x0)
     y0 = np.atleast_1d(y0)
@@ -96,14 +103,30 @@ def scatter_lines(
             pe.Normal(),
         ]
 
+    style_kwargs = {
+        "linewidth": s,
+        "linestyle": line_style,
+        "capstyle": cap_style,
+        "path_effects": path_effects,
+    }
+
+    # We only allow a data_crs if we have a GeoAxes. And only in this case we
+    # add a `transform` kwarg that is passed to `LineCollection` because it
+    # seems that `transform = None` results in an empty plot when passing it
+    # to `LineCollection` with `ax` being a normal matplotilb `Axes` object.
+    if isinstance(ax, cartopy.mpl.geoaxes.GeoAxes):
+        if data_crs is None:
+            data_crs = cartopy.crs.PlateCarree()
+        style_kwargs['transform'] = data_crs
+    elif data_crs is not None:
+        msg = 'data_crs has to be None if `ax` is not a cartopy.mpl.geoaxes.GeoAxes'
+        raise ValueError(msg)
+
     if data is None:
         lines = LineCollection(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
-            linewidth=s,
-            linestyles=line_style,
-            capstyle=cap_style,
             color=c,
-            path_effects=path_effects,
+            **style_kwargs,
         )
 
     else:
@@ -116,10 +139,7 @@ def scatter_lines(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
             norm=norm,
             cmap=cmap,
-            linewidth=s,
-            linestyles=line_style,
-            capstyle=cap_style,
-            path_effects=path_effects,
+            **style_kwargs,
         )
         lines.set_array(data)
 
@@ -127,7 +147,6 @@ def scatter_lines(
     # This is required because x and y bounds are not adjusted after adding the `lines`.
     ax.autoscale()
 
-    #>>>return plt.savefig("TE.jpg", bbox_inches = "tight", dpi = 300)
     return lines
 
 
@@ -144,7 +163,8 @@ def plot_lines(
     line_style: str = "-",
     cap_style: str = "round",
     ax: (matplotlib.axes.Axes | None) = None,
-    type_background_map: str = "None",
+    background_map: (str | None) = None,
+    projection: (cartopy.crs.Projection | None) = None
 ) -> LineCollection:
     """Plot paths of line-based sensors like CMLs.
 
@@ -184,15 +204,15 @@ def plot_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
-    type_background_map : str, optional
-        type of background map ("OSM" for OpenStreetMap, "GM" for GoogleMaps, "NE" for Natural Earth. Default is None.
+    background_map : str | None, optional
+        Type of background map.
+    
 
     Returns
     -------
     LineCollection
 
     """
-
     try:
         color_data = cmls.data
         if len(color_data.shape) != 1:
@@ -216,42 +236,52 @@ def plot_lines(
         y0_name = "site_0_y"
         y1_name = "site_1_y"
 
-    if type_background_map=="OSM" or type_background_map=="GM" or type_background_map=="NE":
-        return scatter_lines_background(
-            x0=cmls[x0_name].values,
-            y0=cmls[y0_name].values,
-            x1=cmls[x1_name].values,
-            y1=cmls[y1_name].values,
-            s=line_width,
-            c=color_data,
-            pad_width=pad_width,
-            pad_color=pad_color,
-            cap_style=cap_style,
-            line_style=line_style,
-            ax=ax,
-            vmin=vmin,
-            vmax=vmax,
-            cmap=cmap,
-        )
+    if ax is None:
+        ax = set_up_axes(background_map=background_map, projection=projection)
+
+    return scatter_lines(
+        x0=cmls[x0_name].values,
+        y0=cmls[y0_name].values,
+        x1=cmls[x1_name].values,
+        y1=cmls[y1_name].values,
+        s=line_width,
+        c=color_data,
+        pad_width=pad_width,
+        pad_color=pad_color,
+        cap_style=cap_style,
+        line_style=line_style,
+        ax=ax,
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
+    )
+
+
+def set_up_axes(background_map='stock', projection=None):
+    if background_map == 'stock':
+        if projection is None:
+            projection=cartopy.crs.PlateCarree()
+        ax = plt.axes(projection=projection)
+        ax.stock_img()
+    elif background_map == 'OSM':
+         request = cimgt.OSM()
+         ax = plt.axes(projection=request.crs)
+         ax.add_image(request, 10)
+    elif background_map == 'NE':
+        if projection is None:
+            projection=cartopy.crs.PlateCarree()
+        ax = plt.axes(projection=projection)
+        ax.add_feature(cartopy.feature.OCEAN, facecolor="lightblue")
+        ax.add_feature(cartopy.feature.LAND, facecolor="lightgrey")
+        ax.add_feature(cartopy.feature.LAKES, facecolor="lightblue", linewidth=0.00001)
+        ax.add_feature(cartopy.feature.BORDERS, linewidth=0.3)
+        ax.coastlines(resolution="10m", linewidth=0.3)
+    elif background_map is None:
+        ax = plt.axes()
     else:
-        if ax is None:
-            _, ax = plt.subplots()
-        return scatter_lines(
-            x0=cmls[x0_name].values,
-            y0=cmls[y0_name].values,
-            x1=cmls[x1_name].values,
-            y1=cmls[y1_name].values,
-            s=line_width,
-            c=color_data,
-            pad_width=pad_width,
-            pad_color=pad_color,
-            cap_style=cap_style,
-            line_style=line_style,
-            ax=ax,
-            vmin=vmin,
-            vmax=vmax,
-            cmap=cmap,
-        )
+        msg = f'unsuported value of background_map {background_map}'
+        raise ValueError(msg)
+    return ax
 
 
 def plot_plg(
