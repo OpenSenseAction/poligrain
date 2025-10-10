@@ -176,13 +176,13 @@ def plot_len_vs_freq_jointplot(
     axes : list[matplotlib.axes.Axes]  |  None, optional
         A list of `Axes` objects in order of a figure with 2x2 subplots. I.e. [top left,
         top right, bottom left, bottom right]. Defaults to None. If not supplied, a new
-        figure with four `Axes` will be created.  Note that the top right subplot will 
+        figure with four `Axes` will be created.  Note that the top right subplot will
         be turned off.
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray, list[PathCollection], 
-    PathCollection, 
+    tuple[np.ndarray, np.ndarray, list[PathCollection],
+    PathCollection,
     np.ndarray, np.ndarray, list[PathCollection]]
     """
     if axes is None:
@@ -532,7 +532,7 @@ def plot_availability_distribution(
     availability_pct = (valid_counts / total_counts) * 100
 
     # Flatten array to plot histograms with a single color
-    availability_pct = availability_pct.values.flatten() # noqa: PD011
+    availability_pct = availability_pct.values.flatten()  # noqa: PD011
 
     # assign weights and plot histogram
     w = np.ones_like(availability_pct) * 100 / len(availability_pct)
@@ -585,7 +585,7 @@ def plot_availability_time_series(
         too high.         Strings should follow xarray's resampling arguments,
         i.e 'D' for daily, 'H' for hourly. By default None.
     mean_over: (str | None)
-        Optional period to take the mean over. Must be a dt attribute like 'hour', 
+        Optional period to take the mean over. Must be a dt attribute like 'hour',
         'dayofweek', 'month', etc. By default None.
     marker_color_sublinks : str, optional
         Color of the markers for the sublink time series. By default "k".
@@ -606,7 +606,7 @@ def plot_availability_time_series(
     if ax is None:
         _, ax = plt.subplots()
 
-    availability_bool = dataset[variable].notnull() # noqa: PD004
+    availability_bool = dataset[variable].notnull()  # noqa: PD004
 
     # True if any sublink for a given cml is valid at that time step
     cmls_available = availability_bool.any(dim="sublink_id")
