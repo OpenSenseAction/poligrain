@@ -566,8 +566,6 @@ def plot_availability_time_series(
     ) -> tuple(PathCollection, PathCollection):
     """Scatter plot of sublink and cml availability over time.
 
-
-    
     Parameters
     ----------
     dataset : xr.Dataset 
