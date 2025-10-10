@@ -487,7 +487,7 @@ def plot_availability_distribution(
     ax: (matplotlib.axes.Axes | None) = None,
     **kwargs,
 ) -> tuple[np.ndarray, np.ndarray, list[PathCollection]]:
-    """Histogram with distribution of data avaibility per cml.
+    """Histogram with distribution of data availability per cml.
 
     Plots availability as a percentage of the total data set length.
 
