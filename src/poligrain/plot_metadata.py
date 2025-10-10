@@ -475,8 +475,8 @@ def plot_polarization(
 
     return bars
 
-def plot_data_availability_distribution(
-    dataset: xr.Dataset | xr.DataArray,
+def plot_availability_distribution(
+    dataset: xr.Dataset,
     variable: str = "rsl",
     bins: (int | np.ndarray) = 10,
     color: str = "grey",
@@ -551,3 +551,112 @@ def plot_data_availability_distribution(
     ax.set_xlabel("Data availability of cmls (%)")
 
     return hist, bins, patches
+
+def plot_availability_time_series(
+    dataset: xr.Dataset,
+    variable: str = "rsl",
+    show_links: str = "both",
+    resample_to: (str | None) = None,
+    mean_over: (str | None) = None,
+    marker_color_sublinks: str = "k",
+    marker_color_cmls: str = "grey",
+    marker_size: float = 10,
+    ax: (matplotlib.axes.Axes | None) = None,
+    **kwargs,
+    ) -> tuple(PathCollection, PathCollection):
+    """Scatter plot of sublink and cml availability over time.
+
+
+    
+    Parameters
+    ----------
+    dataset : xr.Dataset 
+        Dataset with variables named according to OPENSENSE data format. 
+    variable : str
+        Variable to derive the availability from. For example 'rsl' or 'tsl'. 
+        By default 'rsl'.
+    show_links : {'both', 'sublinks', 'cmls'}, optional
+        Which links to show in the plot.
+        - 'both': plot both sublinks and link paths (default)
+        - 'sublinks': only plot sublinks
+        - 'cmls': only plot link paths
+    resample_to : (str | None)
+        Optional interval to resample the availability in case the native frequency is too high.  
+        Strings should follow xarray's resampling arguments, i.e 'D' for daily, 'H' for hourly.
+        By default None.
+    mean_over: (str | None)
+        Optional period to take the mean over. Must be a dt attribute like 'hour', 'dayofweek', 'month', etc.
+        By default None.
+    marker_color_sublinks : str, optional
+        Color of the markers for the sublink time series. By default "k".
+    marker_color_cmls : str, optional
+        Color of the markers for the cml time series. By default "grey".
+    marker_size : float, optional
+        Size of the markers. By default 10.
+    ax : matplotlib.axes.Axes  |  None, optional
+        An `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
+        will be created. By default None.
+    **kwargs
+        Optional keyword arguments to pass to the `scatter` function.
+
+    Returns
+    -------
+    tuple(PathCollection, PathCollection)
+    """
+
+    if ax is None:
+       _, ax = plt.subplots()
+
+    availability_bool = dataset[variable].notnull()
+
+    # True if any sublink for a given cml is valid at that time step
+    cmls_available = availability_bool.any(dim="sublink_id")
+
+    # Count how many cml_ids are available per time step
+    num_cmls = cmls_available.sum(dim="cml_id")
+
+    # Number of sublinks available at each time step
+    num_sublinks = availability_bool.sum(dim=("cml_id", "sublink_id"))
+
+    time_array = availability_bool['time']
+
+    # Optionally resample to e.g. daily means
+    if resample_to is not None:
+        num_sublinks = num_sublinks.resample(time=resample_to).mean()
+        num_cmls = num_cmls.resample(time=resample_to).mean()
+
+        time_array = availability_bool['time'].resample(time=resample_to).mean().time.dt.floor(resample_to)
+
+    # Optionally take the mean over a certain period, e.g. diurnal variation
+    if mean_over is not None:
+        period = getattr(dataset[variable]["time"].dt, mean_over.lower())
+        num_sublinks = num_sublinks.groupby(period).mean()
+        num_cmls = num_cmls.groupby(period).mean()
+        time_array = np.unique(period.values)
+
+    # Create scatter plot
+    scatter_sublinks = scatter_cmls = None # to avoid reference before assignment error
+
+    if show_links in ("both", "sublinks"):
+        scatter_sublinks = ax.scatter(
+            time_array,
+            num_sublinks,
+            color=marker_color_sublinks,
+            s=marker_size,
+            label="sublinks",
+            **kwargs,
+        )
+
+    if show_links in ("both", "cmls"):
+        scatter_cmls = ax.scatter(
+            time_array,
+            num_cmls,
+            color=marker_color_cmls,
+            s=marker_size,
+            label="link paths",
+            **kwargs,
+        )
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Mean nr. of available links per time interval')
+
+    return scatter_sublinks, scatter_cmls
