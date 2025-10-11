@@ -10,8 +10,10 @@ import xarray as xr
 
 import poligrain as plg
 
+
 def test_strange_matplotlib_ci_behavior_winwows():
     fig, ax = plt.subplots()
+
 
 def test_scatter_lines_with_different_args():
     x0 = [1, -1, 0]
