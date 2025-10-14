@@ -5,6 +5,7 @@ from __future__ import annotations
 import cartopy
 import cartopy.crs
 import cartopy.io.img_tiles as cimgt
+import cartopy.mpl.geoaxes
 import matplotlib.axes
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
