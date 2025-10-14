@@ -47,6 +47,7 @@ sphinx-autodoc-typehints = { version = "*", optional = true }
 nbsphinx = { version = "*", optional = true }
 pypandoc-binary = { version = "*", optional = true }
 llvmlite = ">=0.42.0"
+cartopy = ">=0.25.0"
 
 [tool.poetry.group.dev.dependencies]
 # only required for dev work on local machine
