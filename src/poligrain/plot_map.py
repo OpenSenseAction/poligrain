@@ -257,27 +257,35 @@ def plot_lines(
     )
 
 
-def set_up_axes(background_map='stock', projection=None):
-    if background_map == 'stock':
+def set_up_axes(background_map=None, projection=None, extent=None):
+    if background_map is None and projection is None:
+        ax = plt.axes()
+    elif background_map is None and projection is not None:
+        ax = plt.axes(projection=projection)
+    elif background_map == 'stock':
         if projection is None:
             projection=cartopy.crs.PlateCarree()
         ax = plt.axes(projection=projection)
+        if extent is not None:
+            ax.set_extent(extent)
         ax.stock_img()
     elif background_map == 'OSM':
          request = cimgt.OSM()
          ax = plt.axes(projection=request.crs)
+         if extent is not None:
+            ax.set_extent(extent)
          ax.add_image(request, 10)
     elif background_map == 'NE':
         if projection is None:
             projection=cartopy.crs.PlateCarree()
         ax = plt.axes(projection=projection)
+        if extent is not None:
+            ax.set_extent(extent)
         ax.add_feature(cartopy.feature.OCEAN, facecolor="lightblue")
         ax.add_feature(cartopy.feature.LAND, facecolor="lightgrey")
         ax.add_feature(cartopy.feature.LAKES, facecolor="lightblue", linewidth=0.00001)
         ax.add_feature(cartopy.feature.BORDERS, linewidth=0.3)
         ax.coastlines(resolution="10m", linewidth=0.3)
-    elif background_map is None:
-        ax = plt.axes()
     else:
         msg = f'unsuported value of background_map {background_map}'
         raise ValueError(msg)
@@ -291,6 +299,7 @@ def plot_plg(
     vmin=None,
     vmax=None,
     cmap="turbo",
+    alpha=1,
     ax=None,
     use_lon_lat=True,
     edge_color="k",
@@ -302,6 +311,9 @@ def plot_plg(
     colorbar_label="",
     kwargs_cmls_plot=None,
     kwargs_gauges_plot=None,
+    background_map: (str | None) = None,
+    projection: (cartopy.crs.Projection | None) = None,
+    extent: (list | None) = None,
 ):
     """Plot point, line and grid data.
 
@@ -333,6 +345,8 @@ def plot_plg(
         it will be derived individually for each data source when plotting.
     cmap : str, optional
         cmap for all three data sources, by default "turbo"
+    alpha : float, optiona
+        Alpha values used for the gridded dataset.
     ax : _type_, optional
         Axes object from matplotlib, by default None which will create a new
         figure and return the Axes object.
@@ -367,25 +381,36 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
+    data_crs........
     """
     if kwargs_cmls_plot is None:
         kwargs_cmls_plot = {}
     if kwargs_gauges_plot is None:
         kwargs_gauges_plot = {}
+    kwargs_pcolormesh = {}
 
     if ax is None:
-        _, ax = plt.subplots()
+        ax = set_up_axes(
+            background_map=background_map,
+            projection=projection,
+            extent=extent,
+        )
 
     if use_lon_lat:
         grid_x_name = "lon"
         grid_y_name = "lat"
         point_x_name = "lon"
         point_y_name = "lat"
+        data_crs = cartopy.crs.PlateCarree()
+        if isinstance(ax, cartopy.mpl.geoaxes.GeoAxes):
+            kwargs_gauges_plot['transform'] = data_crs
+            kwargs_pcolormesh['transform'] =  data_crs
     else:
         grid_x_name = "x_grid"
         grid_y_name = "y_grid"
         point_x_name = "x"
         point_y_name = "y"
+        data_crs = None
 
     plotted_objects_for_cmap = []
     if da_grid is not None:
@@ -397,6 +422,8 @@ def plot_plg(
             cmap=cmap,
             ax=ax,
             add_colorbar=False,
+            alpha=alpha,
+            **kwargs_pcolormesh,
         )
         plotted_objects_for_cmap.append(pc)
     if da_cmls is not None:
@@ -411,6 +438,8 @@ def plot_plg(
             line_color=kwargs_cmls_plot.pop("line_color", line_color),
             pad_color=kwargs_cmls_plot.pop("edge_color", edge_color),
             pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
+            background_map=None,
+            projection=None,
             **kwargs_cmls_plot,
         )
         # only add line_collection in case we really want to apply a cmap
