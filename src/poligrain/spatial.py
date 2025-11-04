@@ -98,6 +98,8 @@ def get_closest_points_to_point(
     ds_points_neighbors: xr.DataArray | xr.Dataset,
     max_distance: float,
     n_closest: int,
+    id_var_points="id",
+    id_var_neighbors="id",
 ) -> xr.Dataset:
     """Get the closest points for given point locations.
 
@@ -119,6 +121,11 @@ def get_closest_points_to_point(
         `y` in the two datasets.
     n_closest : int
         The maximum number of nearest neighbors to be returned.
+    id_var_points : str
+        Name of the ID variable in `ds_points`, and of the ID variable in the output
+        dataset. Default is "id".
+    id_var_neighbors : str
+        Name of the ID variable in `ds_points_neighbors`. Default is "id".
 
     Returns
     -------
@@ -149,8 +156,8 @@ def get_closest_points_to_point(
 
     # Make sure that we have 'id' dimension in case only one station is there
     # in ds_points_neighbors because e.g. ds.isel(id=0) was used to subset.
-    if "id" not in ds_points_neighbors.dims:
-        ds_points_neighbors = ds_points_neighbors.expand_dims("id")
+    if id_var_neighbors not in ds_points_neighbors.dims:
+        ds_points_neighbors = ds_points_neighbors.expand_dims(id_var_neighbors)
 
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
@@ -161,10 +168,14 @@ def get_closest_points_to_point(
     # the NaNs we get from padding with None afterwards.
     # This way the index n points to this last entry on the right which we want to
     # be None.
-    id_neighbors_nan_padded = ds_points_neighbors.id.pad(
-        id=1,
-        mode="constant",
-    ).isel(id=slice(1, None))
+    id_neighbors_nan_padded = (
+        ds_points_neighbors[id_var_neighbors]
+        .pad(
+            {id_var_neighbors: 1},
+            mode="constant",
+        )
+        .isel({id_var_neighbors: slice(1, None)})
+    )
     id_neighbors_nan_padded = id_neighbors_nan_padded.where(
         ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
         None,
@@ -173,15 +184,15 @@ def get_closest_points_to_point(
 
     # Make sure that `id` dimension is not 0, which happens if input only
     # has one station e.g. because ds.isel(id=0) was used to subset.
-    if ds_points.id.ndim == 0:
-        ds_points = ds_points.expand_dims("id")
+    if ds_points[id_var_points].ndim == 0:
+        ds_points = ds_points.expand_dims(id_var_points)
 
     return xr.Dataset(
         data_vars={
-            "distance": (("id", "n_closest"), distances),
-            "neighbor_id": (("id", "n_closest"), neighbor_ids),
+            "distance": ((id_var_points, "n_closest"), distances),
+            "neighbor_id": ((id_var_points, "n_closest"), neighbor_ids),
         },
-        coords={"id": ds_points.id.data},
+        coords={id_var_points: ds_points[id_var_points].data},
     )
 
 
