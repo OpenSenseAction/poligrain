@@ -168,3 +168,38 @@ def load_ams_pws(data_dir=".", subset="full_period"):
     ds_gauges = xr.open_dataset(data_path / fn)
 
     return ds_pws, ds_gauges
+
+
+def load_openmesh(data_dir=".", subset="20d"):
+    """Load OpenMesh example data.
+
+    Parameters
+    ----------
+    data_dir : str, optional
+       Directory where the data will be stored. Default is current directory.
+    subset : str, optional
+       Subset of data to load. Only '20d' (20 days) is currently available.
+       Default is '20d'.
+
+    Returns
+    -------
+    ds_cmls, ds_pws, ds_asos
+
+    """
+    fn = f"openmesh_cml_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMesh/{fn}"
+    data_path = Path(data_dir)
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_cmls = xr.open_dataset(data_path / fn)
+
+    fn = f"openmesh_wu_pws_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMesh/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_pws = xr.open_dataset(data_path / fn)
+
+    fn = f"openmesh_asos_ws_{subset}.nc"
+    url = f"{BASE_URL}/raw/{VERSION}/OpenMesh/{fn}"
+    download_data_file(url=url, local_file_name=fn, local_path=data_dir)
+    ds_asos = xr.open_dataset(data_path / fn)
+
+    return ds_cmls, ds_pws, ds_asos
