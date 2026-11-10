@@ -757,7 +757,7 @@ def test_get_closest_points_to_point():
     assert np.isnan(
         closest_neighbors.neighbor_id.data[expected_distances == np.inf].astype(float)
     ).all()
-    assert closest_neighbors.neighbor_id.data[0, 3] is None
+    assert pd.isna(closest_neighbors.neighbor_id.data[0, 3])
 
     # check with different parameters
     closest_neighbors = plg.spatial.get_closest_points_to_point(
@@ -794,11 +794,8 @@ def test_get_closest_points_to_point():
         max_distance=2,
         n_closest=2,
     )
-    expected_neighbor_ids = np.array(
-        [["g2", None], ["g2", None], ["g2", None]], dtype=object
-    )
-    assert closest_neighbors.neighbor_id.data[0, 0] == expected_neighbor_ids[0, 0]
-    assert closest_neighbors.neighbor_id.data[0, 1] == expected_neighbor_ids[0, 1]
+    assert closest_neighbors.neighbor_id.data[0, 0] == "g2"
+    assert pd.isna(closest_neighbors.neighbor_id.data[0, 1])
 
 
 def test_calc_point_to_point_distances():

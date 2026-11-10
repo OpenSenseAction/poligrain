@@ -134,7 +134,8 @@ def get_closest_points_to_point(
         dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
         distance follows from the unit of the projected coordinates of the input
         datasets. The `neighbor_id` entries for point locations that are further
-        away then `max_distance` are set to None. The according distances are np.inf.
+        away then `max_distance` are set to NaN. The according distances are np.inf.
+        Use e.g. `pd.isna()` to check for missing neighbors.
     """
     x, y = get_point_xy(ds_points)
     x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
@@ -161,26 +162,12 @@ def get_closest_points_to_point(
 
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
-    # return None as ID in the cases the index is n. For this we must pad the
-    # array of neighbor IDs with None. Because padding is always done symmetrically,
-    # we have to slice off the padding on the left. But we cannot pad directly with
-    # None. We get NaN even if we do `.pad(constant_values=None)`. Hence, we fill
-    # the NaNs we get from padding with None afterwards.
-    # This way the index n points to this last entry on the right which we want to
-    # be None.
-    id_neighbors_nan_padded = (
-        ds_points_neighbors[id_var_neighbors]
-        .pad(
-            {id_var_neighbors: 1},
-            mode="constant",
-        )
-        .isel({id_var_neighbors: slice(1, None)})
-    )
-    id_neighbors_nan_padded = id_neighbors_nan_padded.where(
-        ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
-        None,
-    )
-    neighbor_ids = id_neighbors_nan_padded.data[ixs]
+    # return NaN as ID in the cases the index is n. For this we append NaN to
+    # the array of neighbor IDs, so that index n points to this last entry.
+    # We use NaN and not None, because with pandas>=3 xarray converts None in
+    # string arrays to NaN anyway, so None could not be returned consistently.
+    id_neighbors = ds_points_neighbors[id_var_neighbors].data.astype(object)
+    neighbor_ids = np.append(id_neighbors, np.nan)[ixs]
 
     # Make sure that `id` dimension is not 0, which happens if input only
     # has one station e.g. because ds.isel(id=0) was used to subset.
