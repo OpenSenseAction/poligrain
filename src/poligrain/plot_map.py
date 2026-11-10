@@ -15,6 +15,41 @@ import xarray as xr
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Colormap, Normalize
 
+# Default configuration for the "NE" (Natural Earth) background map. Each entry
+# defines one feature to be added to the axes. The "method" key determines
+# whether `ax.add_feature` or `ax.coastlines` is called, and all remaining
+# entries are passed as keyword arguments. Users can override individual
+# features by passing a dict with the same keys to `set_up_axes` via the
+# `ne_features` argument.
+DEFAULT_NE_FEATURES: dict = {
+    "ocean": {
+        "method": "add_feature",
+        "feature": cartopy.feature.OCEAN,
+        "facecolor": "lightblue",
+    },
+    "land": {
+        "method": "add_feature",
+        "feature": cartopy.feature.LAND,
+        "facecolor": "lightgrey",
+    },
+    "lakes": {
+        "method": "add_feature",
+        "feature": cartopy.feature.LAKES,
+        "facecolor": "lightblue",
+        "linewidth": 0.00001,
+    },
+    "borders": {
+        "method": "add_feature",
+        "feature": cartopy.feature.BORDERS,
+        "linewidth": 0.3,
+    },
+    "coastlines": {
+        "method": "coastlines",
+        "resolution": "10m",
+        "linewidth": 0.3,
+    },
+}
+
 
 def scatter_lines(
     x0: npt.ArrayLike | float,
@@ -22,16 +57,16 @@ def scatter_lines(
     x1: npt.ArrayLike | float,
     y1: npt.ArrayLike | float,
     s: float = 3,
-    c: (str | npt.ArrayLike) = "C0",
+    c: str | npt.ArrayLike = "C0",
     line_style: str = "-",
     pad_width: float = 0,
     pad_color: str = "k",
     cap_style: str = "round",
     vmin: float | None = None,
     vmax: float | None = None,
-    cmap: (str | Colormap) = "viridis",
-    ax: (matplotlib.axes.Axes | None) = None,
-    data_crs: (cartopy.crs.Projection | None) = None,
+    cmap: str | Colormap = "viridis",
+    ax: matplotlib.axes.Axes | None = None,
+    data_crs: cartopy.crs.Projection | None = None,
 ) -> LineCollection:
     """Plot lines as if you would use plt.scatter for points.
 
@@ -151,20 +186,21 @@ def scatter_lines(
 
 
 def plot_lines(
-    cmls: (xr.Dataset | xr.DataArray),
-    vmin: (float | None) = None,
-    vmax: (float | None) = None,
+    cmls: xr.Dataset | xr.DataArray,
+    vmin: float | None = None,
+    vmax: float | None = None,
     use_lon_lat=True,
-    cmap: (str | Colormap) = "turbo",
+    cmap: str | Colormap = "turbo",
     line_color: str = "C0",
     line_width: float = 1,
     pad_width: float = 0.5,
     pad_color: str = "k",
     line_style: str = "-",
     cap_style: str = "round",
-    ax: (matplotlib.axes.Axes | None) = None,
-    background_map: (str | None) = None,
-    projection: (cartopy.crs.Projection | None) = None,
+    ax: matplotlib.axes.Axes | None = None,
+    background_map: str | None = None,
+    projection: cartopy.crs.Projection | None = None,
+    ne_features: dict | None = None,
 ) -> LineCollection:
     """Plot paths of line-based sensors like CMLs.
 
@@ -208,6 +244,8 @@ def plot_lines(
         Type of background map.
     projection : cartopy.crs.Projection | None, optional
         The map projection to be used.
+    ne_features : dict | None, optional
+        Configuration for the "NE" background map. See `set_up_axes` for details.
 
     Returns
     -------
@@ -238,7 +276,11 @@ def plot_lines(
         y1_name = "site_1_y"
 
     if ax is None:
-        ax = set_up_axes(background_map=background_map, projection=projection)
+        ax = set_up_axes(
+            background_map=background_map,
+            projection=projection,
+            ne_features=ne_features,
+        )
 
     return scatter_lines(
         x0=cmls[x0_name].values,
@@ -258,7 +300,12 @@ def plot_lines(
     )
 
 
-def set_up_axes(background_map=None, projection=None, extent=None):
+def set_up_axes(
+    background_map=None,
+    projection=None,
+    extent=None,
+    ne_features: dict | None = None,
+):
     """Create and configure matplotlib axes based on background map type.
 
     Set up the plot axes using Cartopy or standard matplotlib. Supports
@@ -279,6 +326,14 @@ def set_up_axes(background_map=None, projection=None, extent=None):
         extent : list-like or None, optional
             Geographic bounding box [lon_min, lat_min, lon_max, lat_max].
             Defaults to None.
+
+        ne_features : dict or None, optional
+            Configuration for the "NE" (Natural Earth) background map. Keys are
+            feature names (e.g. "ocean", "land", "lakes", "borders", "coastlines")
+            and values are dicts of keyword arguments passed to either
+            `ax.add_feature` or `ax.coastlines` (see `DEFAULT_NE_FEATURES`).
+            Only provided keys override the defaults. Defaults to None, in which
+            case `DEFAULT_NE_FEATURES` is used.
 
     Returns
     -------
@@ -308,11 +363,20 @@ def set_up_axes(background_map=None, projection=None, extent=None):
         ax = plt.axes(projection=projection)
         if extent is not None:
             ax.set_extent(extent)
-        ax.add_feature(cartopy.feature.OCEAN, facecolor="lightblue")
-        ax.add_feature(cartopy.feature.LAND, facecolor="lightgrey")
-        ax.add_feature(cartopy.feature.LAKES, facecolor="lightblue", linewidth=0.00001)
-        ax.add_feature(cartopy.feature.BORDERS, linewidth=0.3)
-        ax.coastlines(resolution="10m", linewidth=0.3)
+        features = {
+            name: {**DEFAULT_NE_FEATURES[name], **(ne_features or {}).get(name, {})}
+            for name in DEFAULT_NE_FEATURES
+        }
+        for feature_kwargs in features.values():
+            method = feature_kwargs.pop("method")
+            if method == "add_feature":
+                feature = feature_kwargs.pop("feature")
+                ax.add_feature(feature, **feature_kwargs)
+            elif method == "coastlines":
+                ax.coastlines(**feature_kwargs)
+            else:
+                msg = f"unsupported method {method} in ne_features"
+                raise ValueError(msg)
     else:
         msg = f"unsupported value of background_map {background_map}"
         raise ValueError(msg)
@@ -338,9 +402,10 @@ def plot_plg(
     colorbar_label="",
     kwargs_cmls_plot=None,
     kwargs_gauges_plot=None,
-    background_map: (str | None) = None,
-    projection: (cartopy.crs.Projection | None) = None,
-    extent: (list | None) = None,
+    background_map: str | None = None,
+    projection: cartopy.crs.Projection | None = None,
+    extent: list | None = None,
+    ne_features: dict | None = None,
 ):
     """Plot point, line and grid data.
 
@@ -408,6 +473,8 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
+    ne_features : dict or None, optional
+        Configuration for the "NE" background map. See `set_up_axes` for details.
     data_crs........
     """
     if kwargs_cmls_plot is None:
@@ -421,6 +488,7 @@ def plot_plg(
             background_map=background_map,
             projection=projection,
             extent=extent,
+            ne_features=ne_features,
         )
 
     if use_lon_lat:

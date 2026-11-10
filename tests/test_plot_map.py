@@ -8,6 +8,7 @@ import numpy as np
 import numpy.testing
 import pytest
 import xarray as xr
+from matplotlib.collections import LineCollection
 
 import poligrain as plg
 
@@ -262,6 +263,14 @@ def test_plot_plg():
             da_gauges=ds_gauges_municp.rainfall_amount.data,
         )
 
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+    ds_gauge_smhi.close()
+
 
 def test_set_up_axes_default():
     """Test set_up_axes with no background_map and no projection."""
@@ -387,4 +396,108 @@ def test_plot_plg_with_geoaxes():
         use_lon_lat=True,
         ax=ax,
     )
+    plt.close("all")
+
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+
+
+def test_set_up_axes_ne_with_custom_features():
+    """Test set_up_axes with 'NE' background map and custom ne_features."""
+    ax = plg.plot_map.set_up_axes(
+        background_map="NE",
+        ne_features={
+            "land": {"facecolor": "green"},
+            "coastlines": {"resolution": "50m", "linewidth": 1.0},
+        },
+    )
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne_with_empty_features():
+    """Test set_up_axes with 'NE' background map and empty ne_features dict."""
+    ax = plg.plot_map.set_up_axes(background_map="NE", ne_features={})
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne_unsupported_method():
+    """Test set_up_axes raises ValueError for unsupported method in ne_features."""
+    with pytest.raises(ValueError, match="unsupported method"):
+        plg.plot_map.set_up_axes(
+            background_map="NE",
+            ne_features={"ocean": {"method": "unsupported"}},
+        )
+
+
+def test_plot_lines_with_ne_features():
+    """Test plot_lines with background_map='NE' and custom ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    lines = plg.plot_map.plot_lines(
+        ds_cmls,
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
+    plt.close("all")
+
+
+def test_plot_plg_with_ne_features():
+    """Test plot_plg with background_map='NE' and custom ne_features."""
+    (
+        ds_rad,
+        ds_cmls,
+        ds_gauges_municp,
+        _,
+    ) = plg.example_data.load_openmrg(data_dir="tests/example_data", subset="5min_2h")
+
+    ds_rad = ds_rad.rename({"longitudes": "lon", "latitudes": "lat"})
+    ds_rad = ds_rad.set_coords(["lon", "lat"])
+
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls.R.sum(dim="time"),
+        da_gauges=ds_gauges_municp.rainfall_amount.sum(dim="time"),
+        use_lon_lat=True,
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    plt.close("all")
+
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+
+
+def test_plot_cmls_accessor_with_ne_features():
+    """Test the xarray accessor plot_cmls with background_map and ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    lines = ds_cmls.plg.plot_cmls(
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
+    plt.close("all")
+
+
+def test_plot_cmls_dataarray_accessor_with_ne_features():
+    """Test the DataArray accessor plot_cmls with background_map and ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    da_rsl = ds_cmls.rsl.isel(sublink_id=0).isel(time=100)
+    lines = da_rsl.plg.plot_cmls(
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
     plt.close("all")

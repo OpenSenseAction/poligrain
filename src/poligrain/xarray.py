@@ -1,4 +1,5 @@
 """xarray Accessors."""
+
 from __future__ import annotations
 
 import matplotlib.axes
@@ -25,7 +26,10 @@ class PoligrainDatasetAccessor:
         line_style: str = "-",
         cap_style: str = "round",
         use_lon_lat: bool = True,
-        ax: (matplotlib.axes.Axes | None) = None,
+        ax: matplotlib.axes.Axes | None = None,
+        background_map: str | None = None,
+        projection=None,
+        ne_features: dict | None = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.
 
@@ -42,6 +46,9 @@ class PoligrainDatasetAccessor:
             cap_style=cap_style,
             use_lon_lat=use_lon_lat,
             ax=ax,
+            background_map=background_map,
+            projection=projection,
+            ne_features=ne_features,
         )
 
 
@@ -54,9 +61,9 @@ class PoligrainDataArrayAccessor:
 
     def plot_cmls(
         self,
-        vmin: (float | None) = None,
-        vmax: (float | None) = None,
-        cmap: (str | Colormap) = "turbo",
+        vmin: float | None = None,
+        vmax: float | None = None,
+        cmap: str | Colormap = "turbo",
         line_color: str = "k",
         line_width: float = 1,
         pad_width: float = 0,
@@ -64,7 +71,10 @@ class PoligrainDataArrayAccessor:
         line_style: str = "-",
         cap_style: str = "round",
         use_lon_lat: bool = True,
-        ax: (matplotlib.axes.Axes | None) = None,
+        ax: matplotlib.axes.Axes | None = None,
+        background_map: str | None = None,
+        projection=None,
+        ne_features: dict | None = None,
     ) -> LineCollection:
         """Plot paths of CMLs and color the lines based on data.
 
@@ -84,4 +94,7 @@ class PoligrainDataArrayAccessor:
             cap_style=cap_style,
             use_lon_lat=use_lon_lat,
             ax=ax,
+            background_map=background_map,
+            projection=projection,
+            ne_features=ne_features,
         )
