@@ -68,6 +68,6 @@ jobs:
         uses: codecov/codecov-action@v5.5.1
 
       - name: Test notebooks on Linux and MacOS
-        if: runner.os != 'Windowss'
+        if: runner.os != 'Windows'
         run: >-
           python -m pytest --nbmake docs/notebooks/*.ipynb
