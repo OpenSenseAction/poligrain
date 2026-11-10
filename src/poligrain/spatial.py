@@ -211,9 +211,9 @@ def calc_point_to_point_distances(
     x_a, y_a = get_point_xy(ds_points_a)
     x_b, y_b = get_point_xy(ds_points_b)
 
-    distance_matrix = scipy.spatial.distance_matrix(
-        x=list(zip(x_a.values, y_a.values)),
-        y=list(zip(x_b.values, y_b.values)),
+    distance_matrix = scipy.spatial.distance.cdist(
+        XA=list(zip(x_a.values, y_a.values)),
+        XB=list(zip(x_b.values, y_b.values)),
     )
 
     dim_a = x_a.dims[0]
