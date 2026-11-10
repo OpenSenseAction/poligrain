@@ -140,10 +140,10 @@ def get_closest_points_to_point(
     x, y = get_point_xy(ds_points)
     x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
     tree_neighbors = scipy.spatial.KDTree(
-        data=list(zip(x_neighbors.values, y_neighbors.values))
+        data=list(zip(x_neighbors.values, y_neighbors.values, strict=False))
     )
     distances, ixs = tree_neighbors.query(
-        list(zip(x.values, y.values)),
+        list(zip(x.values, y.values, strict=False)),
         k=n_closest,
         distance_upper_bound=max_distance,
     )
@@ -212,8 +212,8 @@ def calc_point_to_point_distances(
     x_b, y_b = get_point_xy(ds_points_b)
 
     distance_matrix = scipy.spatial.distance.cdist(
-        XA=list(zip(x_a.values, y_a.values)),
-        XB=list(zip(x_b.values, y_b.values)),
+        XA=list(zip(x_a.values, y_a.values, strict=False)),
+        XB=list(zip(x_b.values, y_b.values, strict=False)),
     )
 
     dim_a = x_a.dims[0]
@@ -390,7 +390,7 @@ class GridAtPoints:
 
         # Get radar pixel coordinates as (N, 2) array
         assert x_grid.shape == y_grid.shape
-        xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten())))
+        xy_grid = np.array(list(zip(x_grid.flatten(), y_grid.flatten(), strict=False)))
 
         # Initialize function to get grid values at points
         xy_points = np.stack([x_points, y_points], axis=1)
@@ -727,7 +727,7 @@ def calc_intersect_weights(
     # Iterate only over the indices within the bounding box and
     # calculate the intersect weigh for each pixel
     ix_in_bbox = np.where(bounding_box == True)  # noqa: E712 # pylint: disable=C0121
-    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1]):
+    for i, j in zip(ix_in_bbox[0], ix_in_bbox[1], strict=False):
         pixel_poly = Polygon(
             [
                 grid_corners.ll_grid[i, j],
