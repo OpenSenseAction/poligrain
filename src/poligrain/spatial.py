@@ -98,6 +98,8 @@ def get_closest_points_to_point(
     ds_points_neighbors: xr.DataArray | xr.Dataset,
     max_distance: float,
     n_closest: int,
+    id_var_points="id",
+    id_var_neighbors="id",
 ) -> xr.Dataset:
     """Get the closest points for given point locations.
 
@@ -119,6 +121,11 @@ def get_closest_points_to_point(
         `y` in the two datasets.
     n_closest : int
         The maximum number of nearest neighbors to be returned.
+    id_var_points : str
+        Name of the ID variable in `ds_points`, and of the ID variable in the output
+        dataset. Default is "id".
+    id_var_neighbors : str
+        Name of the ID variable in `ds_points_neighbors`. Default is "id".
 
     Returns
     -------
@@ -127,7 +134,8 @@ def get_closest_points_to_point(
         dimensions `id`, taken from `ds_points` and `n_closest`. The unit of the
         distance follows from the unit of the projected coordinates of the input
         datasets. The `neighbor_id` entries for point locations that are further
-        away then `max_distance` are set to None. The according distances are np.inf.
+        away then `max_distance` are set to NaN. The according distances are np.inf.
+        Use e.g. `pd.isna()` to check for missing neighbors.
     """
     x, y = get_point_xy(ds_points)
     x_neighbors, y_neighbors = get_point_xy(ds_points_neighbors)
@@ -149,39 +157,29 @@ def get_closest_points_to_point(
 
     # Make sure that we have 'id' dimension in case only one station is there
     # in ds_points_neighbors because e.g. ds.isel(id=0) was used to subset.
-    if "id" not in ds_points_neighbors.dims:
-        ds_points_neighbors = ds_points_neighbors.expand_dims("id")
+    if id_var_neighbors not in ds_points_neighbors.dims:
+        ds_points_neighbors = ds_points_neighbors.expand_dims(id_var_neighbors)
 
     # Where neighboring station are further away than max_distance the ixs are
     # filled with the value n, the length of the neighbor dataset. We want to
-    # return None as ID in the cases the index is n. For this we must pad the
-    # array of neighbor IDs with None. Because padding is always done symmetrically,
-    # we have to slice off the padding on the left. But we cannot pad directly with
-    # None. We get NaN even if we do `.pad(constant_values=None)`. Hence, we fill
-    # the NaNs we get from padding with None afterwards.
-    # This way the index n points to this last entry on the right which we want to
-    # be None.
-    id_neighbors_nan_padded = ds_points_neighbors.id.pad(
-        id=1,
-        mode="constant",
-    ).isel(id=slice(1, None))
-    id_neighbors_nan_padded = id_neighbors_nan_padded.where(
-        ~id_neighbors_nan_padded.isnull(),  # noqa: PD003
-        None,
-    )
-    neighbor_ids = id_neighbors_nan_padded.data[ixs]
+    # return NaN as ID in the cases the index is n. For this we append NaN to
+    # the array of neighbor IDs, so that index n points to this last entry.
+    # We use NaN and not None, because with pandas>=3 xarray converts None in
+    # string arrays to NaN anyway, so None could not be returned consistently.
+    id_neighbors = ds_points_neighbors[id_var_neighbors].data.astype(object)
+    neighbor_ids = np.append(id_neighbors, np.nan)[ixs]
 
     # Make sure that `id` dimension is not 0, which happens if input only
     # has one station e.g. because ds.isel(id=0) was used to subset.
-    if ds_points.id.ndim == 0:
-        ds_points = ds_points.expand_dims("id")
+    if ds_points[id_var_points].ndim == 0:
+        ds_points = ds_points.expand_dims(id_var_points)
 
     return xr.Dataset(
         data_vars={
-            "distance": (("id", "n_closest"), distances),
-            "neighbor_id": (("id", "n_closest"), neighbor_ids),
+            "distance": ((id_var_points, "n_closest"), distances),
+            "neighbor_id": ((id_var_points, "n_closest"), neighbor_ids),
         },
-        coords={"id": ds_points.id.data},
+        coords={id_var_points: ds_points[id_var_points].data},
     )
 
 
@@ -213,9 +211,9 @@ def calc_point_to_point_distances(
     x_a, y_a = get_point_xy(ds_points_a)
     x_b, y_b = get_point_xy(ds_points_b)
 
-    distance_matrix = scipy.spatial.distance_matrix(
-        x=list(zip(x_a.values, y_a.values)),
-        y=list(zip(x_b.values, y_b.values)),
+    distance_matrix = scipy.spatial.distance.cdist(
+        XA=list(zip(x_a.values, y_a.values)),
+        XB=list(zip(x_b.values, y_b.values)),
     )
 
     dim_a = x_a.dims[0]

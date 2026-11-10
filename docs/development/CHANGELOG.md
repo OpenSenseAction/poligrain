@@ -4,6 +4,10 @@
 
 ### New features
 
+- Add `load_openmesh()` function to download and load OpenMesh example data
+  (CML, PWS, and ASOS reference stations over New York City) (by
+  [@drorjac](https://github.com/drorjac))
+
 ### Bug fixes
 
 ### Maintenance

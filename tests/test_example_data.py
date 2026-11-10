@@ -178,3 +178,41 @@ def test_load_ams_pws():
         # close file, because otherwise CI on Windows fails when trying to delete dir
         ds_pws.close()
         ds_gauges.close()
+
+
+def test_load_openmesh():
+    # We download the data and just check a little bit of the data. Here
+    # we do not yet check that data format conventions are correct.
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        (
+            ds_cmls,
+            ds_pws,
+            ds_asos,
+        ) = plg.example_data.load_openmesh(data_dir=tmp_dir_name, subset="20d")
+
+        # Check CML data
+        npt.assert_almost_equal(
+            ds_cmls.site_0_lon.data[:3],
+            np.array([-73.93975, -74.004845, -73.95414], dtype=np.float32),
+            decimal=4,
+        )
+
+        # Check PWS data
+        npt.assert_almost_equal(
+            ds_pws.lon.data[:3],
+            np.array([-73.94, -73.963, -73.918]),
+            decimal=3,
+        )
+
+        # Check ASOS data (lon is NaN, check station IDs and temperature)
+        assert list(ds_asos.id.data) == ["JFK", "EWR", "LGA", "NYC"]
+        npt.assert_almost_equal(
+            ds_asos.temperature.data[0, :3],
+            np.array([6.11111111, 6.66666667, 6.66666667]),
+            decimal=5,
+        )
+
+        # close file, because otherwise CI on Windows fails when trying to delete dir
+        ds_cmls.close()
+        ds_pws.close()
+        ds_asos.close()
