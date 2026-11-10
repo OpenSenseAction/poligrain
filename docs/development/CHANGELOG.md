@@ -14,6 +14,10 @@
 
 ### Breaking changes
 
+- [PR126](https://github.com/OpenSenseAction/poligrain/pull/126) drop support
+  for Python 3.9. The minimum supported Python version is now 3.10. Testing
+  extended to Python 3.13 and 3.14 (by [@cchwala](https://github.com/cchwala))
+
 ## v0.3.1
 
 ### New features
