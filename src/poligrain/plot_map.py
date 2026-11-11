@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import cartopy
+import cartopy.crs
+import cartopy.io.img_tiles as cimgt
+import cartopy.mpl.geoaxes
 import matplotlib.axes
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
@@ -11,6 +15,41 @@ import xarray as xr
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Colormap, Normalize
 
+# Default configuration for the "NE" (Natural Earth) background map. Each entry
+# defines one feature to be added to the axes. The "method" key determines
+# whether `ax.add_feature` or `ax.coastlines` is called, and all remaining
+# entries are passed as keyword arguments. Users can override individual
+# features by passing a dict with the same keys to `set_up_axes` via the
+# `ne_features` argument.
+DEFAULT_NE_FEATURES: dict = {
+    "ocean": {
+        "method": "add_feature",
+        "feature": cartopy.feature.OCEAN,
+        "facecolor": "lightblue",
+    },
+    "land": {
+        "method": "add_feature",
+        "feature": cartopy.feature.LAND,
+        "facecolor": "lightgrey",
+    },
+    "lakes": {
+        "method": "add_feature",
+        "feature": cartopy.feature.LAKES,
+        "facecolor": "lightblue",
+        "linewidth": 0.00001,
+    },
+    "borders": {
+        "method": "add_feature",
+        "feature": cartopy.feature.BORDERS,
+        "linewidth": 0.3,
+    },
+    "coastlines": {
+        "method": "coastlines",
+        "resolution": "10m",
+        "linewidth": 0.3,
+    },
+}
+
 
 def scatter_lines(
     x0: npt.ArrayLike | float,
@@ -18,15 +57,16 @@ def scatter_lines(
     x1: npt.ArrayLike | float,
     y1: npt.ArrayLike | float,
     s: float = 3,
-    c: (str | npt.ArrayLike) = "C0",
+    c: str | npt.ArrayLike = "C0",
     line_style: str = "-",
     pad_width: float = 0,
     pad_color: str = "k",
     cap_style: str = "round",
     vmin: float | None = None,
     vmax: float | None = None,
-    cmap: (str | Colormap) = "viridis",
-    ax: (matplotlib.axes.Axes | None) = None,
+    cmap: str | Colormap = "viridis",
+    ax: matplotlib.axes.Axes | None = None,
+    data_crs: cartopy.crs.Projection | None = None,
 ) -> LineCollection:
     """Plot lines as if you would use plt.scatter for points.
 
@@ -66,6 +106,12 @@ def scatter_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
+    data_crs : cartopy.crs.Projection | None, optional
+        The coordinate reference system of the data provided. The default is None.
+        In the default case cartopy.crs.PlateCarree will be used when plotting
+        with a `ax` that is a `cartopy.mpl.geoaxes.GeoAxes`. When plotting with `ax`
+        being a normal `matplotlib.axes.Axes` `data_crs` has to be None since the
+        coordinate transformation it implies are not supported by matplotlib.
 
     Returns
     -------
@@ -73,7 +119,7 @@ def scatter_lines(
         _description_
     """
     if ax is None:
-        _, ax = plt.subplots()
+        ax = plt.axes()
 
     x0 = np.atleast_1d(x0)
     y0 = np.atleast_1d(y0)
@@ -92,14 +138,30 @@ def scatter_lines(
             pe.Normal(),
         ]
 
+    style_kwargs = {
+        "linewidth": s,
+        "linestyle": line_style,
+        "capstyle": cap_style,
+        "path_effects": path_effects,
+    }
+
+    # We only allow a data_crs if we have a GeoAxes. And only in this case we
+    # add a `transform` kwarg that is passed to `LineCollection` because it
+    # seems that `transform = None` results in an empty plot when passing it
+    # to `LineCollection` with `ax` being a normal matplotilb `Axes` object.
+    if isinstance(ax, cartopy.mpl.geoaxes.GeoAxes):
+        if data_crs is None:
+            data_crs = cartopy.crs.PlateCarree()
+        style_kwargs["transform"] = data_crs
+    elif data_crs is not None:
+        msg = "data_crs has to be None if `ax` is not a cartopy.mpl.geoaxes.GeoAxes"
+        raise ValueError(msg)
+
     if data is None:
         lines = LineCollection(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
-            linewidth=s,
-            linestyles=line_style,
-            capstyle=cap_style,
             color=c,
-            path_effects=path_effects,
+            **style_kwargs,
         )
 
     else:
@@ -112,10 +174,7 @@ def scatter_lines(
             [((x0[i], y0[i]), (x1[i], y1[i])) for i in range(len(x0))],
             norm=norm,
             cmap=cmap,
-            linewidth=s,
-            linestyles=line_style,
-            capstyle=cap_style,
-            path_effects=path_effects,
+            **style_kwargs,
         )
         lines.set_array(data)
 
@@ -127,18 +186,21 @@ def scatter_lines(
 
 
 def plot_lines(
-    cmls: (xr.Dataset | xr.DataArray),
-    vmin: (float | None) = None,
-    vmax: (float | None) = None,
+    cmls: xr.Dataset | xr.DataArray,
+    vmin: float | None = None,
+    vmax: float | None = None,
     use_lon_lat=True,
-    cmap: (str | Colormap) = "turbo",
+    cmap: str | Colormap = "turbo",
     line_color: str = "C0",
     line_width: float = 1,
     pad_width: float = 0.5,
     pad_color: str = "k",
     line_style: str = "-",
     cap_style: str = "round",
-    ax: (matplotlib.axes.Axes | None) = None,
+    ax: matplotlib.axes.Axes | None = None,
+    background_map: str | None = None,
+    projection: cartopy.crs.Projection | None = None,
+    ne_features: dict | None = None,
 ) -> LineCollection:
     """Plot paths of line-based sensors like CMLs.
 
@@ -178,15 +240,30 @@ def plot_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
+    background_map : str  |  None, optional
+        Type of background map to plot the lines on. Can be "stock" for a built-in
+        stock image, "OSM" for OpenStreetMap tiles or "NE" for Natural Earth
+        features. If None (default), a plain matplotlib `Axes` without any
+        background is created. Only used if `ax` is not provided. See
+        `set_up_axes` for details.
+    projection : cartopy.crs.Projection  |  None, optional
+        The map projection to be used for the background map. Only used if `ax`
+        is not provided. If None (default), `cartopy.crs.PlateCarree` is used,
+        except for "OSM" where the projection is set automatically. Note that
+        the data is not reprojected, so the projection should be chosen such
+        that lon-lat data (or x-y data, see `use_lon_lat`) is displayed
+        correctly, e.g. via `cartopy.crs.EuroPP` for Europe.
+    ne_features : dict  |  None, optional
+        Configuration of the "NE" (Natural Earth) background map features, e.g.
+        `{"land": {"facecolor": "green"}}`. Only provided keys override the
+        defaults. Only used if `ax` is not provided and `background_map="NE"`.
+        See `set_up_axes` for details.
 
     Returns
     -------
     LineCollection
 
     """
-    if ax is None:
-        _, ax = plt.subplots()
-
     try:
         color_data = cmls.data
         if len(color_data.shape) != 1:
@@ -210,6 +287,13 @@ def plot_lines(
         y0_name = "site_0_y"
         y1_name = "site_1_y"
 
+    if ax is None:
+        ax = set_up_axes(
+            background_map=background_map,
+            projection=projection,
+            ne_features=ne_features,
+        )
+
     return scatter_lines(
         x0=cmls[x0_name].values,
         y0=cmls[y0_name].values,
@@ -228,6 +312,96 @@ def plot_lines(
     )
 
 
+def set_up_axes(
+    background_map=None,
+    projection=None,
+    extent=None,
+    ne_features: dict | None = None,
+):
+    """Create and configure matplotlib axes based on background map type.
+
+    Set up the plot axes using Cartopy or standard matplotlib. Supports
+    different types of background maps including stock images, OpenStreetMap,
+    and Natural Earth datasets with optional geographic projections and extents.
+
+    Parameters
+    ----------
+    background_map : str  |  None, optional
+        Type of background map to use. Can be "stock" for a built-in stock image,
+        "OSM" for OpenStreetMap tiles or "NE" for Natural Earth features.
+        If None (default), a plain matplotlib `Axes` is created without any
+        background. If only a `projection` is given, a cartopy `GeoAxes` is
+        created without any background features.
+    projection : cartopy.crs.Projection  |  None, optional
+        Projection to use for the plot. For "OSM" map background it is
+        automatically set to the projection of the OSM tiles. For other map
+        backgrounds it defaults to `cartopy.crs.PlateCarree` if not provided.
+    extent : list-like  |  None, optional
+        Geographic bounding box `[lon_min, lat_min, lon_max, lat_max]` that is
+        passed to `ax.set_extent`. Defaults to None, which means the extent is
+        determined automatically.
+    ne_features : dict  |  None, optional
+        Configuration for the "NE" (Natural Earth) background map. Keys are
+        feature names (e.g. "ocean", "land", "lakes", "borders", "coastlines")
+        and values are dicts of keyword arguments passed to either
+        `ax.add_feature` or `ax.coastlines` (see `DEFAULT_NE_FEATURES`).
+        Only provided keys override the defaults. Defaults to None, in which
+        case `DEFAULT_NE_FEATURES` is used.
+
+    Returns
+    -------
+    matplotlib.axes.Axes or cartopy.mpl.geoaxes.GeoAxes
+        Axes object with appropriate projection and background.
+
+    Raises
+    ------
+    ValueError
+        If `background_map` is not one of None, "stock", "OSM" or "NE", or if
+        an entry in `ne_features` has an unsupported "method".
+    """
+    if background_map is None and projection is None:
+        ax = plt.axes()
+    elif background_map is None and projection is not None:
+        ax = plt.axes(projection=projection)
+    elif background_map == "stock":
+        if projection is None:
+            projection = cartopy.crs.PlateCarree()
+        ax = plt.axes(projection=projection)
+        if extent is not None:
+            ax.set_extent(extent)
+        ax.stock_img()
+    elif background_map == "OSM":
+        request = cimgt.OSM()
+        ax = plt.axes(projection=request.crs)
+        if extent is not None:
+            ax.set_extent(extent)
+        ax.add_image(request, 10)
+    elif background_map == "NE":
+        if projection is None:
+            projection = cartopy.crs.PlateCarree()
+        ax = plt.axes(projection=projection)
+        if extent is not None:
+            ax.set_extent(extent)
+        features = {
+            name: {**default, **(ne_features or {}).get(name, {})}
+            for name, default in DEFAULT_NE_FEATURES.items()
+        }
+        for feature_kwargs in features.values():
+            method = feature_kwargs.pop("method")
+            if method == "add_feature":
+                feature = feature_kwargs.pop("feature")
+                ax.add_feature(feature, **feature_kwargs)
+            elif method == "coastlines":
+                ax.coastlines(**feature_kwargs)
+            else:
+                msg = f"unsupported method {method} in ne_features"
+                raise ValueError(msg)
+    else:
+        msg = f"unsupported value of background_map {background_map}"
+        raise ValueError(msg)
+    return ax
+
+
 def plot_plg(
     da_grid=None,
     da_cmls=None,
@@ -235,6 +409,7 @@ def plot_plg(
     vmin=None,
     vmax=None,
     cmap="turbo",
+    alpha=1,
     ax=None,
     use_lon_lat=True,
     edge_color="k",
@@ -246,6 +421,10 @@ def plot_plg(
     colorbar_label="",
     kwargs_cmls_plot=None,
     kwargs_gauges_plot=None,
+    background_map: str | None = None,
+    projection: cartopy.crs.Projection | None = None,
+    extent: list | None = None,
+    ne_features: dict | None = None,
 ):
     """Plot point, line and grid data.
 
@@ -277,6 +456,8 @@ def plot_plg(
         it will be derived individually for each data source when plotting.
     cmap : str, optional
         cmap for all three data sources, by default "turbo"
+    alpha : float, optional
+        Alpha values used for the gridded dataset.
     ax : _type_, optional
         Axes object from matplotlib, by default None which will create a new
         figure and return the Axes object.
@@ -311,26 +492,54 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
-
+    background_map : str  |  None, optional
+        Type of background map to plot on. Can be "stock" for a built-in stock
+        image, "OSM" for OpenStreetMap tiles or "NE" for Natural Earth features.
+        If None (default), a plain matplotlib `Axes` without any background is
+        created. Only used if `ax` is not provided. See `set_up_axes` for details.
+    projection : cartopy.crs.Projection  |  None, optional
+        The map projection to be used for the background map. Only used if `ax`
+        is not provided. If None (default), `cartopy.crs.PlateCarree` is used,
+        except for "OSM" where the projection is set automatically. Note that
+        the data is not reprojected, so the projection should be chosen such
+        that lon-lat data (or x-y data, see `use_lon_lat`) is displayed
+        correctly, e.g. via `cartopy.crs.EuroPP` for Europe.
+    extent : list  |  None, optional
+        Geographic bounding box `[lon_min, lat_min, lon_max, lat_max]` that is
+        passed to `ax.set_extent`. Only used if `ax` is not provided. Defaults
+        to None, which means the extent is determined automatically.
+    ne_features : dict or None, optional
+        Configuration for the "NE" background map. See `set_up_axes` for details.
     """
     if kwargs_cmls_plot is None:
         kwargs_cmls_plot = {}
     if kwargs_gauges_plot is None:
         kwargs_gauges_plot = {}
+    kwargs_pcolormesh = {}
 
     if ax is None:
-        _, ax = plt.subplots()
+        ax = set_up_axes(
+            background_map=background_map,
+            projection=projection,
+            extent=extent,
+            ne_features=ne_features,
+        )
 
     if use_lon_lat:
         grid_x_name = "lon"
         grid_y_name = "lat"
         point_x_name = "lon"
         point_y_name = "lat"
+        data_crs = cartopy.crs.PlateCarree()
+        if isinstance(ax, cartopy.mpl.geoaxes.GeoAxes):
+            kwargs_gauges_plot["transform"] = data_crs
+            kwargs_pcolormesh["transform"] = data_crs
     else:
         grid_x_name = "x_grid"
         grid_y_name = "y_grid"
         point_x_name = "x"
         point_y_name = "y"
+        data_crs = None
 
     plotted_objects_for_cmap = []
     if da_grid is not None:
@@ -342,6 +551,8 @@ def plot_plg(
             cmap=cmap,
             ax=ax,
             add_colorbar=False,
+            alpha=alpha,
+            **kwargs_pcolormesh,
         )
         plotted_objects_for_cmap.append(pc)
     if da_cmls is not None:
@@ -356,6 +567,8 @@ def plot_plg(
             line_color=kwargs_cmls_plot.pop("line_color", line_color),
             pad_color=kwargs_cmls_plot.pop("edge_color", edge_color),
             pad_width=kwargs_cmls_plot.pop("edge_width", edge_width),
+            background_map=None,
+            projection=None,
             **kwargs_cmls_plot,
         )
         # only add line_collection in case we really want to apply a cmap

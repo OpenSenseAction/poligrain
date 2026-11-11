@@ -4,6 +4,13 @@
 
 ### New features
 
+- [PR107](https://github.com/OpenSenseAction/poligrain/pull/107) add cartopy
+  background maps to the plotting functions: `plot_lines`, `plot_plg` and the
+  `.plg.plot_cmls()` xarray accessors now accept `background_map` ("stock",
+  "OSM" or "NE"), `projection` and `extent` arguments, and the Natural Earth
+  ("NE") features can be customized via the `ne_features` argument (by
+  [@overeem11](https://github.com/overeem11) and
+  [@cchwala](https://github.com/cchwala))
 - Add `load_openmesh()` function to download and load OpenMesh example data
   (CML, PWS, and ASOS reference stations over New York City) (by
   [@drorjac](https://github.com/drorjac))

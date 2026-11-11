@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import tempfile
 
+import cartopy.crs
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.testing
 import pytest
 import xarray as xr
+from matplotlib.collections import LineCollection
 
 import poligrain as plg
 
@@ -260,3 +262,242 @@ def test_plot_plg():
             da_grid=ds_rad.rainfall_amount.sum(dim="time"),
             da_gauges=ds_gauges_municp.rainfall_amount.data,
         )
+
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+    ds_gauge_smhi.close()
+
+
+def test_set_up_axes_default():
+    """Test set_up_axes with no background_map and no projection."""
+    ax = plg.plot_map.set_up_axes()
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_projection_only():
+    """Test set_up_axes with a projection but no background_map."""
+    ax = plg.plot_map.set_up_axes(projection=cartopy.crs.PlateCarree())
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_stock():
+    """Test set_up_axes with 'stock' background map."""
+    ax = plg.plot_map.set_up_axes(background_map="stock")
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_stock_with_extent():
+    """Test set_up_axes with 'stock' background map and extent."""
+    ax = plg.plot_map.set_up_axes(background_map="stock", extent=[-10, 40, 40, 60])
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_osm():
+    """Test set_up_axes with 'OSM' background map."""
+    ax = plg.plot_map.set_up_axes(background_map="OSM")
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_osm_with_extent():
+    """Test set_up_axes with 'OSM' background map and extent."""
+    ax = plg.plot_map.set_up_axes(background_map="OSM", extent=[-10, 40, 40, 60])
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne():
+    """Test set_up_axes with 'NE' background map."""
+    ax = plg.plot_map.set_up_axes(background_map="NE")
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne_with_extent():
+    """Test set_up_axes with 'NE' background map and extent."""
+    ax = plg.plot_map.set_up_axes(background_map="NE", extent=[-10, 40, 40, 60])
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_unsupported_background_map():
+    """Test set_up_axes raises ValueError for unsupported background_map."""
+    with pytest.raises(ValueError, match="unsupported value of background_map"):
+        plg.plot_map.set_up_axes(background_map="unsupported")
+
+
+def test_scatter_lines_with_geoaxes():
+    """Test scatter_lines with a cartopy GeoAxes and data_crs."""
+    ax = plg.plot_map.set_up_axes(background_map="NE")
+    x0 = [1, -1, 0]
+    y0 = [3, 3, 2]
+    x1 = [0, 1, 0.5]
+    y1 = [9, 10, 5]
+    lines = plg.plot_map.scatter_lines(
+        x0, y0, x1, y1, ax=ax, data_crs=cartopy.crs.PlateCarree()
+    )
+    assert lines.get_transform() is not None
+    plt.close("all")
+
+
+def test_scatter_lines_with_geoaxes_default_crs():
+    """Test scatter_lines with a GeoAxes and no data_crs (defaults to PlateCarree)."""
+    ax = plg.plot_map.set_up_axes(background_map="NE")
+    x0 = [1, -1, 0]
+    y0 = [3, 3, 2]
+    x1 = [0, 1, 0.5]
+    y1 = [9, 10, 5]
+    lines = plg.plot_map.scatter_lines(x0, y0, x1, y1, ax=ax)
+    assert lines.get_transform() is not None
+    plt.close("all")
+
+
+def test_scatter_lines_data_crs_with_plain_axes_raises():
+    """Test scatter_lines raises ValueError when data_crs is passed with a plain Axes."""  # noqa: E501
+    _, ax = plt.subplots()
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"data_crs has to be None if `ax` is not a "
+            r"cartopy\.mpl\.geoaxes\.GeoAxes"
+        ),
+    ):
+        plg.plot_map.scatter_lines(
+            [1, 2], [3, 4], [5, 6], [7, 8], ax=ax, data_crs=cartopy.crs.PlateCarree()
+        )
+    plt.close("all")
+
+
+def test_plot_plg_with_geoaxes():
+    """Test plot_plg with a cartopy GeoAxes to cover the transform handling."""
+    (
+        ds_rad,
+        ds_cmls,
+        ds_gauges_municp,
+        _,
+    ) = plg.example_data.load_openmrg(data_dir="tests/example_data", subset="5min_2h")
+
+    ds_rad = ds_rad.rename({"longitudes": "lon", "latitudes": "lat"})
+    ds_rad = ds_rad.set_coords(["lon", "lat"])
+
+    ax = plg.plot_map.set_up_axes(background_map="NE")
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls.R.sum(dim="time"),
+        da_gauges=ds_gauges_municp.rainfall_amount.sum(dim="time"),
+        use_lon_lat=True,
+        ax=ax,
+    )
+    plt.close("all")
+
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+
+
+def test_set_up_axes_ne_with_custom_features():
+    """Test set_up_axes with 'NE' background map and custom ne_features."""
+    ax = plg.plot_map.set_up_axes(
+        background_map="NE",
+        ne_features={
+            "land": {"facecolor": "green"},
+            "coastlines": {"resolution": "50m", "linewidth": 1.0},
+        },
+    )
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne_with_empty_features():
+    """Test set_up_axes with 'NE' background map and empty ne_features dict."""
+    ax = plg.plot_map.set_up_axes(background_map="NE", ne_features={})
+    assert isinstance(ax, plt.Axes)
+    plt.close("all")
+
+
+def test_set_up_axes_ne_unsupported_method():
+    """Test set_up_axes raises ValueError for unsupported method in ne_features."""
+    with pytest.raises(ValueError, match="unsupported method"):
+        plg.plot_map.set_up_axes(
+            background_map="NE",
+            ne_features={"ocean": {"method": "unsupported"}},
+        )
+
+
+def test_plot_lines_with_ne_features():
+    """Test plot_lines with background_map='NE' and custom ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    lines = plg.plot_map.plot_lines(
+        ds_cmls,
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
+    plt.close("all")
+
+
+def test_plot_plg_with_ne_features():
+    """Test plot_plg with background_map='NE' and custom ne_features."""
+    (
+        ds_rad,
+        ds_cmls,
+        ds_gauges_municp,
+        _,
+    ) = plg.example_data.load_openmrg(data_dir="tests/example_data", subset="5min_2h")
+
+    ds_rad = ds_rad.rename({"longitudes": "lon", "latitudes": "lat"})
+    ds_rad = ds_rad.set_coords(["lon", "lat"])
+
+    plg.plot_map.plot_plg(
+        da_grid=ds_rad.rainfall_amount.sum(dim="time"),
+        da_cmls=ds_cmls.R.sum(dim="time"),
+        da_gauges=ds_gauges_municp.rainfall_amount.sum(dim="time"),
+        use_lon_lat=True,
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    plt.close("all")
+
+    # Close the datasets to release the netCDF4 file handles. Not doing so can
+    # lead to a segmentation fault when the same files are opened again in a
+    # subsequent test.
+    ds_rad.close()
+    ds_cmls.close()
+    ds_gauges_municp.close()
+
+
+def test_plot_cmls_accessor_with_ne_features():
+    """Test the xarray accessor plot_cmls with background_map and ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    lines = ds_cmls.plg.plot_cmls(
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
+    plt.close("all")
+
+
+def test_plot_cmls_dataarray_accessor_with_ne_features():
+    """Test the DataArray accessor plot_cmls with background_map and ne_features."""
+    ds_cmls = xr.open_dataset("tests/test_data/openMRG_CML_180minutes.nc")
+    da_rsl = ds_cmls.rsl.isel(sublink_id=0).isel(time=100)
+    lines = da_rsl.plg.plot_cmls(
+        background_map="NE",
+        ne_features={"land": {"facecolor": "green"}},
+    )
+    assert isinstance(lines, LineCollection)
+    ds_cmls.close()
+    plt.close("all")
