@@ -240,12 +240,24 @@ def plot_lines(
     ax : matplotlib.axes.Axes  |  None, optional
         A `Axes` object on which to plot. If not supplied, a new figure with an `Axes`
         will be created. By default None.
-    background_map : str | None, optional
-        Type of background map.
-    projection : cartopy.crs.Projection | None, optional
-        The map projection to be used.
-    ne_features : dict | None, optional
-        Configuration for the "NE" background map. See `set_up_axes` for details.
+    background_map : str  |  None, optional
+        Type of background map to plot the lines on. Can be "stock" for a built-in
+        stock image, "OSM" for OpenStreetMap tiles or "NE" for Natural Earth
+        features. If None (default), a plain matplotlib `Axes` without any
+        background is created. Only used if `ax` is not provided. See
+        `set_up_axes` for details.
+    projection : cartopy.crs.Projection  |  None, optional
+        The map projection to be used for the background map. Only used if `ax`
+        is not provided. If None (default), `cartopy.crs.PlateCarree` is used,
+        except for "OSM" where the projection is set automatically. Note that
+        the data is not reprojected, so the projection should be chosen such
+        that lon-lat data (or x-y data, see `use_lon_lat`) is displayed
+        correctly, e.g. via `cartopy.crs.EuroPP` for Europe.
+    ne_features : dict  |  None, optional
+        Configuration of the "NE" (Natural Earth) background map features, e.g.
+        `{"land": {"facecolor": "green"}}`. Only provided keys override the
+        defaults. Only used if `ax` is not provided and `background_map="NE"`.
+        See `set_up_axes` for details.
 
     Returns
     -------
@@ -314,31 +326,38 @@ def set_up_axes(
 
     Parameters
     ----------
-        background_map : str or None
-            Type of background map to use. Can be 'stock' for built-in stock image,
-            'OSM' for OpenStreetMap or 'NE' for Natural Earth features.
-            If not provided creates mapltolib Axes object without any background.
-
-        projection : cartopy.crs.Projection, optional
-            Projection to use for the plot. For 'OSM' map background it is automatically
-            set. For other map backgrounds it defaults to PlateCarree() if not provided.
-
-        extent : list-like or None, optional
-            Geographic bounding box [lon_min, lat_min, lon_max, lat_max].
-            Defaults to None.
-
-        ne_features : dict or None, optional
-            Configuration for the "NE" (Natural Earth) background map. Keys are
-            feature names (e.g. "ocean", "land", "lakes", "borders", "coastlines")
-            and values are dicts of keyword arguments passed to either
-            `ax.add_feature` or `ax.coastlines` (see `DEFAULT_NE_FEATURES`).
-            Only provided keys override the defaults. Defaults to None, in which
-            case `DEFAULT_NE_FEATURES` is used.
+    background_map : str  |  None, optional
+        Type of background map to use. Can be "stock" for a built-in stock image,
+        "OSM" for OpenStreetMap tiles or "NE" for Natural Earth features.
+        If None (default), a plain matplotlib `Axes` is created without any
+        background. If only a `projection` is given, a cartopy `GeoAxes` is
+        created without any background features.
+    projection : cartopy.crs.Projection  |  None, optional
+        Projection to use for the plot. For "OSM" map background it is
+        automatically set to the projection of the OSM tiles. For other map
+        backgrounds it defaults to `cartopy.crs.PlateCarree` if not provided.
+    extent : list-like  |  None, optional
+        Geographic bounding box `[lon_min, lat_min, lon_max, lat_max]` that is
+        passed to `ax.set_extent`. Defaults to None, which means the extent is
+        determined automatically.
+    ne_features : dict  |  None, optional
+        Configuration for the "NE" (Natural Earth) background map. Keys are
+        feature names (e.g. "ocean", "land", "lakes", "borders", "coastlines")
+        and values are dicts of keyword arguments passed to either
+        `ax.add_feature` or `ax.coastlines` (see `DEFAULT_NE_FEATURES`).
+        Only provided keys override the defaults. Defaults to None, in which
+        case `DEFAULT_NE_FEATURES` is used.
 
     Returns
     -------
-        matplotlib.axes.Axes or cartopy.mpl.geoaxes.GeoAxes object with appropriate
-        projection and background.
+    matplotlib.axes.Axes or cartopy.mpl.geoaxes.GeoAxes
+        Axes object with appropriate projection and background.
+
+    Raises
+    ------
+    ValueError
+        If `background_map` is not one of None, "stock", "OSM" or "NE", or if
+        an entry in `ne_features` has an unsupported "method".
     """
     if background_map is None and projection is None:
         ax = plt.axes()
@@ -364,8 +383,8 @@ def set_up_axes(
         if extent is not None:
             ax.set_extent(extent)
         features = {
-            name: {**DEFAULT_NE_FEATURES[name], **(ne_features or {}).get(name, {})}
-            for name in DEFAULT_NE_FEATURES
+            name: {**default, **(ne_features or {}).get(name, {})}
+            for name, default in DEFAULT_NE_FEATURES.items()
         }
         for feature_kwargs in features.values():
             method = feature_kwargs.pop("method")
@@ -473,9 +492,24 @@ def plot_plg(
         `plot_lines` for supported kwargs.
     kwargs_gauges_plot : dict or None, optional
         kwargs to be passed to plt.scatter, by default None.
+    background_map : str  |  None, optional
+        Type of background map to plot on. Can be "stock" for a built-in stock
+        image, "OSM" for OpenStreetMap tiles or "NE" for Natural Earth features.
+        If None (default), a plain matplotlib `Axes` without any background is
+        created. Only used if `ax` is not provided. See `set_up_axes` for details.
+    projection : cartopy.crs.Projection  |  None, optional
+        The map projection to be used for the background map. Only used if `ax`
+        is not provided. If None (default), `cartopy.crs.PlateCarree` is used,
+        except for "OSM" where the projection is set automatically. Note that
+        the data is not reprojected, so the projection should be chosen such
+        that lon-lat data (or x-y data, see `use_lon_lat`) is displayed
+        correctly, e.g. via `cartopy.crs.EuroPP` for Europe.
+    extent : list  |  None, optional
+        Geographic bounding box `[lon_min, lat_min, lon_max, lat_max]` that is
+        passed to `ax.set_extent`. Only used if `ax` is not provided. Defaults
+        to None, which means the extent is determined automatically.
     ne_features : dict or None, optional
         Configuration for the "NE" background map. See `set_up_axes` for details.
-    data_crs........
     """
     if kwargs_cmls_plot is None:
         kwargs_cmls_plot = {}

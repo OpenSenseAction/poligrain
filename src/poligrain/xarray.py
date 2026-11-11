@@ -31,9 +31,24 @@ class PoligrainDatasetAccessor:
         projection=None,
         ne_features: dict | None = None,
     ) -> LineCollection:
-        """Plot paths of CMLs and color the lines based on data.
+        """Plot paths of CMLs from a `xarray.Dataset` with a single color.
 
-        See `plot_map.plot_lines` for description of the parameters
+        See `plot_map.plot_lines` for a description of the parameters.
+
+        Parameters
+        ----------
+        background_map : str | None, optional
+            Type of background map. Can be "stock", "OSM" or "NE". If None
+            (default), a plain matplotlib `Axes` without any background is
+            created. Only used if `ax` is not provided.
+        projection : cartopy.crs.Projection | None, optional
+            The map projection to be used for the background map. Only used if
+            `ax` is not provided.
+        ne_features : dict | None, optional
+            Configuration of the "NE" (Natural Earth) background map features,
+            e.g. `{"land": {"facecolor": "green"}}`. Only used if `ax` is not
+            provided and `background_map="NE"`. See `plot_map.set_up_axes` for
+            details.
 
         """
         return plot_map.plot_lines(
@@ -76,9 +91,24 @@ class PoligrainDataArrayAccessor:
         projection=None,
         ne_features: dict | None = None,
     ) -> LineCollection:
-        """Plot paths of CMLs and color the lines based on data.
+        """Plot paths of CMLs colored based on the values of the `DataArray`.
 
-        See `plot_map.plot_lines` for description of the parameters
+        See `plot_map.plot_lines` for a description of the parameters.
+
+        Parameters
+        ----------
+        background_map : str | None, optional
+            Type of background map. Can be "stock", "OSM" or "NE". If None
+            (default), a plain matplotlib `Axes` without any background is
+            created. Only used if `ax` is not provided.
+        projection : cartopy.crs.Projection | None, optional
+            The map projection to be used for the background map. Only used if
+            `ax` is not provided.
+        ne_features : dict | None, optional
+            Configuration of the "NE" (Natural Earth) background map features,
+            e.g. `{"land": {"facecolor": "green"}}`. Only used if `ax` is not
+            provided and `background_map="NE"`. See `plot_map.set_up_axes` for
+            details.
 
         """
         return plot_map.plot_lines(
