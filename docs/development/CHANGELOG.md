@@ -4,6 +4,16 @@
 
 ### New features
 
+### Bug fixes
+
+### Maintenance
+
+### Breaking changes
+
+## v0.4.0
+
+### New features
+
 - [PR107](https://github.com/OpenSenseAction/poligrain/pull/107) add cartopy
   background maps to the plotting functions: `plot_lines`, `plot_plg` and the
   `.plg.plot_cmls()` xarray accessors now accept `background_map` ("stock",
